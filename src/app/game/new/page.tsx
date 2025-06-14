@@ -43,7 +43,7 @@ export default function NewGamePage() {
 
   const form = useForm<GameFormData>({
     defaultValues: {
-      holeCount: 18,
+      holeCount: 9,
       isMultiplayer: 'false'
     }
   })
