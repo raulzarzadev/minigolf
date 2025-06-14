@@ -141,14 +141,6 @@ const FirebaseSetupGuide: React.FC = () => {
               <h3 className="text-sm font-medium text-gray-900 mb-2">
                 Estado actual del archivo .env.local:
               </h3>
-              <pre className="text-xs text-gray-600 overflow-x-auto">
-                {`NEXT_PUBLIC_FIREBASE_API_KEY=AIzaSyCIIj9ggdpcZG86HlNoFVg3DvGEeUVQAwY
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=baja-minigolf.firebaseapp.com
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=baja-minigolf
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=baja-minigolf.firebasestorage.app
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=440596449557
-NEXT_PUBLIC_FIREBASE_APP_ID=1:440596449557:web:2f5bf432a5bf45556bc11c`}
-              </pre>
             </div>
 
             <div className="bg-green-50 border border-green-200 rounded-lg p-4">
