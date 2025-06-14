@@ -1,14 +1,39 @@
 'use client'
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import AuthForm from '@/components/AuthForm'
 import FirebaseSetupGuide from '@/components/FirebaseSetupGuide'
 import Navbar from '@/components/Navbar'
 import Link from 'next/link'
-import { Plus, Trophy, BarChart3, Clock } from 'lucide-react'
+import { Plus, Trophy, BarChart3, Clock, Users, User } from 'lucide-react'
+import { Game } from '@/types'
+import { getUserGames } from '@/lib/db'
 
 export default function Home() {
   const { user, loading, firebaseError } = useAuth()
+  const [recentGames, setRecentGames] = useState<Game[]>([])
+  const [loadingGames, setLoadingGames] = useState(false)
+
+  useEffect(() => {
+    const loadRecentGames = async () => {
+      if (!user) return
+
+      try {
+        setLoadingGames(true)
+        const userGames = await getUserGames(user.id)
+        // Tomar solo las 3 partidas más recientes
+        setRecentGames(userGames.slice(0, 3))
+      } catch (err) {
+        console.error('Error loading recent games:', err)
+      } finally {
+        setLoadingGames(false)
+      }
+    }
+
+    if (user) {
+      loadRecentGames()
+    }
+  }, [user])
 
   if (loading) {
     return (
@@ -163,21 +188,83 @@ export default function Home() {
             </div>{' '}
           </div>{' '}
         </div>{' '}
-        {/* Recent Games - Placeholder */}{' '}
+        {/* Recent Games */}
         <div className="mt-8">
-          {' '}
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Partidas recientes
-          </h2>{' '}
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-gray-900">
+              Partidas recientes
+            </h2>
+            <Link
+              href="/games"
+              className="text-green-600 hover:text-green-700 text-sm font-medium"
+            >
+              Ver todas →
+            </Link>
+          </div>
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            {' '}
-            <div className="text-center py-8 text-gray-500">
-              {' '}
-              <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />{' '}
-              <p>No hay partidas recientes</p>{' '}
-              <p className="text-sm">¡Crea tu primera partida para empezar!</p>{' '}
-            </div>{' '}
-          </div>{' '}
+            {loadingGames ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-500"></div>
+              </div>
+            ) : recentGames.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>No hay partidas recientes</p>
+                <p className="text-sm">
+                  ¡Crea tu primera partida para empezar!
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {recentGames.map((game) => (
+                  <div
+                    key={game.id}
+                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="flex-shrink-0">
+                        {game.isMultiplayer ? (
+                          <Users className="h-5 w-5 text-blue-500" />
+                        ) : (
+                          <User className="h-5 w-5 text-green-500" />
+                        )}
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-medium text-gray-900">
+                          {game.isMultiplayer
+                            ? `Partida Multijugador`
+                            : 'Partida Individual'}
+                        </h3>
+                        <p className="text-xs text-gray-500">
+                          {game.createdAt.toLocaleDateString()} •{' '}
+                          {game.holeCount} hoyos
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          game.status === 'finished'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-yellow-100 text-yellow-800'
+                        }`}
+                      >
+                        {game.status === 'finished'
+                          ? 'Finalizada'
+                          : 'En progreso'}
+                      </span>
+                      <Link
+                        href={`/game/${game.id}`}
+                        className="text-green-600 hover:text-green-700 text-sm font-medium"
+                      >
+                        {game.status === 'finished' ? 'Ver' : 'Continuar'}
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>{' '}
       </div>{' '}
     </div>

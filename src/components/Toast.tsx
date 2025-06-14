@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { X, Check, Info, AlertTriangle, CheckCircle } from 'lucide-react'
+import { X, Info, AlertTriangle, CheckCircle } from 'lucide-react'
 
 export interface ToastMessage {
   id: string

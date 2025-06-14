@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from 'react'
 import { User } from '@/types'
-import { getUserGames, calculateGameStats } from '@/lib/db'
-import { Trophy, Target, TrendingUp, Clock, Star, Award } from 'lucide-react'
+import { getUserGames } from '@/lib/db'
+import { Trophy, Target, TrendingUp, Star, Award } from 'lucide-react'
 
 interface UserStatsProps {
   user: User
