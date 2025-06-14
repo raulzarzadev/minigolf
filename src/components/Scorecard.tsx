@@ -123,7 +123,7 @@ const Scorecard: React.FC<ScorecardProps> = ({
                 <div
                   className={`flex flex-col items-center justify-center space-y-1 rounded-lg p-1 ${
                     isCurrentHole
-                      ? 'bg-gray-50 border-2 border-black'
+                      ? 'bg-gray-50 border-2 border-gray-200'
                       : isFutureHole
                       ? 'bg-gray-50 opacity-60'
                       : 'bg-gray-50'
@@ -134,7 +134,7 @@ const Scorecard: React.FC<ScorecardProps> = ({
                       updateScore(player.id, holeIndex, Math.max(0, score - 1))
                     }
                     disabled={isUpdatingThisHole || score <= 0}
-                    className="w-6 h-6 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center active:scale-95 transition-all touch-manipulation"
+                    className="w-6 h-6 rounded-full bg-gray-200 text-green-900 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center active:scale-95 transition-all touch-manipulation"
                   >
                     <Minus size={12} />
                   </button>
@@ -144,7 +144,7 @@ const Scorecard: React.FC<ScorecardProps> = ({
                   <button
                     onClick={() => updateScore(player.id, holeIndex, score + 1)}
                     disabled={isUpdatingThisHole}
-                    className="w-6 h-6 rounded-full bg-black text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center active:scale-95 transition-all touch-manipulation"
+                    className="w-6 h-6 rounded-full bg-green-700 text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center active:scale-95 transition-all touch-manipulation"
                   >
                     <Plus size={12} />
                   </button>
@@ -184,19 +184,21 @@ const Scorecard: React.FC<ScorecardProps> = ({
 
     return (
       <div className="grid grid-cols-2 gap-2 text-center text-sm">
-        <div className="p-3 bg-gray-50 rounded-lg">
-          <div className="font-bold text-xl text-black">{totalScore}</div>
+        <div className="p-3 bg-green-50 rounded-lg">
+          <div className="font-bold text-xl text-green-600">{totalScore}</div>
           <div className="text-xs text-gray-500">Total</div>
         </div>
-        <div className="p-3 bg-white border-2 border-black rounded-lg">
-          <div className="font-bold text-xl text-black">{completedHoles}</div>
+        <div className="p-3 bg-white border-2 border-green-500 rounded-lg">
+          <div className="font-bold text-xl text-green-600">
+            {completedHoles}
+          </div>
           <div className="text-xs text-gray-500">Hoyos</div>
         </div>
-        <div className="p-3 bg-black rounded-lg">
+        <div className="p-3 bg-green-600 rounded-lg">
           <div className="font-bold text-xl text-white">
             {stats.averagePerHole}
           </div>
-          <div className="text-xs text-gray-300">Promedio</div>
+          <div className="text-xs text-green-100">Promedio</div>
         </div>
         <div className="p-3 bg-gray-100 rounded-lg">
           <div className="font-bold text-xl text-black">{stats.holesInOne}</div>
@@ -230,7 +232,7 @@ const Scorecard: React.FC<ScorecardProps> = ({
   return (
     <div className="space-y-3">
       {/* Game Info */}
-      <div className="bg-white rounded-lg p-3 border-2 border-black">
+      <div className="bg-white rounded-lg p-3 border-2 border-green-200">
         <div className="flex items-center justify-between mb-3">
           <div className="flex-1 min-w-0">
             <h2 className="text-base font-semibold text-black truncate">
@@ -263,7 +265,7 @@ const Scorecard: React.FC<ScorecardProps> = ({
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div
-              className="bg-black h-2 rounded-full transition-all duration-300"
+              className="bg-green-500 h-2 rounded-full transition-all duration-300"
               style={{
                 width: `${(game.currentHole / game.holeCount) * 100}%`
               }}
@@ -280,7 +282,7 @@ const Scorecard: React.FC<ScorecardProps> = ({
             <button
               onClick={() => setAutoAdvanceHole(!autoAdvanceHole)}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                autoAdvanceHole ? 'bg-black' : 'bg-gray-200'
+                autoAdvanceHole ? 'bg-green-500' : 'bg-gray-200'
               }`}
             >
               <span
@@ -297,7 +299,7 @@ const Scorecard: React.FC<ScorecardProps> = ({
       {game.isMultiplayer && leaderboard.length > 0 && (
         <div className="bg-white rounded-lg border border-gray-200 p-3">
           <h3 className="font-semibold text-gray-900 mb-3 flex items-center text-sm">
-            <Trophy className="h-4 w-4 text-black mr-2" />
+            <Trophy className="h-4 w-4 text-green-600 mr-2" />
             Clasificación
           </h3>
           <div className="space-y-2">

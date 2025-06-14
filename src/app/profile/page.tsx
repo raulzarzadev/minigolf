@@ -151,8 +151,8 @@ export default function ProfilePage() {
 
           <div className="bg-white rounded-lg border border-gray-200 p-3">
             <div className="flex items-center space-x-2">
-              <div className="bg-blue-100 rounded-lg p-2">
-                <TrendingUp className="h-4 w-4 text-blue-600" />
+              <div className="bg-green-100 rounded-lg p-2">
+                <TrendingUp className="h-4 w-4 text-green-600" />
               </div>
               <div className="min-w-0 flex-1">
                 <div className="text-lg font-bold text-gray-900">
@@ -165,8 +165,8 @@ export default function ProfilePage() {
 
           <div className="bg-white rounded-lg border border-gray-200 p-3">
             <div className="flex items-center space-x-2">
-              <div className="bg-yellow-100 rounded-lg p-2">
-                <Target className="h-4 w-4 text-yellow-600" />
+              <div className="bg-green-100 rounded-lg p-2">
+                <Target className="h-4 w-4 text-green-600" />
               </div>
               <div className="min-w-0 flex-1">
                 <div className="text-lg font-bold text-gray-900">
@@ -248,7 +248,7 @@ export default function ProfilePage() {
                           {game.status === 'finished' ? (
                             <Flag className="h-4 w-4 text-green-600" />
                           ) : (
-                            <Clock className="h-4 w-4 text-blue-600" />
+                            <Clock className="h-4 w-4 text-green-600" />
                           )}
                         </div>
                         <div className="min-w-0 flex-1">
@@ -275,7 +275,7 @@ export default function ProfilePage() {
                           className={`text-xs px-2 py-1 rounded-full inline-block mt-1 ${
                             game.status === 'finished'
                               ? 'bg-green-100 text-green-600'
-                              : 'bg-blue-100 text-blue-600'
+                              : 'bg-gray-100 text-gray-600'
                           }`}
                         >
                           {game.status === 'finished'

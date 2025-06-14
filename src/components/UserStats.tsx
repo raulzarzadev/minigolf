@@ -222,7 +222,7 @@ const UserStats: React.FC<UserStatsProps> = ({ user }) => {
           stats.holesInOne > 1 ? 's' : ''
         }-in-one`,
         icon: Star,
-        color: 'text-yellow-600 bg-yellow-100'
+        color: 'text-green-600 bg-green-100'
       })
     }
 
@@ -300,7 +300,7 @@ const UserStats: React.FC<UserStatsProps> = ({ user }) => {
             <div className="bg-white rounded-lg border border-gray-200 p-3">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <Trophy className="h-5 w-5 text-yellow-600" />
+                  <Trophy className="h-5 w-5 text-green-600" />
                 </div>
                 <div className="ml-3">
                   <div className="text-lg font-bold text-gray-900">

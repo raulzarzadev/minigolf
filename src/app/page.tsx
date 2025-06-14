@@ -87,8 +87,8 @@ export default function Home() {
           <Link href="/tournaments" className="group">
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 hover:shadow-md transition-all group-hover:border-gray-400 active:scale-95 touch-manipulation">
               <div className="flex flex-col items-center text-center space-y-2">
-                <div className="bg-gray-100 rounded-lg p-2">
-                  <Trophy className="h-5 w-5 text-black" />
+                <div className="bg-yellow-50 rounded-lg p-2">
+                  <Trophy className="h-5 w-5 text-yellow-500" />
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-gray-900">Torneos</h3>
@@ -101,8 +101,8 @@ export default function Home() {
           <Link href="/profile" className="group">
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 hover:shadow-md transition-all group-hover:border-gray-600 active:scale-95 touch-manipulation">
               <div className="flex flex-col items-center text-center space-y-2">
-                <div className="bg-gray-200 rounded-lg p-2">
-                  <BarChart3 className="h-5 w-5 text-black" />
+                <div className="bg-purple-100 rounded-lg p-2">
+                  <BarChart3 className="h-5 w-5 text-purple-700" />
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-gray-900">
@@ -117,8 +117,8 @@ export default function Home() {
           <Link href="/games" className="group">
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 hover:shadow-md transition-all group-hover:border-gray-500 active:scale-95 touch-manipulation">
               <div className="flex flex-col items-center text-center space-y-2">
-                <div className="bg-gray-300 rounded-lg p-2">
-                  <Clock className="h-5 w-5 text-black" />
+                <div className="bg-blue-100 rounded-lg p-2">
+                  <Clock className="h-5 w-5 text-blue-800" />
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-gray-900">

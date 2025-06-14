@@ -45,8 +45,8 @@ const FirebaseSetupGuide: React.FC = () => {
 
                 <div className="space-y-3">
                   <div className="flex items-start space-x-3">
-                    <div className="flex-shrink-0 h-6 w-6 bg-blue-100 rounded-full flex items-center justify-center">
-                      <span className="text-sm font-medium text-blue-600">
+                    <div className="flex-shrink-0 h-6 w-6 bg-green-100 rounded-full flex items-center justify-center">
+                      <span className="text-sm font-medium text-green-600">
                         1
                       </span>
                     </div>
@@ -59,8 +59,8 @@ const FirebaseSetupGuide: React.FC = () => {
                   </div>
 
                   <div className="flex items-start space-x-3">
-                    <div className="flex-shrink-0 h-6 w-6 bg-blue-100 rounded-full flex items-center justify-center">
-                      <span className="text-sm font-medium text-blue-600">
+                    <div className="flex-shrink-0 h-6 w-6 bg-green-100 rounded-full flex items-center justify-center">
+                      <span className="text-sm font-medium text-green-600">
                         2
                       </span>
                     </div>
@@ -72,8 +72,8 @@ const FirebaseSetupGuide: React.FC = () => {
                   </div>
 
                   <div className="flex items-start space-x-3">
-                    <div className="flex-shrink-0 h-6 w-6 bg-blue-100 rounded-full flex items-center justify-center">
-                      <span className="text-sm font-medium text-blue-600">
+                    <div className="flex-shrink-0 h-6 w-6 bg-green-100 rounded-full flex items-center justify-center">
+                      <span className="text-sm font-medium text-green-600">
                         3
                       </span>
                     </div>
@@ -86,8 +86,8 @@ const FirebaseSetupGuide: React.FC = () => {
                   </div>
 
                   <div className="flex items-start space-x-3">
-                    <div className="flex-shrink-0 h-6 w-6 bg-blue-100 rounded-full flex items-center justify-center">
-                      <span className="text-sm font-medium text-blue-600">
+                    <div className="flex-shrink-0 h-6 w-6 bg-green-100 rounded-full flex items-center justify-center">
+                      <span className="text-sm font-medium text-green-600">
                         4
                       </span>
                     </div>
