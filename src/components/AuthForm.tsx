@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
+import Logo from './Logo'
 
 const AuthForm: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false)
@@ -27,13 +28,13 @@ const AuthForm: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
-        <div>
-          <div className="mx-auto h-16 w-16 flex items-center justify-center bg-green-100 rounded-full">
-            <span className="text-3xl">🏌️‍♂️</span>
+        <div className="text-center">
+          <div className="flex justify-center mb-6">
+            <Logo size="xl" variant="dark" showText={false} />
           </div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-black">
             Plataforma de Minigolf
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
@@ -41,9 +42,9 @@ const AuthForm: React.FC = () => {
           </p>
         </div>
 
-        <div className="bg-white rounded-lg shadow-lg p-8">
+        <div className="bg-white rounded-lg shadow-xl border-2 border-black p-8">
           {error && (
-            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+            <div className="mb-4 p-3 bg-red-50 border-2 border-red-500 text-red-700 rounded">
               {error}
             </div>
           )}
@@ -52,11 +53,11 @@ const AuthForm: React.FC = () => {
             <button
               onClick={handleGoogleSignIn}
               disabled={isLoading}
-              className="w-full flex justify-center items-center py-3 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-full flex justify-center items-center py-3 px-4 border-2 border-black rounded-md shadow-sm bg-white text-sm font-medium text-black hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {isLoading ? (
                 <div className="flex items-center">
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-700 mr-2"></div>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-black mr-2"></div>
                   Iniciando sesión...
                 </div>
               ) : (
@@ -87,7 +88,7 @@ const AuthForm: React.FC = () => {
             <div className="mt-6">
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300" />
+                  <div className="w-full border-t-2 border-gray-300" />
                 </div>
                 <div className="relative flex justify-center text-sm">
                   <span className="px-2 bg-white text-gray-500">

@@ -52,13 +52,13 @@ export default function GamesPage() {
     switch (status) {
       case 'in_progress':
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-black">
             En progreso
           </span>
         )
       case 'finished':
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-black text-white">
             Finalizada
           </span>
         )
@@ -89,11 +89,11 @@ export default function GamesPage() {
 
         {loading ? (
           <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-500"></div>
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-black"></div>
           </div>
         ) : error ? (
-          <div className="bg-red-50 border border-red-200 rounded-md p-3">
-            <div className="text-red-800 text-sm">{error}</div>
+          <div className="bg-gray-100 border border-gray-300 rounded-md p-3">
+            <div className="text-black text-sm">{error}</div>
           </div>
         ) : games.length === 0 ? (
           <div className="text-center py-8">
@@ -106,7 +106,7 @@ export default function GamesPage() {
             </p>
             <Link
               href="/game/new"
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 active:scale-95 transition-all touch-manipulation"
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-black hover:bg-gray-800 active:scale-95 transition-all touch-manipulation"
             >
               Nueva Partida
             </Link>
@@ -122,9 +122,9 @@ export default function GamesPage() {
                   <div className="flex items-center space-x-2 min-w-0 flex-1">
                     <div className="flex-shrink-0">
                       {game.isMultiplayer ? (
-                        <Users className="h-4 w-4 text-blue-500" />
+                        <Users className="h-4 w-4 text-black" />
                       ) : (
-                        <User className="h-4 w-4 text-green-500" />
+                        <User className="h-4 w-4 text-gray-600" />
                       )}
                     </div>
                     <div className="min-w-0 flex-1">

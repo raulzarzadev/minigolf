@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { LogOut, User, Home, Trophy, Plus, Menu, X } from 'lucide-react'
+import Logo from './Logo'
 
 const Navbar: React.FC = () => {
   const { user, logout } = useAuth()
@@ -24,18 +25,17 @@ const Navbar: React.FC = () => {
   const closeMobileMenu = () => setIsMobileMenuOpen(false)
 
   return (
-    <nav className="bg-green-600 text-white shadow-lg">
+    <nav className="bg-white text-black shadow-lg border-b-2 border-black">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         <div className="flex justify-between h-14">
           {/* Logo y marca */}
           <div className="flex items-center">
             <Link
               href="/"
-              className="flex items-center space-x-2"
+              className="flex items-center"
               onClick={closeMobileMenu}
             >
-              <div className="text-xl">🏌️‍♂️</div>
-              <span className="font-bold text-lg">Minigolf</span>
+              <Logo size="md" variant="dark" showText={true} />
             </Link>
           </div>
 
@@ -43,7 +43,7 @@ const Navbar: React.FC = () => {
           <div className="hidden md:flex items-center space-x-1 lg:space-x-4">
             <Link
               href="/"
-              className="flex items-center space-x-1 px-2 lg:px-3 py-2 rounded-md text-sm font-medium hover:bg-green-700 transition-colors"
+              className="flex items-center space-x-1 px-2 lg:px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-100 transition-colors"
             >
               <Home size={18} />
               <span className="hidden lg:inline">Inicio</span>
@@ -51,7 +51,7 @@ const Navbar: React.FC = () => {
 
             <Link
               href="/game/new"
-              className="flex items-center space-x-1 px-2 lg:px-3 py-2 rounded-md text-sm font-medium hover:bg-green-700 transition-colors"
+              className="flex items-center space-x-1 px-2 lg:px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-100 transition-colors"
             >
               <Plus size={18} />
               <span className="hidden lg:inline">Nueva Partida</span>
@@ -59,16 +59,16 @@ const Navbar: React.FC = () => {
 
             <Link
               href="/tournaments"
-              className="flex items-center space-x-1 px-2 lg:px-3 py-2 rounded-md text-sm font-medium hover:bg-green-700 transition-colors"
+              className="flex items-center space-x-1 px-2 lg:px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-100 transition-colors"
             >
               <Trophy size={18} />
               <span className="hidden lg:inline">Torneos</span>
             </Link>
 
-            <div className="flex items-center space-x-1 lg:space-x-4 border-l border-green-500 pl-2 lg:pl-4 ml-2 lg:ml-4">
+            <div className="flex items-center space-x-1 lg:space-x-4 border-l border-gray-300 pl-2 lg:pl-4 ml-2 lg:ml-4">
               <Link
                 href="/profile"
-                className="flex items-center space-x-1 px-2 lg:px-3 py-2 rounded-md text-sm font-medium hover:bg-green-700 transition-colors"
+                className="flex items-center space-x-1 px-2 lg:px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-100 transition-colors"
               >
                 <User size={18} />
                 <span className="hidden lg:inline truncate max-w-20">
@@ -78,7 +78,7 @@ const Navbar: React.FC = () => {
 
               <button
                 onClick={handleLogout}
-                className="flex items-center space-x-1 px-2 lg:px-3 py-2 rounded-md text-sm font-medium hover:bg-green-700 transition-colors"
+                className="flex items-center space-x-1 px-2 lg:px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-100 transition-colors"
               >
                 <LogOut size={18} />
                 <span className="hidden lg:inline">Salir</span>
@@ -90,7 +90,7 @@ const Navbar: React.FC = () => {
           <div className="md:hidden flex items-center">
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-2 rounded-md hover:bg-green-700 transition-colors touch-manipulation"
+              className="p-2 rounded-md hover:bg-gray-100 transition-colors touch-manipulation"
               aria-label="Abrir menú"
             >
               {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
@@ -100,12 +100,12 @@ const Navbar: React.FC = () => {
 
         {/* Menú móvil */}
         {isMobileMenuOpen && (
-          <div className="md:hidden border-t border-green-500">
+          <div className="md:hidden border-t border-gray-300">
             <div className="px-2 pt-2 pb-3 space-y-1">
               <Link
                 href="/"
                 onClick={closeMobileMenu}
-                className="flex items-center space-x-3 px-3 py-3 rounded-md text-base font-medium hover:bg-green-700 transition-colors active:bg-green-700 touch-manipulation"
+                className="flex items-center space-x-3 px-3 py-3 rounded-md text-base font-medium hover:bg-gray-100 transition-colors active:bg-gray-100 touch-manipulation"
               >
                 <Home size={20} />
                 <span>Inicio</span>
@@ -114,7 +114,7 @@ const Navbar: React.FC = () => {
               <Link
                 href="/game/new"
                 onClick={closeMobileMenu}
-                className="flex items-center space-x-3 px-3 py-3 rounded-md text-base font-medium hover:bg-green-700 transition-colors active:bg-green-700 touch-manipulation"
+                className="flex items-center space-x-3 px-3 py-3 rounded-md text-base font-medium hover:bg-gray-100 transition-colors active:bg-gray-100 touch-manipulation"
               >
                 <Plus size={20} />
                 <span>Nueva Partida</span>
@@ -123,7 +123,7 @@ const Navbar: React.FC = () => {
               <Link
                 href="/tournaments"
                 onClick={closeMobileMenu}
-                className="flex items-center space-x-3 px-3 py-3 rounded-md text-base font-medium hover:bg-green-700 transition-colors active:bg-green-700 touch-manipulation"
+                className="flex items-center space-x-3 px-3 py-3 rounded-md text-base font-medium hover:bg-gray-100 transition-colors active:bg-gray-100 touch-manipulation"
               >
                 <Trophy size={20} />
                 <span>Torneos</span>
@@ -132,17 +132,17 @@ const Navbar: React.FC = () => {
               <Link
                 href="/games"
                 onClick={closeMobileMenu}
-                className="flex items-center space-x-3 px-3 py-3 rounded-md text-base font-medium hover:bg-green-700 transition-colors active:bg-green-700 touch-manipulation"
+                className="flex items-center space-x-3 px-3 py-3 rounded-md text-base font-medium hover:bg-gray-100 transition-colors active:bg-gray-100 touch-manipulation"
               >
                 <Trophy size={20} />
                 <span>Mis Partidas</span>
               </Link>
 
-              <div className="border-t border-green-500 pt-4 mt-4">
+              <div className="border-t border-gray-300 pt-4 mt-4">
                 <Link
                   href="/profile"
                   onClick={closeMobileMenu}
-                  className="flex items-center space-x-3 px-3 py-3 rounded-md text-base font-medium hover:bg-green-700 transition-colors active:bg-green-700 touch-manipulation"
+                  className="flex items-center space-x-3 px-3 py-3 rounded-md text-base font-medium hover:bg-gray-100 transition-colors active:bg-gray-100 touch-manipulation"
                 >
                   <User size={20} />
                   <span>{user.name}</span>
@@ -153,7 +153,7 @@ const Navbar: React.FC = () => {
                     handleLogout()
                     closeMobileMenu()
                   }}
-                  className="flex items-center space-x-3 px-3 py-3 rounded-md text-base font-medium hover:bg-green-700 transition-colors active:bg-green-700 w-full text-left touch-manipulation"
+                  className="flex items-center space-x-3 px-3 py-3 rounded-md text-base font-medium hover:bg-gray-100 transition-colors active:bg-gray-100 w-full text-left touch-manipulation"
                 >
                   <LogOut size={20} />
                   <span>Cerrar Sesión</span>

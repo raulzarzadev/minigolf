@@ -38,7 +38,7 @@ export default function Home() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-green-500"></div>
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-black"></div>
       </div>
     )
   }
@@ -67,10 +67,10 @@ export default function Home() {
         {/* Quick Actions - Grid responsivo optimizado */}
         <div className="grid grid-cols-2 gap-3 mb-4">
           <Link href="/game/new" className="group">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 hover:shadow-md transition-all group-hover:border-green-300 active:scale-95 touch-manipulation">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 hover:shadow-md transition-all group-hover:border-black active:scale-95 touch-manipulation">
               <div className="flex flex-col items-center text-center space-y-2">
-                <div className="bg-green-100 rounded-lg p-2">
-                  <Plus className="h-5 w-5 text-green-600" />
+                <div className="bg-black rounded-lg p-2">
+                  <Plus className="h-5 w-5 text-white" />
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-gray-900">
@@ -85,10 +85,10 @@ export default function Home() {
           </Link>
 
           <Link href="/tournaments" className="group">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 hover:shadow-md transition-all group-hover:border-yellow-300 active:scale-95 touch-manipulation">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 hover:shadow-md transition-all group-hover:border-gray-400 active:scale-95 touch-manipulation">
               <div className="flex flex-col items-center text-center space-y-2">
-                <div className="bg-yellow-100 rounded-lg p-2">
-                  <Trophy className="h-5 w-5 text-yellow-600" />
+                <div className="bg-gray-100 rounded-lg p-2">
+                  <Trophy className="h-5 w-5 text-black" />
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-gray-900">Torneos</h3>
@@ -99,10 +99,10 @@ export default function Home() {
           </Link>
 
           <Link href="/profile" className="group">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 hover:shadow-md transition-all group-hover:border-blue-300 active:scale-95 touch-manipulation">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 hover:shadow-md transition-all group-hover:border-gray-600 active:scale-95 touch-manipulation">
               <div className="flex flex-col items-center text-center space-y-2">
-                <div className="bg-blue-100 rounded-lg p-2">
-                  <BarChart3 className="h-5 w-5 text-blue-600" />
+                <div className="bg-gray-200 rounded-lg p-2">
+                  <BarChart3 className="h-5 w-5 text-black" />
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-gray-900">
@@ -115,10 +115,10 @@ export default function Home() {
           </Link>
 
           <Link href="/games" className="group">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 hover:shadow-md transition-all group-hover:border-purple-300 active:scale-95 touch-manipulation">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 hover:shadow-md transition-all group-hover:border-gray-500 active:scale-95 touch-manipulation">
               <div className="flex flex-col items-center text-center space-y-2">
-                <div className="bg-purple-100 rounded-lg p-2">
-                  <Clock className="h-5 w-5 text-purple-600" />
+                <div className="bg-gray-300 rounded-lg p-2">
+                  <Clock className="h-5 w-5 text-black" />
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-gray-900">
@@ -136,20 +136,20 @@ export default function Home() {
             Tu actividad
           </h2>
           <div className="grid grid-cols-3 gap-3">
-            <div className="text-center p-2 bg-green-50 rounded-lg">
-              <div className="text-xl font-bold text-green-600">
+            <div className="text-center p-2 bg-black rounded-lg">
+              <div className="text-xl font-bold text-white">
                 {user.gamesPlayed}
               </div>
-              <div className="text-xs text-gray-500 mt-1">Partidas</div>
+              <div className="text-xs text-gray-300 mt-1">Partidas</div>
             </div>
-            <div className="text-center p-2 bg-blue-50 rounded-lg">
-              <div className="text-xl font-bold text-blue-600">
+            <div className="text-center p-2 bg-gray-100 rounded-lg">
+              <div className="text-xl font-bold text-black">
                 {user.averageScore > 0 ? user.averageScore.toFixed(1) : '--'}
               </div>
               <div className="text-xs text-gray-500 mt-1">Promedio</div>
             </div>
-            <div className="text-center p-2 bg-purple-50 rounded-lg">
-              <div className="text-xl font-bold text-purple-600">--</div>
+            <div className="text-center p-2 bg-gray-200 rounded-lg">
+              <div className="text-xl font-bold text-black">--</div>
               <div className="text-xs text-gray-500 mt-1">Ranking</div>
             </div>
           </div>
@@ -162,7 +162,7 @@ export default function Home() {
             </h2>
             <Link
               href="/games"
-              className="text-green-600 hover:text-green-700 text-sm font-medium"
+              className="text-black hover:text-gray-700 text-sm font-medium"
             >
               Ver todas →
             </Link>
@@ -170,7 +170,7 @@ export default function Home() {
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
             {loadingGames ? (
               <div className="flex items-center justify-center py-6">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-500"></div>
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-black"></div>
               </div>
             ) : recentGames.length === 0 ? (
               <div className="text-center py-6 text-gray-500">
@@ -188,9 +188,9 @@ export default function Home() {
                       <div className="flex items-center space-x-2 min-w-0 flex-1">
                         <div className="flex-shrink-0">
                           {game.isMultiplayer ? (
-                            <Users className="h-4 w-4 text-blue-500" />
+                            <Users className="h-4 w-4 text-black" />
                           ) : (
-                            <User className="h-4 w-4 text-green-500" />
+                            <User className="h-4 w-4 text-gray-600" />
                           )}
                         </div>
                         <div className="min-w-0 flex-1">
@@ -206,8 +206,8 @@ export default function Home() {
                       <span
                         className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                           game.status === 'finished'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-yellow-100 text-yellow-800'
+                            ? 'bg-black text-white'
+                            : 'bg-gray-200 text-black'
                         }`}
                       >
                         {game.status === 'finished'
@@ -218,7 +218,7 @@ export default function Home() {
                     <div className="flex justify-end">
                       <Link
                         href={`/game/${game.id}`}
-                        className="text-green-600 hover:text-green-700 text-sm font-medium active:scale-95 transition-all touch-manipulation"
+                        className="text-black hover:text-gray-700 text-sm font-medium active:scale-95 transition-all touch-manipulation"
                       >
                         {game.status === 'finished'
                           ? 'Ver resultado'

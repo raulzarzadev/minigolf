@@ -14,7 +14,7 @@ export default function TournamentsPage() {
       <div className="min-h-screen bg-gray-50">
         <Navbar />
         <div className="flex items-center justify-center py-16">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-green-500"></div>
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-black"></div>
         </div>
       </div>
     )
@@ -34,9 +34,9 @@ export default function TournamentsPage() {
         </div>
 
         {/* Coming Soon Banner */}
-        <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg p-4 mb-4">
+        <div className="bg-gradient-to-r from-gray-50 to-white border border-gray-200 rounded-lg p-4 mb-4">
           <div className="text-center">
-            <Trophy className="h-12 w-12 text-yellow-600 mx-auto mb-3" />
+            <Trophy className="h-12 w-12 text-black mx-auto mb-3" />
             <h2 className="text-lg font-bold text-gray-900 mb-2">
               ¡Próximamente!
             </h2>
@@ -46,7 +46,7 @@ export default function TournamentsPage() {
             </p>
             <Link
               href="/game/new"
-              className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm touch-manipulation"
+              className="inline-flex items-center px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors text-sm touch-manipulation"
             >
               <Plus className="h-4 w-4 mr-2" />
               Crear Partida de Práctica
@@ -58,8 +58,8 @@ export default function TournamentsPage() {
         <div className="grid grid-cols-1 gap-3 mb-4">
           <div className="bg-white rounded-lg border border-gray-200 p-3">
             <div className="flex items-center mb-2">
-              <div className="bg-blue-100 rounded-lg p-2">
-                <Calendar className="h-4 w-4 text-blue-600" />
+              <div className="bg-gray-100 rounded-lg p-2">
+                <Calendar className="h-4 w-4 text-black" />
               </div>
               <h3 className="ml-3 text-sm font-semibold text-gray-900">
                 Torneos por Temporadas
@@ -73,8 +73,8 @@ export default function TournamentsPage() {
 
           <div className="bg-white rounded-lg border border-gray-200 p-3">
             <div className="flex items-center mb-2">
-              <div className="bg-green-100 rounded-lg p-2">
-                <Users className="h-4 w-4 text-green-600" />
+              <div className="bg-black rounded-lg p-2">
+                <Users className="h-4 w-4 text-white" />
               </div>
               <h3 className="ml-3 text-sm font-semibold text-gray-900">
                 Competencias Grupales

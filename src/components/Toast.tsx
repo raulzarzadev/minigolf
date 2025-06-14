@@ -41,26 +41,26 @@ const Toast: React.FC<ToastProps> = ({ toast, onClose }) => {
   const getIcon = () => {
     switch (toast.type) {
       case 'success':
-        return <CheckCircle className="h-5 w-5 text-green-600" />
+        return <CheckCircle className="h-5 w-5 text-black" />
       case 'error':
-        return <AlertTriangle className="h-5 w-5 text-red-600" />
+        return <AlertTriangle className="h-5 w-5 text-gray-700" />
       case 'warning':
-        return <AlertTriangle className="h-5 w-5 text-yellow-600" />
+        return <AlertTriangle className="h-5 w-5 text-gray-600" />
       case 'info':
-        return <Info className="h-5 w-5 text-blue-600" />
+        return <Info className="h-5 w-5 text-gray-800" />
     }
   }
 
   const getColors = () => {
     switch (toast.type) {
       case 'success':
-        return 'bg-green-50 border-green-200'
+        return 'bg-white border-black'
       case 'error':
-        return 'bg-red-50 border-red-200'
+        return 'bg-gray-100 border-gray-400'
       case 'warning':
-        return 'bg-yellow-50 border-yellow-200'
+        return 'bg-gray-50 border-gray-300'
       case 'info':
-        return 'bg-blue-50 border-blue-200'
+        return 'bg-white border-gray-500'
     }
   }
 
@@ -84,7 +84,7 @@ const Toast: React.FC<ToastProps> = ({ toast, onClose }) => {
               <div className="mt-3">
                 <button
                   onClick={toast.action.onClick}
-                  className="text-sm font-medium text-green-600 hover:text-green-500"
+                  className="text-sm font-medium text-black hover:text-gray-700"
                 >
                   {toast.action.label}
                 </button>
