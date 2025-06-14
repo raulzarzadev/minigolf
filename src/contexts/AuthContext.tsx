@@ -66,7 +66,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           setFirebaseError(null)
         } catch (error) {
           console.error('Error in auth state change:', error)
-          setFirebaseError(error instanceof Error ? error.message : 'Error de autenticación')
+          setFirebaseError(
+            error instanceof Error ? error.message : 'Error de autenticación'
+          )
         } finally {
           setLoading(false)
         }
@@ -75,7 +77,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       return () => unsubscribe()
     } catch (error) {
       console.error('Error initializing Firebase auth:', error)
-      setFirebaseError(error instanceof Error ? error.message : 'Error de configuración de Firebase')
+      setFirebaseError(
+        error instanceof Error
+          ? error.message
+          : 'Error de configuración de Firebase'
+      )
       setLoading(false)
     }
   }, [])

@@ -1,27 +1,30 @@
-'use client';
+'use client'
 
-import React, { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import React, { useState } from 'react'
+import { useAuth } from '@/contexts/AuthContext'
 
 const AuthForm: React.FC = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const { signInWithGoogle } = useAuth();
+  const { signInWithGoogle } = useAuth()
 
   const handleGoogleSignIn = async () => {
-    setIsLoading(true);
-    setError(null);
-    
+    setIsLoading(true)
+    setError(null)
+
     try {
-      await signInWithGoogle();
+      await signInWithGoogle()
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Error al iniciar sesión con Google';
-      setError(errorMessage);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : 'Error al iniciar sesión con Google'
+      setError(errorMessage)
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -96,7 +99,8 @@ const AuthForm: React.FC = () => {
 
             <div className="text-center">
               <p className="text-sm text-gray-600">
-                Al continuar, aceptas nuestros términos de servicio y política de privacidad.
+                Al continuar, aceptas nuestros términos de servicio y política
+                de privacidad.
               </p>
             </div>
           </div>
@@ -109,7 +113,7 @@ const AuthForm: React.FC = () => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default AuthForm;
+export default AuthForm

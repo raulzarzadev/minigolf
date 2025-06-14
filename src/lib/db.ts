@@ -13,7 +13,7 @@ import {
   deleteDoc
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
-import { Game, Player, User } from '@/types'
+import { Game, Player, User, Tournament, TournamentStanding } from '@/types'
 
 // Games Collection Functions
 export const createGame = async (
@@ -194,5 +194,272 @@ export const calculateGameStats = (scores: number[]) => {
     bestHole: bestHole === Infinity ? 0 : bestHole,
     worstHole,
     holesInOne
+  }
+}
+
+// Tournament Functions
+export const createTournament = async (
+  tournamentData: Omit<Tournament, 'id' | 'createdAt'>
+): Promise<string> => {
+  try {
+    const docRef = await addDoc(collection(db, 'tournaments'), {
+      ...tournamentData,
+      createdAt: serverTimestamp()
+    })
+    return docRef.id
+  } catch (error) {
+    console.error('Error creating tournament:', error)
+    throw error
+  }
+}
+
+export const getTournament = async (
+  tournamentId: string
+): Promise<Tournament | null> => {
+  try {
+    const tournamentDoc = await getDoc(doc(db, 'tournaments', tournamentId))
+    if (tournamentDoc.exists()) {
+      const data = tournamentDoc.data()
+      return {
+        id: tournamentDoc.id,
+        ...data,
+        createdAt: data.createdAt.toDate(),
+        startDate: data.startDate.toDate(),
+        endDate: data.endDate.toDate()
+      } as Tournament
+    }
+    return null
+  } catch (error) {
+    console.error('Error getting tournament:', error)
+    throw error
+  }
+}
+
+export const getTournaments = async (
+  status?: 'upcoming' | 'active' | 'finished'
+): Promise<Tournament[]> => {
+  try {
+    let q = query(collection(db, 'tournaments'), orderBy('startDate', 'desc'))
+
+    if (status) {
+      q = query(
+        collection(db, 'tournaments'),
+        where('status', '==', status),
+        orderBy('startDate', 'desc')
+      )
+    }
+
+    const querySnapshot = await getDocs(q)
+    return querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+      createdAt: doc.data().createdAt.toDate(),
+      startDate: doc.data().startDate.toDate(),
+      endDate: doc.data().endDate.toDate()
+    })) as Tournament[]
+  } catch (error) {
+    console.error('Error getting tournaments:', error)
+    throw error
+  }
+}
+
+export const joinTournament = async (
+  tournamentId: string,
+  userId: string
+): Promise<void> => {
+  try {
+    const tournamentRef = doc(db, 'tournaments', tournamentId)
+    const tournamentDoc = await getDoc(tournamentRef)
+
+    if (tournamentDoc.exists()) {
+      const tournament = tournamentDoc.data() as Tournament
+      if (!tournament.participants.includes(userId)) {
+        await updateDoc(tournamentRef, {
+          participants: [...tournament.participants, userId]
+        })
+      }
+    }
+  } catch (error) {
+    console.error('Error joining tournament:', error)
+    throw error
+  }
+}
+
+export const leaveTournament = async (
+  tournamentId: string,
+  userId: string
+): Promise<void> => {
+  try {
+    const tournamentRef = doc(db, 'tournaments', tournamentId)
+    const tournamentDoc = await getDoc(tournamentRef)
+
+    if (tournamentDoc.exists()) {
+      const tournament = tournamentDoc.data() as Tournament
+      const updatedParticipants = tournament.participants.filter(
+        (id) => id !== userId
+      )
+      await updateDoc(tournamentRef, {
+        participants: updatedParticipants
+      })
+    }
+  } catch (error) {
+    console.error('Error leaving tournament:', error)
+    throw error
+  }
+}
+
+export const updateTournamentStatus = async (
+  tournamentId: string,
+  status: Tournament['status']
+): Promise<void> => {
+  try {
+    const tournamentRef = doc(db, 'tournaments', tournamentId)
+    await updateDoc(tournamentRef, { status })
+  } catch (error) {
+    console.error('Error updating tournament status:', error)
+    throw error
+  }
+}
+
+export const calculateTournamentLeaderboard = async (
+  tournamentId: string
+): Promise<TournamentStanding[]> => {
+  try {
+    const tournament = await getTournament(tournamentId)
+    if (!tournament) throw new Error('Tournament not found')
+
+    const tournamentGames = await Promise.all(
+      tournament.games.map((gameId) => getGame(gameId))
+    )
+
+    const participantStats = new Map<
+      string,
+      {
+        gamesPlayed: number
+        totalStrokes: number
+        userName: string
+      }
+    >()
+
+    // Initialize stats for all participants
+    for (const userId of tournament.participants) {
+      // You'd need a getUserById function here
+      participantStats.set(userId, {
+        gamesPlayed: 0,
+        totalStrokes: 0,
+        userName: userId // Replace with actual user name lookup
+      })
+    }
+
+    // Calculate stats from completed games
+    tournamentGames.forEach((game) => {
+      if (!game || game.status !== 'finished') return
+
+      game.players.forEach((player) => {
+        if (player.userId && tournament.participants.includes(player.userId)) {
+          const scores = game.scores[player.id] || []
+          const totalStrokes = scores.reduce((sum, score) => sum + score, 0)
+
+          const stats = participantStats.get(player.userId)
+          if (stats) {
+            stats.gamesPlayed++
+            stats.totalStrokes += totalStrokes
+            stats.userName = player.name
+          }
+        }
+      })
+    })
+
+    // Convert to leaderboard format and sort
+    const leaderboard: TournamentStanding[] = Array.from(
+      participantStats.entries()
+    )
+      .map(([userId, stats]) => ({
+        userId,
+        userName: stats.userName,
+        gamesPlayed: stats.gamesPlayed,
+        totalStrokes: stats.totalStrokes,
+        averageScore:
+          stats.gamesPlayed > 0 ? stats.totalStrokes / stats.gamesPlayed : 0,
+        position: 0, // Will be set after sorting
+        points: calculateTournamentPoints(stats.gamesPlayed, stats.totalStrokes)
+      }))
+      .filter((standing) => standing.gamesPlayed > 0)
+      .sort((a, b) => {
+        if (a.gamesPlayed !== b.gamesPlayed) {
+          return b.gamesPlayed - a.gamesPlayed // More games played is better
+        }
+        return a.averageScore - b.averageScore // Lower average is better
+      })
+
+    // Set positions
+    leaderboard.forEach((standing, index) => {
+      standing.position = index + 1
+    })
+
+    return leaderboard
+  } catch (error) {
+    console.error('Error calculating tournament leaderboard:', error)
+    throw error
+  }
+}
+
+const calculateTournamentPoints = (
+  gamesPlayed: number,
+  totalStrokes: number
+): number => {
+  // Simple points system: 10 points per game played, bonus for low average
+  const basePoints = gamesPlayed * 10
+  const averageScore = gamesPlayed > 0 ? totalStrokes / gamesPlayed : 0
+  const bonusPoints = Math.max(0, (4 - averageScore) * 5) // Bonus for average under 4
+  return Math.round(basePoints + bonusPoints)
+}
+
+// User management functions
+export const createOrUpdateUser = async (userData: {
+  id: string
+  name: string
+  email: string
+}): Promise<void> => {
+  try {
+    const userRef = doc(db, 'users', userData.id)
+    const userDoc = await getDoc(userRef)
+
+    if (userDoc.exists()) {
+      // Update existing user
+      await updateDoc(userRef, {
+        name: userData.name,
+        email: userData.email
+      })
+    } else {
+      // Create new user
+      await updateDoc(userRef, {
+        ...userData,
+        createdAt: serverTimestamp(),
+        gamesPlayed: 0,
+        averageScore: 0
+      })
+    }
+  } catch (error) {
+    console.error('Error creating/updating user:', error)
+    throw error
+  }
+}
+
+export const getUserById = async (userId: string): Promise<User | null> => {
+  try {
+    const userDoc = await getDoc(doc(db, 'users', userId))
+    if (userDoc.exists()) {
+      const data = userDoc.data()
+      return {
+        id: userDoc.id,
+        ...data,
+        createdAt: data.createdAt.toDate()
+      } as User
+    }
+    return null
+  } catch (error) {
+    console.error('Error getting user by ID:', error)
+    throw error
   }
 }

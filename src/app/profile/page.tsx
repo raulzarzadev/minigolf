@@ -5,12 +5,12 @@ import { useAuth } from '@/contexts/AuthContext'
 import { getUserGames } from '@/lib/db'
 import { Game } from '@/types'
 import Navbar from '@/components/Navbar'
+import UserStats from '@/components/UserStats'
 import Link from 'next/link'
 import {
   User,
   Trophy,
   Target,
-  Calendar,
   Clock,
   Play,
   Flag,
@@ -23,23 +23,23 @@ export default function ProfilePage() {
   const [gamesLoading, setGamesLoading] = useState(true)
 
   useEffect(() => {
+    const loadUserGames = async () => {
+      if (!user) return
+
+      try {
+        const games = await getUserGames(user.id)
+        setUserGames(games)
+      } catch (error) {
+        console.error('Error loading user games:', error)
+      } finally {
+        setGamesLoading(false)
+      }
+    }
+
     if (user) {
       loadUserGames()
     }
   }, [user])
-
-  const loadUserGames = async () => {
-    if (!user) return
-
-    try {
-      const games = await getUserGames(user.id)
-      setUserGames(games)
-    } catch (error) {
-      console.error('Error loading user games:', error)
-    } finally {
-      setGamesLoading(false)
-    }
-  }
 
   const calculateStats = () => {
     const completedGames = userGames.filter(
@@ -294,36 +294,8 @@ export default function ProfilePage() {
           )}
         </div>
 
-        {/* Additional Stats */}
-        {stats.totalHoles > 0 && (
-          <div className="mt-8 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Estadísticas Detalladas
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">
-                  {stats.totalStrokes}
-                </div>
-                <div className="text-sm text-gray-500">Total de golpes</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">
-                  {stats.totalHoles}
-                </div>
-                <div className="text-sm text-gray-500">Hoyos jugados</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">
-                  {stats.inProgressGames}
-                </div>
-                <div className="text-sm text-gray-500">
-                  Partidas en progreso
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* User Statistics */}
+        {user && <UserStats user={user} />}
       </div>
     </div>
   )

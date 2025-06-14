@@ -4,44 +4,55 @@ import React, { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { createGame, generateGuestId, searchUsers } from '@/lib/db'
-import { Player } from '@/types'
+import { generateGuestId, createGame, searchUsers } from '@/lib/db'
+import { Game, Player } from '@/types'
 import Navbar from '@/components/Navbar'
-import { Plus, X, Search, Users, User } from 'lucide-react'
+import {
+  Plus,
+  X,
+  Search,
+  Users,
+  AlertCircle,
+  User as UserIcon
+} from 'lucide-react'
 
-const gameSchema = z.object({
-  holeCount: z.number().min(1).max(36),
-  isMultiplayer: z.boolean(),
-  tournamentId: z.string().optional()
-})
+// Tipo para resultados de búsqueda de usuarios
+interface SearchUser {
+  id: string
+  name: string
+  email: string
+}
 
-type GameFormData = z.infer<typeof gameSchema>
+// Datos del formulario
+interface GameFormData {
+  holeCount: number
+  isMultiplayer: string
+  tournamentId?: string
+}
 
 export default function NewGamePage() {
   const { user } = useAuth()
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [players, setPlayers] = useState<Player[]>([])
   const [guestName, setGuestName] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
-  const [searchResults, setSearchResults] = useState<any[]>([])
+  const [searchResults, setSearchResults] = useState<SearchUser[]>([])
   const [isSearching, setIsSearching] = useState(false)
 
   const form = useForm<GameFormData>({
-    resolver: zodResolver(gameSchema),
     defaultValues: {
       holeCount: 18,
-      isMultiplayer: false
+      isMultiplayer: 'false'
     }
   })
 
-  const isMultiplayer = form.watch('isMultiplayer')
+  const isMultiplayer = form.watch('isMultiplayer') === 'true'
 
   React.useEffect(() => {
     if (user && isMultiplayer) {
-      // Add current user as the first player
+      // añade al creador
       const currentPlayer: Player = {
         id: user.id,
         name: user.name,
@@ -63,95 +74,84 @@ export default function NewGamePage() {
     setIsSearching(true)
     try {
       const results = await searchUsers(term)
-      // Filter out current user and already added players
-      const filteredResults = results.filter(
-        (searchUser) =>
-          searchUser.id !== user?.id &&
-          !players.some((player) => player.userId === searchUser.id)
+      const filtered = results.filter(
+        (u) => u.id !== user?.id && !players.some((p) => p.userId === u.id)
       )
-      setSearchResults(filteredResults)
-    } catch (error) {
-      console.error('Error searching users:', error)
+      setSearchResults(filtered)
+    } catch (e) {
+      console.error('Error searchUsers:', e)
     } finally {
       setIsSearching(false)
     }
   }
 
-  const addGuestPlayer = () => {
-    if (!guestName.trim()) return
-
-    const guestPlayer: Player = {
-      id: generateGuestId(),
-      name: guestName.trim(),
-      isGuest: true
-    }
-
-    setPlayers([...players, guestPlayer])
-    setGuestName('')
-  }
-
-  const addUserPlayer = (searchUser: any) => {
+  const addUserPlayer = (u: SearchUser) => {
     const userPlayer: Player = {
-      id: searchUser.id,
-      name: searchUser.name,
-      userId: searchUser.id,
+      id: u.id,
+      name: u.name,
+      userId: u.id,
       isGuest: false
     }
-
-    setPlayers([...players, userPlayer])
+    setPlayers((prev) => [...prev, userPlayer])
     setSearchTerm('')
     setSearchResults([])
   }
 
-  const removePlayer = (playerId: string) => {
-    // Don't allow removing the current user (first player)
-    if (players[0]?.userId === user?.id && playerId === user.id) return
+  // Añadir jugador invitado
+  const addGuestPlayer = () => {
+    if (!guestName.trim()) return
+    const guest: Player = {
+      id: generateGuestId(),
+      name: guestName.trim(),
+      isGuest: true
+    }
+    setPlayers((prev) => [...prev, guest])
+    setGuestName('')
+  }
 
-    setPlayers(players.filter((player) => player.id !== playerId))
+  // Eliminar jugador
+  const removePlayer = (playerId: string) => {
+    if (!user) return
+    // No permitir eliminar al creador
+    const userId = user.id
+    if (players[0]?.userId === userId && playerId === userId) return
+    setPlayers((prev) => prev.filter((p) => p.id !== playerId))
   }
 
   const onSubmit = async (data: GameFormData) => {
     if (!user) return
-
     setIsLoading(true)
+    setError(null)
     try {
-      const gameData = {
+      // convertir a booleano
+      const multi = data.isMultiplayer === 'true'
+      const gameData: Omit<Game, 'id' | 'createdAt'> = {
         createdBy: user.id,
         holeCount: data.holeCount,
-        players: data.isMultiplayer
+        players: multi
           ? players
-          : [
-              {
-                id: user.id,
-                name: user.name,
-                userId: user.id,
-                isGuest: false
-              }
-            ],
-        scores: {},
-        status: 'in_progress' as const,
+          : [{ id: user.id, name: user.name, userId: user.id, isGuest: false }],
+        scores: {} as Record<string, number[]>,
+        status: 'in_progress',
         tournamentId: data.tournamentId || null,
-        isMultiplayer: data.isMultiplayer,
+        isMultiplayer: multi,
         currentHole: 1
       }
-
-      // Initialize scores for all players
-      gameData.players.forEach((player) => {
-        gameData.scores[player.id] = new Array(data.holeCount).fill(0)
+      gameData.players.forEach((p) => {
+        gameData.scores[p.id] = Array(data.holeCount).fill(0)
       })
 
-      const gameId = await createGame(gameData)
-      router.push(`/game/${gameId}`)
-    } catch (error) {
-      console.error('Error creating game:', error)
+      const id = await createGame(gameData)
+      router.push(`/game/${id}`)
+    } catch (e) {
+      console.error('Error creating game:', e)
+      setError(e instanceof Error ? e.message : 'Error al crear')
     } finally {
       setIsLoading(false)
     }
   }
 
-  if (!user) {
-    return <div>Cargando...</div>
-  }
+  if (!user) return <div>Cargando...</div>
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -162,6 +162,31 @@ export default function NewGamePage() {
           <h1 className="text-2xl font-bold text-gray-900 mb-6">
             Nueva Partida 🏌️‍♂️
           </h1>
+
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <AlertCircle className="h-5 w-5 text-red-400" />
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-red-800">
+                    Error al crear la partida
+                  </h3>
+                  <div className="mt-2 text-sm text-red-700">{error}</div>
+                  <div className="mt-3">
+                    <button
+                      type="button"
+                      onClick={() => setError(null)}
+                      className="text-sm text-red-600 hover:text-red-500"
+                    >
+                      Cerrar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             {/* Game Type */}
@@ -185,7 +210,7 @@ export default function NewGamePage() {
                     }`}
                   >
                     <div className="flex items-center space-x-3">
-                      <User className="h-6 w-6 text-green-600" />
+                      <UserIcon className="h-6 w-6 text-green-600" />
                       <div>
                         <div className="font-medium">Individual</div>
                         <div className="text-sm text-gray-500">Solo tú</div>
@@ -255,7 +280,7 @@ export default function NewGamePage() {
                       <div className="flex items-center space-x-3">
                         {player.isGuest ? (
                           <div className="h-8 w-8 bg-gray-300 rounded-full flex items-center justify-center">
-                            <User className="h-4 w-4 text-gray-600" />
+                            <UserIcon className="h-4 w-4 text-gray-600" />
                           </div>
                         ) : (
                           <div className="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center">

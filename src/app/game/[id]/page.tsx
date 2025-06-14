@@ -46,8 +46,8 @@ export default function GamePage() {
     try {
       await finishGame(game.id)
       // The real-time listener will update the game state
-    } catch (error) {
-      console.error('Error finishing game:', error)
+    } catch {
+      console.error('Error finishing game:')
     } finally {
       setIsFinishing(false)
     }
@@ -65,7 +65,7 @@ export default function GamePage() {
           text: `¡Únete a mi partida de minigolf!`,
           url: gameUrl
         })
-      } catch (error) {
+      } catch {
         // User cancelled sharing
       }
     } else {

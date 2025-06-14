@@ -35,12 +35,69 @@ export interface Game {
 export interface Tournament {
   id: string
   name: string
+  description: string
   season: string
   startDate: Date
   endDate: Date
   status: 'upcoming' | 'active' | 'finished'
   participants: string[] // User IDs
   games: string[] // Game IDs
+  createdBy: string // User ID
+  createdAt: Date
+  maxParticipants?: number
+  holeCount: number
+  entryFee?: number
+  prizes?: string[]
+  rules?: string
+  leaderboard?: TournamentStanding[]
+}
+
+// Tournament standing/ranking
+export interface TournamentStanding {
+  userId: string
+  userName: string
+  gamesPlayed: number
+  totalStrokes: number
+  averageScore: number
+  position: number
+  points: number
+}
+
+// Notification system
+export interface Notification {
+  id: string
+  userId: string
+  type:
+    | 'game_invite'
+    | 'tournament_invite'
+    | 'game_finished'
+    | 'tournament_result'
+  title: string
+  message: string
+  createdAt: Date
+  read: boolean
+  actionUrl?: string
+  gameId?: string
+  tournamentId?: string
+}
+
+// Achievement system
+export interface Achievement {
+  id: string
+  name: string
+  description: string
+  icon: string
+  condition: string
+  category: 'scoring' | 'games' | 'tournaments' | 'social'
+  points: number
+}
+
+export interface UserAchievement {
+  userId: string
+  achievementId: string
+  earnedAt: Date
+  gameId?: string
+  tournamentId?: string
 }
 
 // Game statistics

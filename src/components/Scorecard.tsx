@@ -1,9 +1,9 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Game, Player } from '@/types'
-import { updatePlayerScore, calculateGameStats } from '@/lib/db'
-import { Minus, Plus, Trophy, Target } from 'lucide-react'
+import { updatePlayerScore, calculateGameStats, updateGame } from '@/lib/db'
+import { Minus, Plus, Trophy, Target, Clock, CheckCircle } from 'lucide-react'
 
 interface ScorecardProps {
   game: Game
@@ -19,6 +19,34 @@ const Scorecard: React.FC<ScorecardProps> = ({
   onScoreUpdate
 }) => {
   const [isUpdating, setIsUpdating] = useState<string | null>(null)
+  const [autoAdvanceHole, setAutoAdvanceHole] = useState(true)
+
+  // Auto-advance to next hole when all players complete current hole
+  useEffect(() => {
+    if (!autoAdvanceHole || !canEdit || game.status !== 'in_progress') return
+
+    const currentHoleIndex = game.currentHole - 1
+    const allPlayersCompletedCurrentHole = game.players.every((player) => {
+      const scores = game.scores[player.id] || []
+      return scores[currentHoleIndex] > 0
+    })
+
+    if (allPlayersCompletedCurrentHole && game.currentHole < game.holeCount) {
+      // Auto-advance to next hole
+      setTimeout(() => {
+        updateGame(game.id, { currentHole: game.currentHole + 1 })
+      }, 1500) // Small delay for better UX
+    }
+  }, [
+    game.scores,
+    game.currentHole,
+    game.players,
+    canEdit,
+    autoAdvanceHole,
+    game.id,
+    game.status,
+    game.holeCount
+  ])
 
   const updateScore = async (
     playerId: string,
@@ -64,6 +92,7 @@ const Scorecard: React.FC<ScorecardProps> = ({
 
   const renderHoleInputs = (player: Player) => {
     const holes = Array.from({ length: game.holeCount }, (_, i) => i)
+    const currentHoleIndex = game.currentHole - 1
 
     return (
       <div className="grid grid-cols-3 sm:grid-cols-6 lg:grid-cols-9 gap-2">
@@ -71,14 +100,35 @@ const Scorecard: React.FC<ScorecardProps> = ({
           const score = getPlayerScore(player.id, holeIndex)
           const isUpdatingThisHole = isUpdating === `${player.id}-${holeIndex}`
           const canEditThisScore = canEditScore(player.id)
+          const isCurrentHole = holeIndex === currentHoleIndex
+          const isCompletedHole = score > 0
+          const isFutureHole = holeIndex > currentHoleIndex
 
           return (
             <div key={holeIndex} className="text-center">
-              <div className="text-xs text-gray-500 mb-1">
+              <div
+                className={`text-xs mb-1 flex items-center justify-center ${
+                  isCurrentHole
+                    ? 'text-green-600 font-semibold'
+                    : 'text-gray-500'
+                }`}
+              >
+                {isCurrentHole && <Clock className="h-3 w-3 mr-1" />}
+                {isCompletedHole && !isCurrentHole && (
+                  <CheckCircle className="h-3 w-3 mr-1 text-green-500" />
+                )}
                 Hoyo {holeIndex + 1}
               </div>
               {canEditThisScore ? (
-                <div className="flex items-center justify-center space-x-1 bg-gray-50 rounded-lg p-1">
+                <div
+                  className={`flex items-center justify-center space-x-1 rounded-lg p-1 ${
+                    isCurrentHole
+                      ? 'bg-green-50 border-2 border-green-200'
+                      : isFutureHole
+                      ? 'bg-gray-50 opacity-60'
+                      : 'bg-gray-50'
+                  }`}
+                >
                   <button
                     onClick={() =>
                       updateScore(player.id, holeIndex, Math.max(0, score - 1))
@@ -100,7 +150,13 @@ const Scorecard: React.FC<ScorecardProps> = ({
                   </button>
                 </div>
               ) : (
-                <div className="h-8 flex items-center justify-center font-medium text-lg">
+                <div
+                  className={`h-8 flex items-center justify-center font-medium text-lg ${
+                    isCurrentHole
+                      ? 'bg-green-50 border-2 border-green-200 rounded-lg'
+                      : ''
+                  }`}
+                >
                   {score || '-'}
                 </div>
               )}
@@ -196,6 +252,45 @@ const Scorecard: React.FC<ScorecardProps> = ({
             </div>
           </div>
         </div>
+
+        {/* Progress bar */}
+        <div className="mt-3">
+          <div className="flex justify-between text-sm text-green-600 mb-1">
+            <span>Progreso</span>
+            <span>
+              {game.currentHole} de {game.holeCount}
+            </span>
+          </div>
+          <div className="w-full bg-green-200 rounded-full h-2">
+            <div
+              className="bg-green-600 h-2 rounded-full transition-all duration-300"
+              style={{
+                width: `${(game.currentHole / game.holeCount) * 100}%`
+              }}
+            ></div>
+          </div>
+        </div>
+
+        {/* Auto-advance toggle for game creator */}
+        {canEdit && game.isMultiplayer && (
+          <div className="mt-3 flex items-center justify-between">
+            <span className="text-sm text-green-700">
+              Avanzar hoyo automáticamente
+            </span>
+            <button
+              onClick={() => setAutoAdvanceHole(!autoAdvanceHole)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                autoAdvanceHole ? 'bg-green-600' : 'bg-gray-200'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  autoAdvanceHole ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Leaderboard - Only show if multiple players and some scores */}
