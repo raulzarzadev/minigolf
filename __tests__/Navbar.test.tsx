@@ -116,9 +116,7 @@ describe('Navbar component', () => {
     render(<Navbar />)
 
     // Verificar que se muestre el botón de logout
-    expect(
-      screen.getByRole('button', { name: /salir/i })
-    ).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /salir/i })).toBeInTheDocument()
   })
 
   it('has proper responsive design classes', () => {

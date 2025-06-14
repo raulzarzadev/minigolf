@@ -97,7 +97,9 @@ describe('GamesPage', () => {
       screen.getByText('¡Crea tu primera partida para empezar a jugar!')
     ).toBeInTheDocument()
     // Verificar que existe el botón "Nueva Partida" en el estado vacío (no en la navbar)
-    const newGameButtons = screen.getAllByRole('link', { name: /nueva partida/i })
+    const newGameButtons = screen.getAllByRole('link', {
+      name: /nueva partida/i
+    })
     expect(newGameButtons.length).toBeGreaterThan(0) // Debe haber al menos uno
   })
 })

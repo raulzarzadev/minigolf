@@ -80,8 +80,10 @@ describe('AuthForm component', () => {
   })
 
   it('displays error message when there is an error', async () => {
-    const mockSignInWithGoogle = jest.fn().mockRejectedValue(new Error('Error de prueba'))
-    
+    const mockSignInWithGoogle = jest
+      .fn()
+      .mockRejectedValue(new Error('Error de prueba'))
+
     mockUseAuth.mockReturnValue({
       user: null,
       firebaseUser: null,
@@ -94,7 +96,9 @@ describe('AuthForm component', () => {
     render(<AuthForm />)
 
     // Hacer clic en el botón de Google para disparar el error
-    const googleButton = screen.getByRole('button', { name: /continuar con google/i })
+    const googleButton = screen.getByRole('button', {
+      name: /continuar con google/i
+    })
     fireEvent.click(googleButton)
 
     // Esperar a que aparezca el mensaje de error

@@ -44,7 +44,9 @@ export const updateGameMock = async (
   }
 }
 
-export const searchUsersMock = async (searchTerm: string): Promise<MockUser[]> => {
+export const searchUsersMock = async (
+  searchTerm: string
+): Promise<MockUser[]> => {
   await new Promise((resolve) => setTimeout(resolve, 500))
 
   // Mock users for testing
