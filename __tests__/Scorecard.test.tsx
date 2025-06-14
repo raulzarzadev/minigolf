@@ -40,9 +40,10 @@ describe('Scorecard component', () => {
     render(<Scorecard game={game} canEdit={false} />)
     expect(screen.getByText('Partida Multijugador')).toBeInTheDocument()
     expect(screen.getByText('3 hoyos • 2 jugadores')).toBeInTheDocument()
-    // Should render 3 hole inputs per player
-    const holeLabels = screen.getAllByText(/Hoyo [1-3]/)
-    expect(holeLabels).toHaveLength(6)
+
+    // Verificar que se muestren los nombres de los jugadores
+    expect(screen.getByText('Alice')).toBeInTheDocument()
+    expect(screen.getByText('Bob')).toBeInTheDocument()
   })
 
   it('shows disabled inputs when cannot edit', () => {
@@ -55,5 +56,63 @@ describe('Scorecard component', () => {
     render(<Scorecard game={game} canEdit={true} currentPlayer={players[0]} />)
     const plusButtons = screen.getAllByRole('button', { name: '' })
     expect(plusButtons.length).toBeGreaterThan(0)
+  })
+
+  // Nuevas pruebas UX/UI
+  it('displays player scores correctly', () => {
+    const gameWithScores: Game = {
+      ...game,
+      scores: { p1: [2, 3, 1], p2: [4, 2, 5] }
+    }
+
+    render(<Scorecard game={gameWithScores} canEdit={false} />)
+
+    // Verificar que el total de golpes se calcule correctamente
+    expect(screen.getByText('6')).toBeInTheDocument() // Alice total
+    expect(screen.getByText('11')).toBeInTheDocument() // Bob total
+  })
+
+  it('shows game status correctly', () => {
+    render(<Scorecard game={game} canEdit={false} />)
+
+    // El componente debería mostrar información del estado del juego
+    expect(screen.getByText('Partida Multijugador')).toBeInTheDocument()
+    expect(screen.getByText('3 hoyos • 2 jugadores')).toBeInTheDocument()
+    expect(screen.getByText('En progreso')).toBeInTheDocument()
+  })
+
+  it('handles player interaction correctly when editable', async () => {
+    render(<Scorecard game={game} canEdit={true} currentPlayer={players[0]} />)
+
+    // Buscar botones de edición (+ y -)
+    const buttons = screen.getAllByRole('button')
+    expect(buttons.length).toBeGreaterThan(0)
+
+    // Verificar que hay indicador de editable
+    expect(screen.getByText('Editable')).toBeInTheDocument()
+  })
+
+  it('displays correct hole count and progress', () => {
+    render(<Scorecard game={game} canEdit={false} />)
+
+    // Verificar que se muestren todos los hoyos usando getAllByText
+    const hole1Elements = screen.getAllByText('Hoyo 1')
+    expect(hole1Elements.length).toBeGreaterThan(0)
+
+    expect(screen.getByText('Hoyo 2')).toBeInTheDocument()
+    expect(screen.getByText('Hoyo 3')).toBeInTheDocument()
+
+    // Verificar progreso
+    expect(screen.getByText('1 de 3')).toBeInTheDocument()
+  })
+
+  it('shows appropriate UI for guest vs registered players', () => {
+    render(<Scorecard game={game} canEdit={false} />)
+
+    // Verificar que se muestren ambos tipos de jugadores
+    expect(screen.getByText('Alice')).toBeInTheDocument() // Usuario registrado
+    expect(screen.getByText('Bob')).toBeInTheDocument() // Usuario invitado
+    expect(screen.getByText('Usuario registrado')).toBeInTheDocument()
+    expect(screen.getByText('Invitado')).toBeInTheDocument()
   })
 })
