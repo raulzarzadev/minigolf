@@ -35,10 +35,11 @@ const AuthForm: React.FC = () => {
             <Logo size="xl" variant="dark" showText={false} />
           </div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-black">
-            Plataforma de Minigolf
+            Baja Mini Golf
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Administra partidas de minigolf y torneos digitales
+            Administra partidas de minigolf y torneos digitales en La Paz, Baja
+            California Sur.
           </p>
         </div>
 
@@ -109,7 +110,7 @@ const AuthForm: React.FC = () => {
 
         <div className="text-center">
           <p className="text-xs text-gray-500">
-            ¿Necesitas ayuda? Contáctanos en support@minigolf.com
+            ¿Necesitas ayuda? Contáctanos en raulzarza.dev@gmail.com
           </p>
         </div>
       </div>

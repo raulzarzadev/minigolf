@@ -14,16 +14,18 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Plataforma de Minigolf',
-  description: 'Administra partidas de minigolf y torneos digitales',
+  title: 'Baja Mini Golf',
+  description:
+    'Administra partidas de Baja Mini Golf y torneos digitales en La Paz, Baja California Sur.',
   icons: {
     icon: '/favicon.ico',
     shortcut: '/favicon.ico',
     apple: '/apple-touch-icon.png'
   },
   openGraph: {
-    title: 'Plataforma de Minigolf',
-    description: 'Administra partidas de minigolf y torneos digitales',
+    title: 'Baja Mini Golf',
+    description:
+      'Administra partidas de Baja Mini Golf y torneos digitales en La Paz, Baja California Sur.',
     url: 'https://baja-minigolf.vercel.app',
     siteName: 'Baja Mini Golf',
     images: [
@@ -34,7 +36,7 @@ export const metadata: Metadata = {
         alt: 'Baja Mini Golf'
       }
     ],
-    locale: 'es_ES',
+    locale: 'es_Mx',
     type: 'website'
   }
 }
