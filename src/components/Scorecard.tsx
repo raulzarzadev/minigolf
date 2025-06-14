@@ -108,9 +108,7 @@ const Scorecard: React.FC<ScorecardProps> = ({
             <div key={holeIndex} className="text-center">
               <div
                 className={`text-xs mb-1 flex items-center justify-center ${
-                  isCurrentHole
-                    ? 'text-black font-semibold'
-                    : 'text-gray-500'
+                  isCurrentHole ? 'text-black font-semibold' : 'text-gray-500'
                 }`}
               >
                 {isCurrentHole && <Clock className="h-2.5 w-2.5 mr-0.5" />}
@@ -189,9 +187,7 @@ const Scorecard: React.FC<ScorecardProps> = ({
           <div className="text-xs text-gray-500">Total</div>
         </div>
         <div className="p-3 bg-white border-2 border-black rounded-lg">
-          <div className="font-bold text-xl text-black">
-            {completedHoles}
-          </div>
+          <div className="font-bold text-xl text-black">{completedHoles}</div>
           <div className="text-xs text-gray-500">Hoyos</div>
         </div>
         <div className="p-3 bg-black rounded-lg">
@@ -201,9 +197,7 @@ const Scorecard: React.FC<ScorecardProps> = ({
           <div className="text-xs text-gray-300">Promedio</div>
         </div>
         <div className="p-3 bg-gray-100 rounded-lg">
-          <div className="font-bold text-xl text-black">
-            {stats.holesInOne}
-          </div>
+          <div className="font-bold text-xl text-black">{stats.holesInOne}</div>
           <div className="text-xs text-gray-500">Hole-in-1</div>
         </div>
       </div>
