@@ -205,12 +205,12 @@ export default function NewGamePage() {
                   <div
                     className={`border-2 rounded-lg p-3 cursor-pointer transition-colors touch-manipulation ${
                       !isMultiplayer
-                        ? 'border-black bg-gray-50'
+                        ? 'border-green-500 bg-green-50'
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
                   >
                     <div className="flex items-center space-x-3">
-                      <UserIcon className="h-5 w-5 text-black" />
+                      <UserIcon className="h-5 w-5 text-green-600" />
                       <div>
                         <div className="font-medium">Individual</div>
                         <div className="text-sm text-gray-500">Solo tú</div>
@@ -229,12 +229,12 @@ export default function NewGamePage() {
                   <div
                     className={`border-2 rounded-lg p-3 cursor-pointer transition-colors touch-manipulation ${
                       isMultiplayer
-                        ? 'border-black bg-gray-50'
+                        ? 'border-green-500 bg-green-50'
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
                   >
                     <div className="flex items-center space-x-3">
-                      <Users className="h-5 w-5 text-black" />
+                      <Users className="h-5 w-5 text-green-600" />
                       <div>
                         <div className="font-medium">Multijugador</div>
                         <div className="text-sm text-gray-500">Con amigos</div>
@@ -323,7 +323,7 @@ export default function NewGamePage() {
                       value={guestName}
                       onChange={(e) => setGuestName(e.target.value)}
                       placeholder="Nombre del invitado"
-                      className="flex-1 px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-black focus:border-black text-base"
+                      className="flex-1 px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 text-base"
                       onKeyPress={(e) =>
                         e.key === 'Enter' &&
                         (e.preventDefault(), addGuestPlayer())
@@ -333,7 +333,7 @@ export default function NewGamePage() {
                       type="button"
                       onClick={addGuestPlayer}
                       disabled={!guestName.trim()}
-                      className="px-4 py-3 bg-black text-white rounded-md hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
+                      className="px-4 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
                     >
                       <Plus className="h-4 w-4" />
                     </button>
@@ -403,7 +403,7 @@ export default function NewGamePage() {
               <button
                 type="submit"
                 disabled={isLoading || (isMultiplayer && players.length < 2)}
-                className="w-full py-3 bg-black text-white rounded-md hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed font-medium touch-manipulation"
+                className="w-full py-3 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium touch-manipulation"
               >
                 {isLoading ? 'Creando...' : 'Crear Partida'}
               </button>

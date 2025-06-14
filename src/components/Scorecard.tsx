@@ -108,12 +108,14 @@ const Scorecard: React.FC<ScorecardProps> = ({
             <div key={holeIndex} className="text-center">
               <div
                 className={`text-xs mb-1 flex items-center justify-center ${
-                  isCurrentHole ? 'text-black font-semibold' : 'text-gray-500'
+                  isCurrentHole
+                    ? 'text-green-600 font-semibold'
+                    : 'text-gray-500'
                 }`}
               >
                 {isCurrentHole && <Clock className="h-2.5 w-2.5 mr-0.5" />}
                 {isCompletedHole && !isCurrentHole && (
-                  <CheckCircle className="h-2.5 w-2.5 mr-0.5 text-gray-600" />
+                  <CheckCircle className="h-2.5 w-2.5 mr-0.5 text-green-500" />
                 )}
                 <span className="text-xs font-medium">H{holeIndex + 1}</span>
               </div>

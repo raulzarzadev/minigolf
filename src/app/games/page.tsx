@@ -58,7 +58,7 @@ export default function GamesPage() {
         )
       case 'finished':
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-black text-white">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
             Finalizada
           </span>
         )
@@ -89,7 +89,7 @@ export default function GamesPage() {
 
         {loading ? (
           <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-black"></div>
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-500"></div>
           </div>
         ) : error ? (
           <div className="bg-gray-100 border border-gray-300 rounded-md p-3">
@@ -106,7 +106,7 @@ export default function GamesPage() {
             </p>
             <Link
               href="/game/new"
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-black hover:bg-gray-800 active:scale-95 transition-all touch-manipulation"
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 active:scale-95 transition-all touch-manipulation"
             >
               Nueva Partida
             </Link>

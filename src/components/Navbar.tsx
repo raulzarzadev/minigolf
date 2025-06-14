@@ -43,7 +43,7 @@ const Navbar: React.FC = () => {
           <div className="hidden md:flex items-center space-x-1 lg:space-x-4">
             <Link
               href="/"
-              className="flex items-center space-x-1 px-2 lg:px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-100 transition-colors"
+              className="flex items-center space-x-1 px-2 lg:px-3 py-2 rounded-md text-sm font-medium hover:bg-green-100 hover:text-green-700 transition-colors"
             >
               <Home size={18} />
               <span className="hidden lg:inline">Inicio</span>
@@ -51,7 +51,7 @@ const Navbar: React.FC = () => {
 
             <Link
               href="/game/new"
-              className="flex items-center space-x-1 px-2 lg:px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-100 transition-colors"
+              className="flex items-center space-x-1 px-2 lg:px-3 py-2 rounded-md text-sm font-medium hover:bg-green-100 hover:text-green-700 transition-colors"
             >
               <Plus size={18} />
               <span className="hidden lg:inline">Nueva Partida</span>
@@ -59,7 +59,7 @@ const Navbar: React.FC = () => {
 
             <Link
               href="/tournaments"
-              className="flex items-center space-x-1 px-2 lg:px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-100 transition-colors"
+              className="flex items-center space-x-1 px-2 lg:px-3 py-2 rounded-md text-sm font-medium hover:bg-green-100 hover:text-green-700 transition-colors"
             >
               <Trophy size={18} />
               <span className="hidden lg:inline">Torneos</span>
@@ -68,7 +68,7 @@ const Navbar: React.FC = () => {
             <div className="flex items-center space-x-1 lg:space-x-4 border-l border-gray-300 pl-2 lg:pl-4 ml-2 lg:ml-4">
               <Link
                 href="/profile"
-                className="flex items-center space-x-1 px-2 lg:px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-100 transition-colors"
+                className="flex items-center space-x-1 px-2 lg:px-3 py-2 rounded-md text-sm font-medium hover:bg-green-100 hover:text-green-700 transition-colors"
               >
                 <User size={18} />
                 <span className="hidden lg:inline truncate max-w-20">

@@ -14,7 +14,7 @@ export default function TournamentsPage() {
       <div className="min-h-screen bg-gray-50">
         <Navbar />
         <div className="flex items-center justify-center py-16">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-black"></div>
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-green-500"></div>
         </div>
       </div>
     )
@@ -46,7 +46,7 @@ export default function TournamentsPage() {
             </p>
             <Link
               href="/game/new"
-              className="inline-flex items-center px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors text-sm touch-manipulation"
+              className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm touch-manipulation"
             >
               <Plus className="h-4 w-4 mr-2" />
               Crear Partida de Práctica
