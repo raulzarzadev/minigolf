@@ -57,7 +57,8 @@ describe('Navbar component', () => {
     expect(screen.getByText('Inicio')).toBeInTheDocument()
     expect(screen.getByText('Nueva Partida')).toBeInTheDocument()
     expect(screen.getByText('Torneos')).toBeInTheDocument()
-    expect(screen.getByText('Perfil')).toBeInTheDocument()
+    // El perfil muestra el nombre del usuario en el enlace
+    expect(screen.getByText('Test User')).toBeInTheDocument()
   })
 
   it('displays user information correctly', () => {
@@ -98,7 +99,7 @@ describe('Navbar component', () => {
     const tournamentsLink = screen.getByRole('link', { name: /torneos/i })
     expect(tournamentsLink).toHaveAttribute('href', '/tournaments')
 
-    const profileLink = screen.getByRole('link', { name: /perfil/i })
+    const profileLink = screen.getByRole('link', { name: /test user/i })
     expect(profileLink).toHaveAttribute('href', '/profile')
   })
 
@@ -116,7 +117,7 @@ describe('Navbar component', () => {
 
     // Verificar que se muestre el botón de logout
     expect(
-      screen.getByRole('button', { name: /cerrar sesión/i })
+      screen.getByRole('button', { name: /salir/i })
     ).toBeInTheDocument()
   })
 

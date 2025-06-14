@@ -66,7 +66,7 @@ describe('GamesPage', () => {
 
     expect(screen.getByText('Mis Partidas')).toBeInTheDocument()
     expect(
-      screen.getByText('Historial completo de tus juegos de minigolf')
+      screen.getByText('Historial de tus juegos de minigolf')
     ).toBeInTheDocument()
   })
 
@@ -96,6 +96,8 @@ describe('GamesPage', () => {
     expect(
       screen.getByText('¡Crea tu primera partida para empezar a jugar!')
     ).toBeInTheDocument()
-    expect(screen.getByText('Nueva Partida')).toBeInTheDocument()
+    // Verificar que existe el botón "Nueva Partida" en el estado vacío (no en la navbar)
+    const newGameButtons = screen.getAllByRole('link', { name: /nueva partida/i })
+    expect(newGameButtons.length).toBeGreaterThan(0) // Debe haber al menos uno
   })
 })

@@ -1,5 +1,5 @@
 import React from 'react'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import AuthForm from '@/components/AuthForm'
 
 // Mock del hook useAuth
@@ -79,20 +79,28 @@ describe('AuthForm component', () => {
     expect(mockSignInWithGoogle).toHaveBeenCalledTimes(1)
   })
 
-  it('displays error message when there is an error', () => {
+  it('displays error message when there is an error', async () => {
+    const mockSignInWithGoogle = jest.fn().mockRejectedValue(new Error('Error de prueba'))
+    
     mockUseAuth.mockReturnValue({
       user: null,
       firebaseUser: null,
       loading: false,
-      firebaseError: 'Error de prueba',
-      signInWithGoogle: jest.fn(),
+      firebaseError: null,
+      signInWithGoogle: mockSignInWithGoogle,
       logout: jest.fn()
     })
 
     render(<AuthForm />)
 
-    // Verificar que se muestre el mensaje de error
-    expect(screen.getByText('Error de prueba')).toBeInTheDocument()
+    // Hacer clic en el botón de Google para disparar el error
+    const googleButton = screen.getByRole('button', { name: /continuar con google/i })
+    fireEvent.click(googleButton)
+
+    // Esperar a que aparezca el mensaje de error
+    await waitFor(() => {
+      expect(screen.getByText('Error de prueba')).toBeInTheDocument()
+    })
   })
 
   it('has proper styling and layout', () => {
@@ -108,10 +116,9 @@ describe('AuthForm component', () => {
     render(<AuthForm />)
 
     // Verificar que la estructura tenga las clases de estilo apropiadas
-    const mainContainer = screen
-      .getByText('Plataforma de Minigolf')
-      .closest('div')
-    expect(mainContainer).toHaveClass('text-center')
+    const mainTitle = screen.getByText('Plataforma de Minigolf')
+    const titleContainer = mainTitle.closest('h2')
+    expect(titleContainer).toHaveClass('text-center')
 
     // Verificar que el icono de minigolf esté presente
     expect(screen.getByText('🏌️‍♂️')).toBeInTheDocument()
