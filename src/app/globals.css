@@ -5,13 +5,6 @@
   --foreground: #171717;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
@@ -21,7 +14,89 @@
 
 body {
   background: var(--background);
-  /* color: var(--foreground); */
-
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Optimizaciones para móviles muy pequeños */
+@media (max-width: 320px) {
+  /* Asegurar que el texto sea legible en pantallas muy pequeñas */
+  .text-xs {
+    font-size: 0.75rem;
+    line-height: 1rem;
+  }
+
+  /* Aumentar ligeramente el tamaño de los botones táctiles */
+  button,
+  .touch-manipulation {
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+
+  /* Asegurar que los elementos clickeables tengan suficiente espacio */
+  a,
+  button,
+  input,
+  select,
+  textarea {
+    min-height: 44px;
+  }
+
+  /* Reducir padding para ahorrar espacio */
+  .p-4 {
+    padding: 0.75rem;
+  }
+
+  .p-3 {
+    padding: 0.5rem;
+  }
+}
+
+/* Mejoras de accesibilidad táctil */
+.touch-manipulation {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Scale effect personalizado para elementos activos */
+.active\:scale-98:active {
+  transform: scale(0.98);
+}
+
+.active\:scale-95:active {
+  transform: scale(0.95);
+}
+
+/* Asegurar que los elementos se vean bien en pantallas pequeñas */
+@media (max-width: 375px) {
+  /* Reducir padding en contenedores principales en móviles pequeños */
+  .container-mobile {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  /* Optimizar grid para móviles muy pequeños */
+  .grid-cols-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* Estilo especial para breakpoint xs (extra small) */
+@media (min-width: 320px) and (max-width: 374px) {
+  .xs\:grid-cols-5 {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+/* Mejorar rendimiento en dispositivos móviles */
+* {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Optimizaciones específicas para el scorecard en móviles */
+@media (max-width: 400px) {
+  /* Asegurar que los botones del scorecard sean fáciles de usar */
+  .scorecard-button {
+    min-width: 32px;
+    min-height: 32px;
+  }
 }

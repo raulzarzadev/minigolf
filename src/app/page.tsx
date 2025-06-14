@@ -53,145 +53,111 @@ export default function Home() {
   }
   return (
     <div className="min-h-screen bg-gray-50">
-      {' '}
-      <Navbar />{' '}
-      <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        {' '}
-        {/* Welcome Header */}{' '}
-        <div className="mb-8">
-          {' '}
-          <h1 className="text-3xl font-bold text-gray-900">
-            {' '}
-            ¡Hola, {user.name}! 🏌️‍♂️{' '}
-          </h1>{' '}
-          <p className="mt-2 text-gray-600">
-            {' '}
-            Bienvenido a tu plataforma de minigolf. ¿Listo para una nueva
-            partida?{' '}
-          </p>{' '}
-        </div>{' '}
-        {/* Quick Actions */}{' '}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {' '}
+      <Navbar />
+      <div className="max-w-7xl mx-auto py-3 px-3 sm:py-8 sm:px-6 lg:px-8">
+        {/* Welcome Header - Optimizado para móvil */}
+        <div className="mb-4">
+          <h1 className="text-xl font-bold text-gray-900 leading-tight">
+            ¡Hola, {user.name}! 🏌️‍♂️
+          </h1>
+          <p className="mt-1 text-sm text-gray-600">
+            ¿Listo para una nueva partida?
+          </p>
+        </div>
+        {/* Quick Actions - Grid responsivo optimizado */}
+        <div className="grid grid-cols-2 gap-3 mb-4">
           <Link href="/game/new" className="group">
-            {' '}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow group-hover:border-green-300">
-              {' '}
-              <div className="flex items-center">
-                {' '}
-                <div className="bg-green-100 rounded-lg p-3">
-                  {' '}
-                  <Plus className="h-6 w-6 text-green-600" />{' '}
-                </div>{' '}
-                <div className="ml-4">
-                  {' '}
-                  <h3 className="text-lg font-medium text-gray-900">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 hover:shadow-md transition-all group-hover:border-green-300 active:scale-95 touch-manipulation">
+              <div className="flex flex-col items-center text-center space-y-2">
+                <div className="bg-green-100 rounded-lg p-2">
+                  <Plus className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-gray-900">
                     Nueva Partida
-                  </h3>{' '}
-                  <p className="text-sm text-gray-500">
+                  </h3>
+                  <p className="text-xs text-gray-500">
                     Individual o multijugador
-                  </p>{' '}
-                </div>{' '}
-              </div>{' '}
-            </div>{' '}
-          </Link>{' '}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </Link>
+
           <Link href="/tournaments" className="group">
-            {' '}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow group-hover:border-yellow-300">
-              {' '}
-              <div className="flex items-center">
-                {' '}
-                <div className="bg-yellow-100 rounded-lg p-3">
-                  {' '}
-                  <Trophy className="h-6 w-6 text-yellow-600" />{' '}
-                </div>{' '}
-                <div className="ml-4">
-                  {' '}
-                  <h3 className="text-lg font-medium text-gray-900">
-                    Torneos
-                  </h3>{' '}
-                  <p className="text-sm text-gray-500">Competencias activas</p>{' '}
-                </div>{' '}
-              </div>{' '}
-            </div>{' '}
-          </Link>{' '}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 hover:shadow-md transition-all group-hover:border-yellow-300 active:scale-95 touch-manipulation">
+              <div className="flex flex-col items-center text-center space-y-2">
+                <div className="bg-yellow-100 rounded-lg p-2">
+                  <Trophy className="h-5 w-5 text-yellow-600" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-gray-900">Torneos</h3>
+                  <p className="text-xs text-gray-500">Competencias activas</p>
+                </div>
+              </div>
+            </div>
+          </Link>
+
           <Link href="/profile" className="group">
-            {' '}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow group-hover:border-blue-300">
-              {' '}
-              <div className="flex items-center">
-                {' '}
-                <div className="bg-blue-100 rounded-lg p-3">
-                  {' '}
-                  <BarChart3 className="h-6 w-6 text-blue-600" />{' '}
-                </div>{' '}
-                <div className="ml-4">
-                  {' '}
-                  <h3 className="text-lg font-medium text-gray-900">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 hover:shadow-md transition-all group-hover:border-blue-300 active:scale-95 touch-manipulation">
+              <div className="flex flex-col items-center text-center space-y-2">
+                <div className="bg-blue-100 rounded-lg p-2">
+                  <BarChart3 className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-gray-900">
                     Estadísticas
-                  </h3>{' '}
-                  <p className="text-sm text-gray-500">Tu rendimiento</p>{' '}
-                </div>{' '}
-              </div>{' '}
-            </div>{' '}
-          </Link>{' '}
+                  </h3>
+                  <p className="text-xs text-gray-500">Tu rendimiento</p>
+                </div>
+              </div>
+            </div>
+          </Link>
+
           <Link href="/games" className="group">
-            {' '}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow group-hover:border-purple-300">
-              {' '}
-              <div className="flex items-center">
-                {' '}
-                <div className="bg-purple-100 rounded-lg p-3">
-                  {' '}
-                  <Clock className="h-6 w-6 text-purple-600" />{' '}
-                </div>{' '}
-                <div className="ml-4">
-                  {' '}
-                  <h3 className="text-lg font-medium text-gray-900">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 hover:shadow-md transition-all group-hover:border-purple-300 active:scale-95 touch-manipulation">
+              <div className="flex flex-col items-center text-center space-y-2">
+                <div className="bg-purple-100 rounded-lg p-2">
+                  <Clock className="h-5 w-5 text-purple-600" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-gray-900">
                     Mis Partidas
-                  </h3>{' '}
-                  <p className="text-sm text-gray-500">Historial de juegos</p>{' '}
-                </div>{' '}
-              </div>{' '}
-            </div>{' '}
-          </Link>{' '}
-        </div>{' '}
-        {/* User Stats Summary */}{' '}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          {' '}
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Resumen de tu actividad
-          </h2>{' '}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {' '}
-            <div className="text-center">
-              {' '}
-              <div className="text-3xl font-bold text-green-600">
+                  </h3>
+                  <p className="text-xs text-gray-500">Historial de juegos</p>
+                </div>
+              </div>
+            </div>
+          </Link>
+        </div>
+        {/* User Stats Summary - Optimizado para móvil */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 mb-4">
+          <h2 className="text-base font-semibold text-gray-900 mb-3">
+            Tu actividad
+          </h2>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="text-center p-2 bg-green-50 rounded-lg">
+              <div className="text-xl font-bold text-green-600">
                 {user.gamesPlayed}
-              </div>{' '}
-              <div className="text-sm text-gray-500">Partidas jugadas</div>{' '}
-            </div>{' '}
-            <div className="text-center">
-              {' '}
-              <div className="text-3xl font-bold text-blue-600">
-                {' '}
-                {user.averageScore > 0
-                  ? user.averageScore.toFixed(1)
-                  : '--'}{' '}
-              </div>{' '}
-              <div className="text-sm text-gray-500">Promedio de golpes</div>{' '}
-            </div>{' '}
-            <div className="text-center">
-              {' '}
-              <div className="text-3xl font-bold text-purple-600">--</div>{' '}
-              <div className="text-sm text-gray-500">Ranking global</div>{' '}
-            </div>{' '}
-          </div>{' '}
-        </div>{' '}
-        {/* Recent Games */}
-        <div className="mt-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-900">
+              </div>
+              <div className="text-xs text-gray-500 mt-1">Partidas</div>
+            </div>
+            <div className="text-center p-2 bg-blue-50 rounded-lg">
+              <div className="text-xl font-bold text-blue-600">
+                {user.averageScore > 0 ? user.averageScore.toFixed(1) : '--'}
+              </div>
+              <div className="text-xs text-gray-500 mt-1">Promedio</div>
+            </div>
+            <div className="text-center p-2 bg-purple-50 rounded-lg">
+              <div className="text-xl font-bold text-purple-600">--</div>
+              <div className="text-xs text-gray-500 mt-1">Ranking</div>
+            </div>
+          </div>
+        </div>
+        {/* Recent Games - Optimizado para móvil */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-semibold text-gray-900">
               Partidas recientes
             </h2>
             <Link
@@ -201,49 +167,44 @@ export default function Home() {
               Ver todas →
             </Link>
           </div>
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
             {loadingGames ? (
-              <div className="flex items-center justify-center py-8">
+              <div className="flex items-center justify-center py-6">
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-500"></div>
               </div>
             ) : recentGames.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No hay partidas recientes</p>
-                <p className="text-sm">
+              <div className="text-center py-6 text-gray-500">
+                <Clock className="h-8 w-8 mx-auto mb-3 opacity-50" />
+                <p className="text-sm">No hay partidas recientes</p>
+                <p className="text-xs">
                   ¡Crea tu primera partida para empezar!
                 </p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {recentGames.map((game) => (
-                  <div
-                    key={game.id}
-                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className="flex-shrink-0">
-                        {game.isMultiplayer ? (
-                          <Users className="h-5 w-5 text-blue-500" />
-                        ) : (
-                          <User className="h-5 w-5 text-green-500" />
-                        )}
+                  <div key={game.id} className="p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center space-x-2 min-w-0 flex-1">
+                        <div className="flex-shrink-0">
+                          {game.isMultiplayer ? (
+                            <Users className="h-4 w-4 text-blue-500" />
+                          ) : (
+                            <User className="h-4 w-4 text-green-500" />
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="text-sm font-medium text-gray-900 truncate">
+                            {game.isMultiplayer ? `Multijugador` : 'Individual'}
+                          </h3>
+                          <p className="text-xs text-gray-500">
+                            {game.createdAt.toLocaleDateString()} •{' '}
+                            {game.holeCount} hoyos
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="text-sm font-medium text-gray-900">
-                          {game.isMultiplayer
-                            ? `Partida Multijugador`
-                            : 'Partida Individual'}
-                        </h3>
-                        <p className="text-xs text-gray-500">
-                          {game.createdAt.toLocaleDateString()} •{' '}
-                          {game.holeCount} hoyos
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-3">
                       <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                           game.status === 'finished'
                             ? 'bg-green-100 text-green-800'
                             : 'bg-yellow-100 text-yellow-800'
@@ -253,11 +214,15 @@ export default function Home() {
                           ? 'Finalizada'
                           : 'En progreso'}
                       </span>
+                    </div>
+                    <div className="flex justify-end">
                       <Link
                         href={`/game/${game.id}`}
-                        className="text-green-600 hover:text-green-700 text-sm font-medium"
+                        className="text-green-600 hover:text-green-700 text-sm font-medium active:scale-95 transition-all touch-manipulation"
                       >
-                        {game.status === 'finished' ? 'Ver' : 'Continuar'}
+                        {game.status === 'finished'
+                          ? 'Ver resultado'
+                          : 'Continuar partida'}
                       </Link>
                     </div>
                   </div>
@@ -265,7 +230,7 @@ export default function Home() {
               </div>
             )}
           </div>
-        </div>{' '}
+        </div>
       </div>{' '}
     </div>
   )

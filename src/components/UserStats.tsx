@@ -259,22 +259,22 @@ const UserStats: React.FC<UserStatsProps> = ({ user }) => {
   const achievements = getAchievements()
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Time Range Selector */}
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold text-gray-900">Estadísticas</h3>
+        <h3 className="text-base font-semibold text-gray-900">Estadísticas</h3>
         <div className="flex rounded-lg border border-gray-300 overflow-hidden">
           {(['week', 'month', 'year', 'all'] as const).map((range) => (
             <button
               key={range}
               onClick={() => setTimeRange(range)}
-              className={`px-3 py-1 text-sm ${
+              className={`px-2 py-1 text-xs touch-manipulation ${
                 timeRange === range
                   ? 'bg-green-600 text-white'
                   : 'bg-white text-gray-700 hover:bg-gray-50'
               }`}
             >
-              {range === 'week' && 'Semana'}
+              {range === 'week' && 'Sem'}
               {range === 'month' && 'Mes'}
               {range === 'year' && 'Año'}
               {range === 'all' && 'Todo'}
@@ -284,147 +284,147 @@ const UserStats: React.FC<UserStatsProps> = ({ user }) => {
       </div>
 
       {stats.totalGames === 0 ? (
-        <div className="text-center py-12">
-          <Trophy className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
+        <div className="text-center py-8">
+          <Trophy className="h-8 w-8 text-gray-400 mx-auto mb-3" />
+          <h3 className="text-base font-medium text-gray-900 mb-2">
             No hay estadísticas aún
           </h3>
-          <p className="text-gray-500">
+          <p className="text-gray-500 text-sm">
             Completa algunas partidas para ver tus estadísticas aquí
           </p>
         </div>
       ) : (
         <>
           {/* Main Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <div className="grid grid-cols-1 gap-3">
+            <div className="bg-white rounded-lg border border-gray-200 p-3">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <Trophy className="h-8 w-8 text-yellow-600" />
+                  <Trophy className="h-5 w-5 text-yellow-600" />
                 </div>
-                <div className="ml-4">
-                  <div className="text-2xl font-bold text-gray-900">
+                <div className="ml-3">
+                  <div className="text-lg font-bold text-gray-900">
                     {stats.totalGames}
                   </div>
-                  <div className="text-sm text-gray-500">Partidas jugadas</div>
+                  <div className="text-xs text-gray-500">Partidas jugadas</div>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="bg-white rounded-lg border border-gray-200 p-3">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <Target className="h-8 w-8 text-green-600" />
+                  <Target className="h-5 w-5 text-green-600" />
                 </div>
-                <div className="ml-4">
-                  <div className="text-2xl font-bold text-gray-900">
+                <div className="ml-3">
+                  <div className="text-lg font-bold text-gray-900">
                     {stats.averagePerHole}
                   </div>
-                  <div className="text-sm text-gray-500">Promedio por hoyo</div>
+                  <div className="text-xs text-gray-500">Promedio por hoyo</div>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="bg-white rounded-lg border border-gray-200 p-3">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <TrendingUp className="h-8 w-8 text-blue-600" />
+                  <TrendingUp className="h-5 w-5 text-blue-600" />
                 </div>
-                <div className="ml-4">
-                  <div className="text-2xl font-bold text-gray-900">
+                <div className="ml-3">
+                  <div className="text-lg font-bold text-gray-900">
                     {stats.winRate}%
                   </div>
-                  <div className="text-sm text-gray-500">Tasa de victoria</div>
+                  <div className="text-xs text-gray-500">Tasa de victoria</div>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Detailed Stats */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h4 className="font-semibold text-gray-900 mb-4">
-                Estadísticas detalladas
-              </h4>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Golpes totales</span>
-                  <span className="font-medium">{stats.totalStrokes}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Hoyos jugados</span>
-                  <span className="font-medium">{stats.totalHoles}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Holes-in-one</span>
-                  <span className="font-medium">{stats.holesInOne}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Mejor promedio</span>
-                  <span className="font-medium">{stats.bestGame || 'N/A'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Tiempo promedio</span>
-                  <span className="font-medium">
-                    {stats.averageGameTime > 0
-                      ? `${Math.round(stats.averageGameTime)} min`
-                      : 'N/A'}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Tipo favorito</span>
-                  <span className="font-medium">
-                    {stats.favoriteGameType === 'multiplayer'
-                      ? 'Multijugador'
-                      : stats.favoriteGameType === 'individual'
-                      ? 'Individual'
-                      : 'N/A'}
-                  </span>
-                </div>
+          <div className="bg-white rounded-lg border border-gray-200 p-3">
+            <h4 className="font-semibold text-gray-900 mb-3 text-sm">
+              Estadísticas detalladas
+            </h4>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Golpes totales</span>
+                <span className="font-medium">{stats.totalStrokes}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Hoyos jugados</span>
+                <span className="font-medium">{stats.totalHoles}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Holes-in-one</span>
+                <span className="font-medium">{stats.holesInOne}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Mejor promedio</span>
+                <span className="font-medium">{stats.bestGame || 'N/A'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Tiempo promedio</span>
+                <span className="font-medium">
+                  {stats.averageGameTime > 0
+                    ? `${Math.round(stats.averageGameTime)} min`
+                    : 'N/A'}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Tipo favorito</span>
+                <span className="font-medium">
+                  {stats.favoriteGameType === 'multiplayer'
+                    ? 'Multi'
+                    : stats.favoriteGameType === 'individual'
+                    ? 'Individual'
+                    : 'N/A'}
+                </span>
               </div>
             </div>
+          </div>
 
-            {/* Achievements */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h4 className="font-semibold text-gray-900 mb-4">Logros</h4>
-              {achievements.length > 0 ? (
-                <div className="space-y-3">
-                  {achievements.map((achievement, index) => (
-                    <div key={index} className="flex items-center space-x-3">
-                      <div className={`p-2 rounded-lg ${achievement.color}`}>
-                        <achievement.icon className="h-5 w-5" />
+          {/* Achievements */}
+          <div className="bg-white rounded-lg border border-gray-200 p-3">
+            <h4 className="font-semibold text-gray-900 mb-3 text-sm">Logros</h4>
+            {achievements.length > 0 ? (
+              <div className="space-y-2">
+                {achievements.map((achievement, index) => (
+                  <div key={index} className="flex items-center space-x-2">
+                    <div className={`p-1.5 rounded-lg ${achievement.color}`}>
+                      <achievement.icon className="h-3 w-3" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium text-gray-900 text-xs">
+                        {achievement.name}
                       </div>
-                      <div>
-                        <div className="font-medium text-gray-900">
-                          {achievement.name}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {achievement.description}
-                        </div>
+                      <div className="text-xs text-gray-500 truncate">
+                        {achievement.description}
                       </div>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-gray-500 text-center py-4">
-                  <Award className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                  <p>¡Sigue jugando para desbloquear logros!</p>
-                </div>
-              )}
-            </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-gray-500 text-center py-3">
+                <Award className="h-6 w-6 mx-auto mb-2 text-gray-400" />
+                <p className="text-xs">
+                  ¡Sigue jugando para desbloquear logros!
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Recent Form */}
           {stats.recentForm.length > 0 && (
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h4 className="font-semibold text-gray-900 mb-4">
+            <div className="bg-white rounded-lg border border-gray-200 p-3">
+              <h4 className="font-semibold text-gray-900 mb-3 text-sm">
                 Forma reciente
               </h4>
-              <div className="flex items-center space-x-2">
-                {stats.recentForm.map((score, index) => (
+              <div className="flex items-center space-x-1">
+                {stats.recentForm.slice(0, 5).map((score, index) => (
                   <div
                     key={index}
-                    className={`w-8 h-8 rounded flex items-center justify-center text-xs font-medium ${
+                    className={`w-6 h-6 rounded flex items-center justify-center text-xs font-medium ${
                       score <= 2
                         ? 'bg-green-100 text-green-600'
                         : score <= 3
@@ -435,8 +435,8 @@ const UserStats: React.FC<UserStatsProps> = ({ user }) => {
                     {score.toFixed(1)}
                   </div>
                 ))}
-                <div className="text-sm text-gray-500 ml-4">
-                  Promedio por hoyo en últimas partidas
+                <div className="text-xs text-gray-500 ml-2">
+                  Promedio por hoyo (últimas partidas)
                 </div>
               </div>
             </div>

@@ -104,123 +104,122 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-gray-50">
       <Navbar />
 
-      <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto py-3 px-3 sm:px-6 lg:px-8">
         {/* Profile Header */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
-          <div className="flex items-center space-x-6">
-            <div className="h-20 w-20 bg-green-100 rounded-full flex items-center justify-center">
-              <User className="h-10 w-10 text-green-600" />
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">
+          <div className="flex items-center space-x-3">
+            <div className="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <User className="h-6 w-6 text-green-600" />
             </div>
-            <div className="flex-1">
-              <h1 className="text-2xl font-bold text-gray-900">{user.name}</h1>
-              <p className="text-gray-600">{user.email}</p>
-              <p className="text-sm text-gray-500 mt-1">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-lg font-bold text-gray-900 truncate">
+                {user.name}
+              </h1>
+              <p className="text-sm text-gray-600 truncate">{user.email}</p>
+              <p className="text-xs text-gray-500">
                 Miembro desde{' '}
                 {new Date(user.createdAt).toLocaleDateString('es-ES', {
                   year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
+                  month: 'short'
                 })}
               </p>
             </div>
-            <div className="text-right">
-              <div className="text-3xl font-bold text-green-600">
+            <div className="text-center">
+              <div className="text-xl font-bold text-green-600">
                 {stats.totalGames}
               </div>
-              <div className="text-sm text-gray-500">Partidas totales</div>
+              <div className="text-xs text-gray-500">Partidas</div>
             </div>
           </div>
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="flex items-center">
-              <div className="bg-green-100 rounded-lg p-3">
-                <Trophy className="h-6 w-6 text-green-600" />
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <div className="bg-white rounded-lg border border-gray-200 p-3">
+            <div className="flex items-center space-x-2">
+              <div className="bg-green-100 rounded-lg p-2">
+                <Trophy className="h-4 w-4 text-green-600" />
               </div>
-              <div className="ml-4">
-                <div className="text-2xl font-bold text-gray-900">
+              <div className="min-w-0 flex-1">
+                <div className="text-lg font-bold text-gray-900">
                   {stats.completedGames}
                 </div>
-                <div className="text-sm text-gray-500">
-                  Partidas completadas
-                </div>
+                <div className="text-xs text-gray-500">Completadas</div>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="flex items-center">
-              <div className="bg-blue-100 rounded-lg p-3">
-                <TrendingUp className="h-6 w-6 text-blue-600" />
+          <div className="bg-white rounded-lg border border-gray-200 p-3">
+            <div className="flex items-center space-x-2">
+              <div className="bg-blue-100 rounded-lg p-2">
+                <TrendingUp className="h-4 w-4 text-blue-600" />
               </div>
-              <div className="ml-4">
-                <div className="text-2xl font-bold text-gray-900">
+              <div className="min-w-0 flex-1">
+                <div className="text-lg font-bold text-gray-900">
                   {stats.averageScore}
                 </div>
-                <div className="text-sm text-gray-500">Promedio por hoyo</div>
+                <div className="text-xs text-gray-500">Promedio</div>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="flex items-center">
-              <div className="bg-yellow-100 rounded-lg p-3">
-                <Target className="h-6 w-6 text-yellow-600" />
+          <div className="bg-white rounded-lg border border-gray-200 p-3">
+            <div className="flex items-center space-x-2">
+              <div className="bg-yellow-100 rounded-lg p-2">
+                <Target className="h-4 w-4 text-yellow-600" />
               </div>
-              <div className="ml-4">
-                <div className="text-2xl font-bold text-gray-900">
+              <div className="min-w-0 flex-1">
+                <div className="text-lg font-bold text-gray-900">
                   {stats.holesInOne}
                 </div>
-                <div className="text-sm text-gray-500">Holes-in-one</div>
+                <div className="text-xs text-gray-500">Hole-in-1</div>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="flex items-center">
-              <div className="bg-purple-100 rounded-lg p-3">
-                <Flag className="h-6 w-6 text-purple-600" />
+          <div className="bg-white rounded-lg border border-gray-200 p-3">
+            <div className="flex items-center space-x-2">
+              <div className="bg-purple-100 rounded-lg p-2">
+                <Flag className="h-4 w-4 text-purple-600" />
               </div>
-              <div className="ml-4">
-                <div className="text-2xl font-bold text-gray-900">
+              <div className="min-w-0 flex-1">
+                <div className="text-lg font-bold text-gray-900">
                   {stats.bestGame || '--'}
                 </div>
-                <div className="text-sm text-gray-500">Mejor partida</div>
+                <div className="text-xs text-gray-500">Mejor</div>
               </div>
             </div>
           </div>
         </div>
 
         {/* Games History */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-gray-900">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-semibold text-gray-900">
               Historial de Partidas
             </h2>
             <Link
               href="/game/new"
-              className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+              className="inline-flex items-center px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm touch-manipulation"
             >
-              <Play className="h-4 w-4 mr-2" />
-              Nueva Partida
+              <Play className="h-4 w-4 mr-1" />
+              Nueva
             </Link>
           </div>
 
           {gamesLoading ? (
-            <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mx-auto"></div>
-              <p className="text-gray-500 mt-2">Cargando partidas...</p>
+            <div className="text-center py-6">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-500 mx-auto"></div>
+              <p className="text-gray-500 mt-2 text-sm">Cargando partidas...</p>
             </div>
           ) : userGames.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No has jugado ninguna partida aún</p>
-              <p className="text-sm">¡Crea tu primera partida para empezar!</p>
+            <div className="text-center py-6 text-gray-500">
+              <Clock className="h-8 w-8 mx-auto mb-3 opacity-50" />
+              <p className="text-sm">No has jugado ninguna partida aún</p>
+              <p className="text-xs">¡Crea tu primera partida para empezar!</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {userGames.map((game) => {
                 const playerScore = game.scores[user.id] || []
                 const totalScore = playerScore.reduce(
@@ -235,43 +234,41 @@ export default function ProfilePage() {
                   <Link
                     key={game.id}
                     href={`/game/${game.id}`}
-                    className="block border border-gray-200 rounded-lg p-4 hover:border-gray-300 hover:shadow-sm transition-all"
+                    className="block border border-gray-200 rounded-lg p-3 hover:border-gray-300 hover:shadow-sm transition-all active:scale-98 touch-manipulation"
                   >
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
+                      <div className="flex items-center space-x-3 min-w-0 flex-1">
                         <div
-                          className={`h-10 w-10 rounded-full flex items-center justify-center ${
+                          className={`h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                             game.status === 'finished'
                               ? 'bg-green-100'
                               : 'bg-blue-100'
                           }`}
                         >
                           {game.status === 'finished' ? (
-                            <Flag className="h-5 w-5 text-green-600" />
+                            <Flag className="h-4 w-4 text-green-600" />
                           ) : (
-                            <Clock className="h-5 w-5 text-blue-600" />
+                            <Clock className="h-4 w-4 text-blue-600" />
                           )}
                         </div>
-                        <div>
-                          <div className="font-medium text-gray-900">
-                            {game.isMultiplayer
-                              ? 'Partida Multijugador'
-                              : 'Partida Individual'}
+                        <div className="min-w-0 flex-1">
+                          <div className="font-medium text-sm text-gray-900 truncate">
+                            {game.isMultiplayer ? 'Multijugador' : 'Individual'}
                           </div>
-                          <div className="text-sm text-gray-500">
+                          <div className="text-xs text-gray-500">
                             {new Date(game.createdAt).toLocaleDateString(
                               'es-ES'
                             )}{' '}
-                            •{game.holeCount} hoyos • {game.players.length}{' '}
+                            • {game.holeCount} hoyos • {game.players.length}{' '}
                             jugador{game.players.length > 1 ? 'es' : ''}
                           </div>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className="font-semibold text-lg">
+                      <div className="text-right flex-shrink-0">
+                        <div className="font-semibold text-base">
                           {completedHoles > 0 ? totalScore : '--'}
                         </div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-xs text-gray-500">
                           {completedHoles} / {game.holeCount} hoyos
                         </div>
                         <div

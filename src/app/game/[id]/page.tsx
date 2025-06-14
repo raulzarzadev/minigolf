@@ -141,42 +141,25 @@ export default function GamePage() {
     <div className="min-h-screen bg-gray-50">
       <Navbar />
 
-      <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto py-3 px-3 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => router.back()}
-                className="inline-flex items-center text-gray-600 hover:text-gray-900"
-              >
-                <ArrowLeft className="h-5 w-5 mr-2" />
-                Volver
-              </button>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">
-                  Partida de Minigolf
-                </h1>
-                <p className="text-gray-600">
-                  {new Date(game.createdAt).toLocaleDateString('es-ES', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
-                </p>
-              </div>
-            </div>
+        <div className="mb-4">
+          <div className="flex items-center justify-between mb-3">
+            <button
+              onClick={() => router.back()}
+              className="inline-flex items-center text-gray-600 hover:text-gray-900 active:scale-95 transition-all touch-manipulation"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              <span className="text-sm">Volver</span>
+            </button>
 
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2">
               {game.isMultiplayer && (
                 <button
                   onClick={handleShareGame}
-                  className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                  className="inline-flex items-center px-2 py-1 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 text-sm touch-manipulation"
                 >
-                  <Share2 className="h-4 w-4 mr-2" />
+                  <Share2 className="h-4 w-4 mr-1" />
                   Compartir
                 </button>
               )}
@@ -185,27 +168,42 @@ export default function GamePage() {
                 <button
                   onClick={handleFinishGame}
                   disabled={isFinishing}
-                  className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="inline-flex items-center px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm touch-manipulation"
                 >
-                  <Flag className="h-4 w-4 mr-2" />
-                  {isFinishing ? 'Finalizando...' : 'Finalizar Partida'}
+                  <Flag className="h-4 w-4 mr-1" />
+                  {isFinishing ? 'Finalizando...' : 'Finalizar'}
                 </button>
               )}
             </div>
+          </div>
+
+          <div>
+            <h1 className="text-lg font-bold text-gray-900">
+              Partida de Minigolf
+            </h1>
+            <p className="text-xs text-gray-600">
+              {new Date(game.createdAt).toLocaleDateString('es-ES', {
+                weekday: 'short',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
+            </p>
           </div>
         </div>
 
         {/* Game Status Messages */}
         {game.status === 'finished' && (
-          <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="mb-4 bg-green-50 border border-green-200 rounded-lg p-3">
             <div className="flex items-center">
-              <Trophy className="h-5 w-5 text-green-600 mr-2" />
+              <Trophy className="h-4 w-4 text-green-600 mr-2" />
               <div>
-                <h3 className="font-medium text-green-800">
+                <h3 className="font-medium text-green-800 text-sm">
                   ¡Partida finalizada!
                 </h3>
-                <p className="text-green-600">
-                  La partida terminó el{' '}
+                <p className="text-green-600 text-xs">
+                  Terminó el{' '}
                   {new Date(
                     game.finishedAt || game.createdAt
                   ).toLocaleDateString('es-ES')}
@@ -216,20 +214,20 @@ export default function GamePage() {
         )}
 
         {shouldShowFinishSuggestion && (
-          <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div className="flex items-center justify-between">
+          <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <div className="flex flex-col space-y-2">
               <div>
-                <h3 className="font-medium text-blue-800">
-                  ¡Todos los jugadores han completado la partida!
+                <h3 className="font-medium text-blue-800 text-sm">
+                  ¡Todos han completado la partida!
                 </h3>
-                <p className="text-blue-600">
-                  Puedes finalizar la partida para ver las estadísticas finales.
+                <p className="text-blue-600 text-xs">
+                  Puedes finalizar para ver las estadísticas finales.
                 </p>
               </div>
               <button
                 onClick={handleFinishGame}
                 disabled={isFinishing}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                className="self-start px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm touch-manipulation"
               >
                 Finalizar ahora
               </button>
@@ -240,7 +238,7 @@ export default function GamePage() {
         {/* Scorecard */}
         <Scorecard
           game={game}
-          currentPlayer={currentPlayer}
+          currentPlayer={currentPlayer || undefined}
           canEdit={canEdit()}
           onScoreUpdate={() => {
             // The real-time listener will handle updates
@@ -249,21 +247,18 @@ export default function GamePage() {
 
         {/* Help Text */}
         {canEdit() && game.status === 'in_progress' && (
-          <div className="mt-6 bg-blue-50 rounded-lg p-4">
-            <h4 className="font-medium text-blue-800 mb-2">💡 Consejos:</h4>
-            <ul className="text-blue-700 text-sm space-y-1">
-              <li>
-                • Usa los botones + y - para registrar los golpes de cada hoyo
-              </li>
+          <div className="mt-4 bg-blue-50 rounded-lg p-3">
+            <h4 className="font-medium text-blue-800 mb-2 text-sm">
+              💡 Consejos:
+            </h4>
+            <ul className="text-blue-700 text-xs space-y-1">
+              <li>• Usa los botones + y - para registrar los golpes</li>
               {isGameCreator() && (
-                <li>
-                  • Como creador, puedes editar las puntuaciones de todos los
-                  jugadores
-                </li>
+                <li>• Como creador, puedes editar las puntuaciones de todos</li>
               )}
               <li>• Las puntuaciones se guardan automáticamente</li>
               <li>
-                • Los demás jugadores verán las actualizaciones en tiempo real
+                • Los demás jugadores ven las actualizaciones en tiempo real
               </li>
             </ul>
           </div>

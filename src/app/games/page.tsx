@@ -79,112 +79,109 @@ export default function GamesPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Mis Partidas</h1>
-          <p className="mt-2 text-gray-600">
-            Historial completo de tus juegos de minigolf
+      <div className="max-w-7xl mx-auto py-3 px-3 sm:py-8 sm:px-6 lg:px-8">
+        <div className="mb-4">
+          <h1 className="text-xl font-bold text-gray-900">Mis Partidas</h1>
+          <p className="mt-1 text-sm text-gray-600">
+            Historial de tus juegos de minigolf
           </p>
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-500"></div>
           </div>
         ) : error ? (
-          <div className="bg-red-50 border border-red-200 rounded-md p-4">
-            <div className="text-red-800">{error}</div>
+          <div className="bg-red-50 border border-red-200 rounded-md p-3">
+            <div className="text-red-800 text-sm">{error}</div>
           </div>
         ) : games.length === 0 ? (
-          <div className="text-center py-12">
-            <Clock className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
+          <div className="text-center py-8">
+            <Clock className="h-10 w-10 mx-auto text-gray-400 mb-3" />
+            <h3 className="text-base font-medium text-gray-900 mb-2">
               No hay partidas aún
             </h3>
-            <p className="text-gray-600 mb-6">
+            <p className="text-sm text-gray-600 mb-4">
               ¡Crea tu primera partida para empezar a jugar!
             </p>
             <Link
               href="/game/new"
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700"
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 active:scale-95 transition-all touch-manipulation"
             >
               Nueva Partida
             </Link>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-3">
             {games.map((game) => (
               <div
                 key={game.id}
-                className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden"
+                className="bg-white rounded-lg shadow-sm border border-gray-200 p-3"
               >
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center space-x-3">
-                      <div className="flex-shrink-0">
-                        {game.isMultiplayer ? (
-                          <Users className="h-6 w-6 text-blue-500" />
-                        ) : (
-                          <User className="h-6 w-6 text-green-500" />
-                        )}
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-medium text-gray-900">
-                          {game.isMultiplayer
-                            ? `Partida Multijugador`
-                            : 'Partida Individual'}
-                        </h3>
-                        <div className="flex items-center text-sm text-gray-500">
-                          <Calendar className="h-4 w-4 mr-1" />
-                          {game.createdAt.toLocaleDateString()}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      {getStatusBadge(game.status)}
-                      {game.status === 'finished' && (
-                        <div className="mt-1 text-sm text-gray-500">
-                          <Trophy className="h-4 w-4 inline mr-1" />
-                          {calculateTotalScore(game)} golpes
-                        </div>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center space-x-2 min-w-0 flex-1">
+                    <div className="flex-shrink-0">
+                      {game.isMultiplayer ? (
+                        <Users className="h-4 w-4 text-blue-500" />
+                      ) : (
+                        <User className="h-4 w-4 text-green-500" />
                       )}
                     </div>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-sm font-medium text-gray-900 truncate">
+                        {game.isMultiplayer ? `Multijugador` : 'Individual'}
+                      </h3>
+                      <div className="flex items-center text-xs text-gray-500">
+                        <Calendar className="h-3 w-3 mr-1" />
+                        {game.createdAt.toLocaleDateString()}
+                      </div>
+                    </div>
                   </div>
+                  <div className="flex flex-col items-end space-y-1">
+                    {getStatusBadge(game.status)}
+                    {game.status === 'finished' && (
+                      <div className="text-xs text-gray-500">
+                        <Trophy className="h-3 w-3 inline mr-1" />
+                        {calculateTotalScore(game)} golpes
+                      </div>
+                    )}
+                  </div>
+                </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="text-center p-4 bg-gray-50 rounded-lg">
-                      <div className="text-2xl font-bold text-gray-900">
-                        {game.holeCount}
-                      </div>
-                      <div className="text-sm text-gray-500">Hoyos</div>
+                <div className="grid grid-cols-3 gap-2 mb-3">
+                  <div className="text-center p-2 bg-gray-50 rounded-lg">
+                    <div className="text-lg font-bold text-gray-900">
+                      {game.holeCount}
                     </div>
-                    <div className="text-center p-4 bg-gray-50 rounded-lg">
-                      <div className="text-2xl font-bold text-gray-900">
-                        {game.players.length}
-                      </div>
-                      <div className="text-sm text-gray-500">Jugadores</div>
-                    </div>
-                    <div className="text-center p-4 bg-gray-50 rounded-lg">
-                      <div className="text-2xl font-bold text-gray-900">
-                        {game.currentHole}/{game.holeCount}
-                      </div>
-                      <div className="text-sm text-gray-500">Progreso</div>
-                    </div>
+                    <div className="text-xs text-gray-500">Hoyos</div>
                   </div>
+                  <div className="text-center p-2 bg-gray-50 rounded-lg">
+                    <div className="text-lg font-bold text-gray-900">
+                      {game.players.length}
+                    </div>
+                    <div className="text-xs text-gray-500">Jugadores</div>
+                  </div>
+                  <div className="text-center p-2 bg-gray-50 rounded-lg">
+                    <div className="text-lg font-bold text-gray-900">
+                      {game.currentHole}/{game.holeCount}
+                    </div>
+                    <div className="text-xs text-gray-500">Progreso</div>
+                  </div>
+                </div>
 
-                  <div className="mt-4 flex items-center justify-between">
-                    <div className="text-sm text-gray-500">
-                      Jugadores: {game.players.map((p) => p.name).join(', ')}
-                    </div>
-                    <Link
-                      href={`/game/${game.id}`}
-                      className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                    >
-                      {game.status === 'in_progress'
-                        ? 'Continuar'
-                        : 'Ver detalles'}
-                    </Link>
+                <div className="flex flex-col space-y-2">
+                  <div className="text-xs text-gray-500 truncate">
+                    <span className="font-medium">Jugadores:</span>{' '}
+                    {game.players.map((p) => p.name).join(', ')}
                   </div>
+                  <Link
+                    href={`/game/${game.id}`}
+                    className="w-full inline-flex items-center justify-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 active:scale-95 transition-all touch-manipulation"
+                  >
+                    {game.status === 'in_progress'
+                      ? 'Continuar partida'
+                      : 'Ver resultado'}
+                  </Link>
                 </div>
               </div>
             ))}

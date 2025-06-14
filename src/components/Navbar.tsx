@@ -1,12 +1,13 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
-import { LogOut, User, Home, Trophy, Plus } from 'lucide-react'
+import { LogOut, User, Home, Trophy, Plus, Menu, X } from 'lucide-react'
 
 const Navbar: React.FC = () => {
   const { user, logout } = useAuth()
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   const handleLogout = async () => {
     try {
@@ -20,61 +21,147 @@ const Navbar: React.FC = () => {
     return null
   }
 
+  const closeMobileMenu = () => setIsMobileMenuOpen(false)
+
   return (
     <nav className="bg-green-600 text-white shadow-lg">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="flex justify-between h-14">
+          {/* Logo y marca */}
           <div className="flex items-center">
-            <Link href="/" className="flex items-center space-x-2">
-              <div className="text-2xl">🏌️‍♂️</div>
-              <span className="font-bold text-xl">Minigolf</span>
+            <Link
+              href="/"
+              className="flex items-center space-x-2"
+              onClick={closeMobileMenu}
+            >
+              <div className="text-xl">🏌️‍♂️</div>
+              <span className="font-bold text-lg">Minigolf</span>
             </Link>
           </div>
 
-          <div className="flex items-center space-x-4">
+          {/* Menu de escritorio */}
+          <div className="hidden md:flex items-center space-x-1 lg:space-x-4">
             <Link
               href="/"
-              className="flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium hover:bg-green-700 transition-colors"
+              className="flex items-center space-x-1 px-2 lg:px-3 py-2 rounded-md text-sm font-medium hover:bg-green-700 transition-colors"
             >
               <Home size={18} />
-              <span>Inicio</span>
+              <span className="hidden lg:inline">Inicio</span>
             </Link>
 
             <Link
               href="/game/new"
-              className="flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium hover:bg-green-700 transition-colors"
+              className="flex items-center space-x-1 px-2 lg:px-3 py-2 rounded-md text-sm font-medium hover:bg-green-700 transition-colors"
             >
               <Plus size={18} />
-              <span>Nueva Partida</span>
+              <span className="hidden lg:inline">Nueva Partida</span>
             </Link>
 
             <Link
               href="/tournaments"
-              className="flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium hover:bg-green-700 transition-colors"
+              className="flex items-center space-x-1 px-2 lg:px-3 py-2 rounded-md text-sm font-medium hover:bg-green-700 transition-colors"
             >
               <Trophy size={18} />
-              <span>Torneos</span>
+              <span className="hidden lg:inline">Torneos</span>
             </Link>
 
-            <div className="flex items-center space-x-4 border-l border-green-500 pl-4">
+            <div className="flex items-center space-x-1 lg:space-x-4 border-l border-green-500 pl-2 lg:pl-4 ml-2 lg:ml-4">
               <Link
                 href="/profile"
-                className="flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium hover:bg-green-700 transition-colors"
+                className="flex items-center space-x-1 px-2 lg:px-3 py-2 rounded-md text-sm font-medium hover:bg-green-700 transition-colors"
               >
                 <User size={18} />
-                <span>{user.name}</span>
+                <span className="hidden lg:inline truncate max-w-20">
+                  {user.name}
+                </span>
               </Link>
 
               <button
                 onClick={handleLogout}
-                className="flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium hover:bg-green-700 transition-colors"
+                className="flex items-center space-x-1 px-2 lg:px-3 py-2 rounded-md text-sm font-medium hover:bg-green-700 transition-colors"
               >
                 <LogOut size={18} />
-                <span>Salir</span>
+                <span className="hidden lg:inline">Salir</span>
               </button>
             </div>
           </div>
+
+          {/* Botón menú móvil */}
+          <div className="md:hidden flex items-center">
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-2 rounded-md hover:bg-green-700 transition-colors touch-manipulation"
+              aria-label="Abrir menú"
+            >
+              {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
+          </div>
         </div>
+
+        {/* Menú móvil */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden border-t border-green-500">
+            <div className="px-2 pt-2 pb-3 space-y-1">
+              <Link
+                href="/"
+                onClick={closeMobileMenu}
+                className="flex items-center space-x-3 px-3 py-3 rounded-md text-base font-medium hover:bg-green-700 transition-colors active:bg-green-700 touch-manipulation"
+              >
+                <Home size={20} />
+                <span>Inicio</span>
+              </Link>
+
+              <Link
+                href="/game/new"
+                onClick={closeMobileMenu}
+                className="flex items-center space-x-3 px-3 py-3 rounded-md text-base font-medium hover:bg-green-700 transition-colors active:bg-green-700 touch-manipulation"
+              >
+                <Plus size={20} />
+                <span>Nueva Partida</span>
+              </Link>
+
+              <Link
+                href="/tournaments"
+                onClick={closeMobileMenu}
+                className="flex items-center space-x-3 px-3 py-3 rounded-md text-base font-medium hover:bg-green-700 transition-colors active:bg-green-700 touch-manipulation"
+              >
+                <Trophy size={20} />
+                <span>Torneos</span>
+              </Link>
+
+              <Link
+                href="/games"
+                onClick={closeMobileMenu}
+                className="flex items-center space-x-3 px-3 py-3 rounded-md text-base font-medium hover:bg-green-700 transition-colors active:bg-green-700 touch-manipulation"
+              >
+                <Trophy size={20} />
+                <span>Mis Partidas</span>
+              </Link>
+
+              <div className="border-t border-green-500 pt-4 mt-4">
+                <Link
+                  href="/profile"
+                  onClick={closeMobileMenu}
+                  className="flex items-center space-x-3 px-3 py-3 rounded-md text-base font-medium hover:bg-green-700 transition-colors active:bg-green-700 touch-manipulation"
+                >
+                  <User size={20} />
+                  <span>{user.name}</span>
+                </Link>
+
+                <button
+                  onClick={() => {
+                    handleLogout()
+                    closeMobileMenu()
+                  }}
+                  className="flex items-center space-x-3 px-3 py-3 rounded-md text-base font-medium hover:bg-green-700 transition-colors active:bg-green-700 w-full text-left touch-manipulation"
+                >
+                  <LogOut size={20} />
+                  <span>Cerrar Sesión</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </nav>
   )
