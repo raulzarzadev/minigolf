@@ -1,5 +1,12 @@
 import { Game } from '@/types'
 
+// Define type for mock users
+interface MockUser {
+  id: string
+  name: string
+  email: string
+}
+
 // Temporary mock database for testing without Firebase
 const mockGames: Record<string, Game> = {}
 let gameIdCounter = 1
@@ -37,7 +44,7 @@ export const updateGameMock = async (
   }
 }
 
-export const searchUsersMock = async (searchTerm: string): Promise<any[]> => {
+export const searchUsersMock = async (searchTerm: string): Promise<MockUser[]> => {
   await new Promise((resolve) => setTimeout(resolve, 500))
 
   // Mock users for testing

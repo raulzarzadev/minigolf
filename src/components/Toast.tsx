@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { X, Info, AlertTriangle, CheckCircle } from 'lucide-react'
 
 export interface ToastMessage {
@@ -23,6 +23,11 @@ interface ToastProps {
 const Toast: React.FC<ToastProps> = ({ toast, onClose }) => {
   const [isVisible, setIsVisible] = useState(true)
 
+  const handleClose = useCallback(() => {
+    setIsVisible(false)
+    setTimeout(() => onClose(toast.id), 150) // Wait for animation
+  }, [onClose, toast.id])
+
   useEffect(() => {
     if (toast.duration) {
       const timer = setTimeout(() => {
@@ -31,12 +36,7 @@ const Toast: React.FC<ToastProps> = ({ toast, onClose }) => {
 
       return () => clearTimeout(timer)
     }
-  }, [toast.duration])
-
-  const handleClose = () => {
-    setIsVisible(false)
-    setTimeout(() => onClose(toast.id), 150) // Wait for animation
-  }
+  }, [toast.duration, handleClose])
 
   const getIcon = () => {
     switch (toast.type) {
