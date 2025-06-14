@@ -15,7 +15,28 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: 'Plataforma de Minigolf',
-  description: 'Administra partidas de minigolf y torneos digitales'
+  description: 'Administra partidas de minigolf y torneos digitales',
+  icons: {
+    icon: '/favicon.ico',
+    shortcut: '/favicon.ico',
+    apple: '/apple-touch-icon.png'
+  },
+  openGraph: {
+    title: 'Plataforma de Minigolf',
+    description: 'Administra partidas de minigolf y torneos digitales',
+    url: 'https://baja-minigolf.vercel.app',
+    siteName: 'Baja Mini Golf',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Baja Mini Golf'
+      }
+    ],
+    locale: 'es_ES',
+    type: 'website'
+  }
 }
 
 export default function RootLayout({
