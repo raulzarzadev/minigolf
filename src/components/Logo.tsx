@@ -13,7 +13,8 @@ interface LogoProps {
 const Logo: React.FC<LogoProps> = ({
   size = 'md',
   variant = 'dark',
-  className = ''
+  className = '',
+  showText = true
 }) => {
   const colorClasses = {
     dark: {
@@ -27,22 +28,27 @@ const Logo: React.FC<LogoProps> = ({
   }
 
   const sizes = {
-    sm: 64,
-    md: 84,
-    lg: 104,
-    xl: 124
+    sm: 32,
+    md: 46,
+    lg: 64,
+    xl: 68
   }
 
   return (
     <div className={`flex items-center space-x-2 ${className}`}>
       <Image
-        src={'/logo-tipo-baja-mini-golf.png'}
+        src={'/logo-baja-mini-golf.png'}
         alt="Baja Mini Golf"
         className={` object-contain ${colorClasses[variant].icon}`}
         width={sizes[size]}
         height={sizes[size]}
         priority
       />
+      {showText && (
+        <span className={`font-bold  ${colorClasses[variant].text}`}>
+          Baja Mini Golf
+        </span>
+      )}
     </div>
   )
 }
