@@ -6,7 +6,7 @@ import Navbar from '@/components/Navbar'
 import { Clock, Trophy, Users, User, Calendar } from 'lucide-react'
 import Link from 'next/link'
 import { Game } from '@/types'
-import { getUserGames } from '@/lib/db'
+import { getAllUserGames } from '@/lib/db'
 
 export default function GamesPage() {
   const { user } = useAuth()
@@ -20,7 +20,7 @@ export default function GamesPage() {
 
       try {
         setLoading(true)
-        const userGames = await getUserGames(user.id)
+        const userGames = await getAllUserGames(user.id)
         setGames(userGames)
       } catch (err) {
         setError('Error al cargar las partidas')
@@ -71,9 +71,10 @@ export default function GamesPage() {
     }
   }
 
-  const calculateTotalScore = (game: Game) => {
-    const playerScore = game.scores[user.id] || []
-    return playerScore.reduce((total, score) => total + score, 0)
+  const calculatePlayerScore = (game: Game, playerId: string) => {
+    const playerScores = game.scores[playerId]
+    if (!playerScores) return 0
+    return playerScores.reduce((total, score) => total + score, 0)
   }
 
   return (
@@ -83,7 +84,7 @@ export default function GamesPage() {
         <div className="mb-4">
           <h1 className="text-xl font-bold text-gray-900">Mis Partidas</h1>
           <p className="mt-1 text-sm text-gray-600">
-            Historial de tus juegos de minigolf
+            Historial de tus juegos de minigolf (como creador e invitado)
           </p>
         </div>
 
@@ -113,78 +114,93 @@ export default function GamesPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {games.map((game) => (
-              <div
-                key={game.id}
-                className="bg-white rounded-lg shadow-sm border border-gray-200 p-3"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center space-x-2 min-w-0 flex-1">
-                    <div className="flex-shrink-0">
-                      {game.isMultiplayer ? (
-                        <Users className="h-4 w-4 text-black" />
-                      ) : (
-                        <User className="h-4 w-4 text-gray-600" />
+            {games.map((game) => {
+              const isCreator = game.createdBy === user.id
+              const userPlayer = game.players.find((p) => p.userId === user.id)
+
+              return (
+                <div
+                  key={game.id}
+                  className="bg-white rounded-lg shadow-sm border border-gray-200 p-3"
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center space-x-2 min-w-0 flex-1">
+                      <div className="flex-shrink-0">
+                        {game.isMultiplayer ? (
+                          <Users className="h-4 w-4 text-black" />
+                        ) : (
+                          <User className="h-4 w-4 text-gray-600" />
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center space-x-2">
+                          <h3 className="text-sm font-medium text-gray-900 truncate">
+                            {game.isMultiplayer ? `Multijugador` : 'Individual'}
+                          </h3>
+                          {!isCreator && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                              Invitado
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center text-xs text-gray-500">
+                          <Calendar className="h-3 w-3 mr-1" />
+                          {game.createdAt.toLocaleDateString()}
+                        </div>
+                        {game.isMultiplayer && (
+                          <div className="text-xs text-gray-500 mt-1">
+                            {game.players.length} jugador
+                            {game.players.length !== 1 ? 'es' : ''}:{' '}
+                            {game.players.map((p) => p.name).join(', ')}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end space-y-1">
+                      {getStatusBadge(game.status)}
+                      {game.status === 'finished' && userPlayer && (
+                        <div className="text-xs text-gray-500">
+                          <Trophy className="h-3 w-3 inline mr-1" />
+                          {calculatePlayerScore(game, userPlayer.id)} golpes
+                        </div>
                       )}
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <h3 className="text-sm font-medium text-gray-900 truncate">
-                        {game.isMultiplayer ? `Multijugador` : 'Individual'}
-                      </h3>
-                      <div className="flex items-center text-xs text-gray-500">
-                        <Calendar className="h-3 w-3 mr-1" />
-                        {game.createdAt.toLocaleDateString()}
-                      </div>
-                    </div>
                   </div>
-                  <div className="flex flex-col items-end space-y-1">
-                    {getStatusBadge(game.status)}
-                    {game.status === 'finished' && (
-                      <div className="text-xs text-gray-500">
-                        <Trophy className="h-3 w-3 inline mr-1" />
-                        {calculateTotalScore(game)} golpes
-                      </div>
-                    )}
-                  </div>
-                </div>
 
-                <div className="grid grid-cols-3 gap-2 mb-3">
-                  <div className="text-center p-2 bg-gray-50 rounded-lg">
-                    <div className="text-lg font-bold text-gray-900">
-                      {game.holeCount}
+                  <div className="grid grid-cols-3 gap-2 mb-3">
+                    <div className="text-center p-2 bg-gray-50 rounded-lg">
+                      <div className="text-lg font-bold text-gray-900">
+                        {game.holeCount}
+                      </div>
+                      <div className="text-xs text-gray-500">Hoyos</div>
                     </div>
-                    <div className="text-xs text-gray-500">Hoyos</div>
-                  </div>
-                  <div className="text-center p-2 bg-gray-50 rounded-lg">
-                    <div className="text-lg font-bold text-gray-900">
-                      {game.players.length}
+                    <div className="text-center p-2 bg-gray-50 rounded-lg">
+                      <div className="text-lg font-bold text-gray-900">
+                        {game.players.length}
+                      </div>
+                      <div className="text-xs text-gray-500">Jugadores</div>
                     </div>
-                    <div className="text-xs text-gray-500">Jugadores</div>
-                  </div>
-                  <div className="text-center p-2 bg-gray-50 rounded-lg">
-                    <div className="text-lg font-bold text-gray-900">
-                      {game.currentHole}/{game.holeCount}
+                    <div className="text-center p-2 bg-gray-50 rounded-lg">
+                      <div className="text-lg font-bold text-gray-900">
+                        {game.currentHole}/{game.holeCount}
+                      </div>
+                      <div className="text-xs text-gray-500">Progreso</div>
                     </div>
-                    <div className="text-xs text-gray-500">Progreso</div>
                   </div>
-                </div>
 
-                <div className="flex flex-col space-y-2">
-                  <div className="text-xs text-gray-500 truncate">
-                    <span className="font-medium">Jugadores:</span>{' '}
-                    {game.players.map((p) => p.name).join(', ')}
+                  <div className="flex justify-end">
+                    <Link
+                      href={`/game/${game.id}`}
+                      className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 active:scale-95 transition-all touch-manipulation"
+                    >
+                      {game.status === 'in_progress'
+                        ? 'Continuar partida'
+                        : 'Ver resultado'}
+                    </Link>
                   </div>
-                  <Link
-                    href={`/game/${game.id}`}
-                    className="w-full inline-flex items-center justify-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 active:scale-95 transition-all touch-manipulation"
-                  >
-                    {game.status === 'in_progress'
-                      ? 'Continuar partida'
-                      : 'Ver resultado'}
-                  </Link>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>

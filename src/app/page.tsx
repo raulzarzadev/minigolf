@@ -7,7 +7,7 @@ import Navbar from '@/components/Navbar'
 import Link from 'next/link'
 import { Plus, Trophy, BarChart3, Clock, Users, User } from 'lucide-react'
 import { Game } from '@/types'
-import { getUserGames } from '@/lib/db'
+import { getAllUserGames } from '@/lib/db'
 
 export default function Home() {
   const { user, loading, firebaseError } = useAuth()
@@ -23,7 +23,7 @@ export default function Home() {
 
       try {
         setLoadingGames(true)
-        const userGames = await getUserGames(user.id)
+        const userGames = await getAllUserGames(user.id)
         // Tomar solo las 3 partidas más recientes
         setRecentGames(userGames.slice(0, 3))
       } catch (err) {
@@ -188,51 +188,74 @@ export default function Home() {
               </div>
             ) : (
               <div className="space-y-3">
-                {recentGames.map((game) => (
-                  <div key={game.id} className="p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center space-x-2 min-w-0 flex-1">
-                        <div className="flex-shrink-0">
-                          {game.isMultiplayer ? (
-                            <Users className="h-4 w-4 text-black" />
-                          ) : (
-                            <User className="h-4 w-4 text-gray-600" />
-                          )}
+                <div className="text-xs text-gray-600 mb-2 font-medium">
+                  📋 Incluye partidas donde eres creador o invitado
+                </div>
+                {recentGames.map((game) => {
+                  const isCreator = game.createdBy === user.id
+
+                  return (
+                    <div key={game.id} className="p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center space-x-2 min-w-0 flex-1">
+                          <div className="flex-shrink-0">
+                            {game.isMultiplayer ? (
+                              <Users className="h-4 w-4 text-black" />
+                            ) : (
+                              <User className="h-4 w-4 text-gray-600" />
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center space-x-2">
+                              <h3 className="text-sm font-medium text-gray-900 truncate">
+                                {game.isMultiplayer
+                                  ? `Multijugador`
+                                  : 'Individual'}
+                              </h3>
+                              {!isCreator && (
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                  Invitado
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-gray-500">
+                              {game.createdAt.toLocaleDateString()} •{' '}
+                              {game.holeCount} hoyos
+                            </p>
+                            {game.isMultiplayer && (
+                              <p className="text-xs text-gray-500">
+                                {game.players.length} jugador
+                                {game.players.length !== 1 ? 'es' : ''}:{' '}
+                                {game.players.map((p) => p.name).join(', ')}
+                              </p>
+                            )}
+                          </div>
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <h3 className="text-sm font-medium text-gray-900 truncate">
-                            {game.isMultiplayer ? `Multijugador` : 'Individual'}
-                          </h3>
-                          <p className="text-xs text-gray-500">
-                            {game.createdAt.toLocaleDateString()} •{' '}
-                            {game.holeCount} hoyos
-                          </p>
-                        </div>
+                        <span
+                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            game.status === 'finished'
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-gray-200 text-black'
+                          }`}
+                        >
+                          {game.status === 'finished'
+                            ? 'Finalizada'
+                            : 'En progreso'}
+                        </span>
                       </div>
-                      <span
-                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                          game.status === 'finished'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-gray-200 text-black'
-                        }`}
-                      >
-                        {game.status === 'finished'
-                          ? 'Finalizada'
-                          : 'En progreso'}
-                      </span>
+                      <div className="flex justify-end">
+                        <Link
+                          href={`/game/${game.id}`}
+                          className="text-green-600 hover:text-green-700 text-sm font-medium active:scale-95 transition-all touch-manipulation"
+                        >
+                          {game.status === 'finished'
+                            ? 'Ver resultado'
+                            : 'Continuar partida'}
+                        </Link>
+                      </div>
                     </div>
-                    <div className="flex justify-end">
-                      <Link
-                        href={`/game/${game.id}`}
-                        className="text-green-600 hover:text-green-700 text-sm font-medium active:scale-95 transition-all touch-manipulation"
-                      >
-                        {game.status === 'finished'
-                          ? 'Ver resultado'
-                          : 'Continuar partida'}
-                      </Link>
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </div>

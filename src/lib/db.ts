@@ -83,6 +83,58 @@ export const getUserGames = async (userId: string): Promise<Game[]> => {
   }
 }
 
+// Get all games where user participates (as creator or player)
+export const getAllUserGames = async (userId: string): Promise<Game[]> => {
+  try {
+    // Get all games and filter client-side since Firestore doesn't support
+    // array-contains on nested objects or OR queries across different fields efficiently
+    const q = query(collection(db, 'games'), orderBy('createdAt', 'desc'))
+
+    const querySnapshot = await getDocs(q)
+    const allGames = querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+      createdAt: doc.data().createdAt.toDate(),
+      finishedAt: doc.data().finishedAt?.toDate()
+    })) as Game[]
+
+    // Filter games where user is creator OR player
+    return allGames.filter(
+      (game) =>
+        game.createdBy === userId ||
+        game.players.some((player) => player.userId === userId)
+    )
+  } catch (error) {
+    console.error('Error getting all user games:', error)
+    throw error
+  }
+}
+
+// Get games where user is invited as a player (not creator)
+export const getInvitedGames = async (userId: string): Promise<Game[]> => {
+  try {
+    const q = query(collection(db, 'games'), orderBy('createdAt', 'desc'))
+
+    const querySnapshot = await getDocs(q)
+    const allGames = querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+      createdAt: doc.data().createdAt.toDate(),
+      finishedAt: doc.data().finishedAt?.toDate()
+    })) as Game[]
+
+    // Filter games where user is a player but not the creator
+    return allGames.filter(
+      (game) =>
+        game.createdBy !== userId &&
+        game.players.some((player) => player.userId === userId)
+    )
+  } catch (error) {
+    console.error('Error getting invited games:', error)
+    throw error
+  }
+}
+
 // Real-time game updates
 export const subscribeToGame = (
   gameId: string,
@@ -460,5 +512,52 @@ export const getUserById = async (userId: string): Promise<User | null> => {
   } catch (error) {
     console.error('Error getting user by ID:', error)
     throw error
+  }
+}
+
+// Calculate comprehensive user statistics including invited games
+export const calculateUserStats = async (userId: string) => {
+  try {
+    const allGames = await getAllUserGames(userId)
+    const finishedGames = allGames.filter((game) => game.status === 'finished')
+
+    let totalStrokes = 0
+    let gamesCompleted = 0
+    let holesInOne = 0
+
+    finishedGames.forEach((game) => {
+      const playerScores = game.scores[userId]
+      if (playerScores && playerScores.length > 0) {
+        const gameTotal = playerScores.reduce((sum, score) => sum + score, 0)
+        if (gameTotal > 0) {
+          // Only count games where user actually played
+          totalStrokes += gameTotal
+          gamesCompleted++
+          holesInOne += playerScores.filter((score) => score === 1).length
+        }
+      }
+    })
+
+    return {
+      gamesPlayed: gamesCompleted,
+      totalStrokes,
+      averageScore:
+        gamesCompleted > 0
+          ? Math.round((totalStrokes / gamesCompleted) * 100) / 100
+          : 0,
+      holesInOne,
+      gamesCreated: allGames.filter((game) => game.createdBy === userId).length,
+      gamesAsGuest: allGames.filter((game) => game.createdBy !== userId).length
+    }
+  } catch (error) {
+    console.error('Error calculating user stats:', error)
+    return {
+      gamesPlayed: 0,
+      totalStrokes: 0,
+      averageScore: 0,
+      holesInOne: 0,
+      gamesCreated: 0,
+      gamesAsGuest: 0
+    }
   }
 }
