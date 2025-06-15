@@ -6,7 +6,7 @@ import { getUserGames } from '@/lib/db'
 import { Game } from '@/types'
 import Navbar from '@/components/Navbar'
 import UserStats from '@/components/UserStats'
-import UsernameEditor from '@/components/UsernameEditor'
+import DiscreteUsernameEditor from '@/components/DiscreteUsernameEditor'
 import Link from 'next/link'
 import {
   User,
@@ -116,14 +116,19 @@ export default function ProfilePage() {
               <h1 className="text-lg font-bold text-gray-900 truncate">
                 {user.name}
               </h1>
-              <p className="text-sm text-gray-600 truncate">{user.email}</p>
+              {/* <p className="text-sm text-gray-400 font-mono truncate">
+                @{user.username}
+              </p> */}
+              <DiscreteUsernameEditor />
+
+              {/* <p className="text-sm text-gray-600 truncate">{user.email}</p>
               <p className="text-xs text-gray-500">
                 Miembro desde{' '}
                 {new Date(user.createdAt).toLocaleDateString('es-ES', {
                   year: 'numeric',
                   month: 'short'
                 })}
-              </p>
+              </p> */}
             </div>
             <div className="text-center">
               <div className="text-xl font-bold text-green-600">
@@ -134,9 +139,7 @@ export default function ProfilePage() {
           </div>
 
           {/* Username Section */}
-          <div className="border-t border-gray-100 pt-4">
-            <UsernameEditor />
-          </div>
+          <div className="border-t border-gray-100 pt-4"></div>
         </div>
 
         {/* Stats Grid */}

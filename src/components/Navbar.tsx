@@ -90,9 +90,12 @@ const Navbar: React.FC = () => {
                 className="flex items-center space-x-1 px-2 lg:px-3 py-2 rounded-md text-sm font-medium hover:bg-green-100 hover:text-green-700 transition-colors"
               >
                 <User size={18} />
-                <span className="hidden lg:inline truncate max-w-20">
-                  {user.name}
-                </span>
+                <div className="hidden lg:block">
+                  <div className="truncate max-w-24 text-sm">{user.name}</div>
+                  <div className="truncate max-w-24 text-xs text-gray-500 font-mono">
+                    @{user.username}
+                  </div>
+                </div>
               </Link>
 
               <button
@@ -175,7 +178,12 @@ const Navbar: React.FC = () => {
                   className="flex items-center space-x-3 px-3 py-3 rounded-md text-base font-medium hover:bg-gray-100 transition-colors active:bg-gray-100 touch-manipulation"
                 >
                   <User size={20} />
-                  <span>{user.name}</span>
+                  <div>
+                    <div className="text-base">{user.name}</div>
+                    <div className="text-sm text-gray-500 font-mono">
+                      @{user.username}
+                    </div>
+                  </div>
                 </Link>
 
                 <button
