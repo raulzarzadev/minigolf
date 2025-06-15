@@ -8,15 +8,7 @@ import Navbar from '@/components/Navbar'
 import UserStats from '@/components/UserStats'
 import DiscreteUsernameEditor from '@/components/DiscreteUsernameEditor'
 import Link from 'next/link'
-import {
-  User,
-  Trophy,
-  Target,
-  Clock,
-  Play,
-  Flag,
-  TrendingUp
-} from 'lucide-react'
+import { User, Clock, Play, Flag } from 'lucide-react'
 
 export default function ProfilePage() {
   const { user, loading } = useAuth()
