@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { User } from '@/types'
 import { getUserGames } from '@/lib/db'
-import { Trophy, Target, TrendingUp, Star, Award } from 'lucide-react'
+import { Trophy, Target, TrendingUp, Star, Award, Flag } from 'lucide-react'
 
 interface UserStatsProps {
   user: User
@@ -296,7 +296,7 @@ const UserStats: React.FC<UserStatsProps> = ({ user }) => {
       ) : (
         <>
           {/* Main Stats Grid */}
-          <div className="grid grid-cols-1 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
             <div className="bg-white rounded-lg border border-gray-200 p-3">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
@@ -335,6 +335,34 @@ const UserStats: React.FC<UserStatsProps> = ({ user }) => {
                     {stats.winRate}%
                   </div>
                   <div className="text-xs text-gray-500">Tasa de victoria</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg border border-gray-200 p-3">
+              <div className="flex items-center space-x-2">
+                <div className="bg-green-100 rounded-lg p-2">
+                  <Target className="h-4 w-4 text-green-600" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-lg font-bold text-gray-900">
+                    {stats.holesInOne}
+                  </div>
+                  <div className="text-xs text-gray-500">Hole-in-1</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg border border-gray-200 p-3">
+              <div className="flex items-center space-x-2">
+                <div className="bg-purple-100 rounded-lg p-2">
+                  <Flag className="h-4 w-4 text-purple-600" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-lg font-bold text-gray-900">
+                    {stats.bestGame || '--'}
+                  </div>
+                  <div className="text-xs text-gray-500">Mejor</div>
                 </div>
               </div>
             </div>

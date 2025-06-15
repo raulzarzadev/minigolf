@@ -116,19 +116,8 @@ export default function ProfilePage() {
               <h1 className="text-lg font-bold text-gray-900 truncate">
                 {user.name}
               </h1>
-              {/* <p className="text-sm text-gray-400 font-mono truncate">
-                @{user.username}
-              </p> */}
-              <DiscreteUsernameEditor />
 
-              {/* <p className="text-sm text-gray-600 truncate">{user.email}</p>
-              <p className="text-xs text-gray-500">
-                Miembro desde{' '}
-                {new Date(user.createdAt).toLocaleDateString('es-ES', {
-                  year: 'numeric',
-                  month: 'short'
-                })}
-              </p> */}
+              <DiscreteUsernameEditor />
             </div>
             <div className="text-center">
               <div className="text-xl font-bold text-green-600">
@@ -137,69 +126,11 @@ export default function ProfilePage() {
               <div className="text-xs text-gray-500">Partidas</div>
             </div>
           </div>
-
-          {/* Username Section */}
-          <div className="border-t border-gray-100 pt-4"></div>
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 gap-3 mb-4">
-          <div className="bg-white rounded-lg border border-gray-200 p-3">
-            <div className="flex items-center space-x-2">
-              <div className="bg-green-100 rounded-lg p-2">
-                <Trophy className="h-4 w-4 text-green-600" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="text-lg font-bold text-gray-900">
-                  {stats.completedGames}
-                </div>
-                <div className="text-xs text-gray-500">Completadas</div>
-              </div>
-            </div>
-          </div>
 
-          <div className="bg-white rounded-lg border border-gray-200 p-3">
-            <div className="flex items-center space-x-2">
-              <div className="bg-green-100 rounded-lg p-2">
-                <TrendingUp className="h-4 w-4 text-green-600" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="text-lg font-bold text-gray-900">
-                  {stats.averageScore}
-                </div>
-                <div className="text-xs text-gray-500">Promedio</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg border border-gray-200 p-3">
-            <div className="flex items-center space-x-2">
-              <div className="bg-green-100 rounded-lg p-2">
-                <Target className="h-4 w-4 text-green-600" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="text-lg font-bold text-gray-900">
-                  {stats.holesInOne}
-                </div>
-                <div className="text-xs text-gray-500">Hole-in-1</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg border border-gray-200 p-3">
-            <div className="flex items-center space-x-2">
-              <div className="bg-purple-100 rounded-lg p-2">
-                <Flag className="h-4 w-4 text-purple-600" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="text-lg font-bold text-gray-900">
-                  {stats.bestGame || '--'}
-                </div>
-                <div className="text-xs text-gray-500">Mejor</div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <UserStats user={user} />
 
         {/* Games History */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
