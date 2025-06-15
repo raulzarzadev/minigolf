@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
 import { AuthProvider } from '@/contexts/AuthContext'
+import LogoPreloader from '@/components/LogoPreloader'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -47,10 +48,21 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="es">
+      <head>
+        <link
+          rel="preload"
+          href="/logo-baja-mini-golf.png"
+          as="image"
+          type="image/png"
+        />
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#059669" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <LogoPreloader />
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
