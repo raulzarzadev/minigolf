@@ -22,7 +22,8 @@ describe('AuthForm component', () => {
       loading: false,
       firebaseError: null,
       signInWithGoogle: jest.fn(),
-      logout: jest.fn()
+      logout: jest.fn(),
+      updateUsername: jest.fn()
     })
 
     render(<AuthForm />)
@@ -44,7 +45,8 @@ describe('AuthForm component', () => {
       loading: false,
       firebaseError: null,
       signInWithGoogle: jest.fn(),
-      logout: jest.fn()
+      logout: jest.fn(),
+      updateUsername: jest.fn()
     })
 
     render(<AuthForm />)
@@ -66,7 +68,8 @@ describe('AuthForm component', () => {
       loading: false,
       firebaseError: null,
       signInWithGoogle: mockSignInWithGoogle,
-      logout: jest.fn()
+      logout: jest.fn(),
+      updateUsername: jest.fn()
     })
 
     render(<AuthForm />)
@@ -90,7 +93,8 @@ describe('AuthForm component', () => {
       loading: false,
       firebaseError: null,
       signInWithGoogle: mockSignInWithGoogle,
-      logout: jest.fn()
+      logout: jest.fn(),
+      updateUsername: jest.fn()
     })
 
     render(<AuthForm />)
@@ -114,7 +118,8 @@ describe('AuthForm component', () => {
       loading: false,
       firebaseError: null,
       signInWithGoogle: jest.fn(),
-      logout: jest.fn()
+      logout: jest.fn(),
+      updateUsername: jest.fn()
     })
 
     render(<AuthForm />)
@@ -135,7 +140,8 @@ describe('AuthForm component', () => {
       loading: false,
       firebaseError: null,
       signInWithGoogle: jest.fn(),
-      logout: jest.fn()
+      logout: jest.fn(),
+      updateUsername: jest.fn()
     })
 
     render(<AuthForm />)

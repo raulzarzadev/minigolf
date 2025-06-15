@@ -9,16 +9,19 @@ jest.mock('@/contexts/AuthContext', () => ({
 
 // Importar el mock
 import { useAuth } from '@/contexts/AuthContext'
+import { User } from '@/types'
 const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>
 
 // Mock user object
-const mockUser = {
+const mockUser: User = {
   id: '123',
   name: 'Test User',
   email: 'test@example.com',
   createdAt: new Date(),
   gamesPlayed: 0,
-  averageScore: 0
+  averageScore: 0,
+  username: 'testuser',
+  isAdmin: false
 }
 
 describe('Navbar component', () => {
@@ -33,7 +36,8 @@ describe('Navbar component', () => {
       loading: false,
       firebaseError: null,
       signInWithGoogle: jest.fn(),
-      logout: jest.fn()
+      logout: jest.fn(),
+      updateUsername: jest.fn()
     })
 
     const { container } = render(<Navbar />)
@@ -47,7 +51,8 @@ describe('Navbar component', () => {
       loading: false,
       firebaseError: null,
       signInWithGoogle: jest.fn(),
-      logout: jest.fn()
+      logout: jest.fn(),
+      updateUsername: jest.fn()
     })
 
     render(<Navbar />)
@@ -68,7 +73,8 @@ describe('Navbar component', () => {
       loading: false,
       firebaseError: null,
       signInWithGoogle: jest.fn(),
-      logout: jest.fn()
+      logout: jest.fn(),
+      updateUsername: jest.fn()
     })
 
     render(<Navbar />)
@@ -84,7 +90,8 @@ describe('Navbar component', () => {
       loading: false,
       firebaseError: null,
       signInWithGoogle: jest.fn(),
-      logout: jest.fn()
+      logout: jest.fn(),
+      updateUsername: jest.fn()
     })
 
     render(<Navbar />)
@@ -110,7 +117,8 @@ describe('Navbar component', () => {
       loading: false,
       firebaseError: null,
       signInWithGoogle: jest.fn(),
-      logout: jest.fn()
+      logout: jest.fn(),
+      updateUsername: jest.fn()
     })
 
     render(<Navbar />)
@@ -126,7 +134,8 @@ describe('Navbar component', () => {
       loading: false,
       firebaseError: null,
       signInWithGoogle: jest.fn(),
-      logout: jest.fn()
+      logout: jest.fn(),
+      updateUsername: jest.fn()
     })
 
     render(<Navbar />)

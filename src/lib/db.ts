@@ -683,7 +683,7 @@ export const getAllUsersRanking = async () => {
 
     for (const userDoc of usersSnapshot.docs) {
       const userData = userDoc.data()
-      
+
       let totalStrokes = 0
       let totalHoles = 0
       let holesInOne = 0
@@ -693,49 +693,69 @@ export const getAllUsersRanking = async () => {
       // Procesar todas las partidas para encontrar las del usuario
       gamesSnapshot.docs.forEach((gameDoc) => {
         const gameData = gameDoc.data()
-        
+
         // Verificar si el usuario participó en esta partida (como creador o invitado)
         const isCreator = gameData.createdBy === userDoc.id
-        const isParticipant = gameData.players?.some((player: { userId?: string }) => 
-          player.userId === userDoc.id
+        const isParticipant = gameData.players?.some(
+          (player: { userId?: string }) => player.userId === userDoc.id
         )
 
         if (isCreator || isParticipant) {
           // Buscar las puntuaciones del usuario en la partida
-          let userPlayerId = null
-          
+          let userPlayerId: string | null = null
+
           if (isCreator) {
             // Si es el creador, buscar su ID en los players o usar directamente su userId
-            const creatorPlayer = gameData.players?.find((player: { userId?: string }) => 
-              player.userId === userDoc.id
+            const creatorPlayer = gameData.players?.find(
+              (player: { userId?: string }) => player.userId === userDoc.id
             )
             userPlayerId = creatorPlayer?.id || userDoc.id
           } else {
             // Si es participante, encontrar su player ID
-            const participantPlayer = gameData.players?.find((player: { userId?: string }) => 
-              player.userId === userDoc.id
+            const participantPlayer = gameData.players?.find(
+              (player: { userId?: string }) => player.userId === userDoc.id
             )
             userPlayerId = participantPlayer?.id
           }
 
           // Verificar si tiene puntuaciones registradas
-          if (userPlayerId && gameData.scores && gameData.scores[userPlayerId]) {
+          if (
+            userPlayerId &&
+            gameData.scores &&
+            gameData.scores[userPlayerId]
+          ) {
             totalGames++
             const userScores = gameData.scores[userPlayerId]
-            
-            totalStrokes += userScores.reduce((sum: number, score: number) => sum + score, 0)
+
+            totalStrokes += userScores.reduce(
+              (sum: number, score: number) => sum + score,
+              0
+            )
             totalHoles += userScores.length
-            holesInOne += userScores.filter((score: number) => score === 1).length
+            holesInOne += userScores.filter(
+              (score: number) => score === 1
+            ).length
 
             // Determinar si ganó la partida (menor puntuación total)
-            const userTotalScore = userScores.reduce((sum: number, score: number) => sum + score, 0)
-            
+            const userTotalScore = userScores.reduce(
+              (sum: number, score: number) => sum + score,
+              0
+            )
+
             // Obtener puntuaciones de otros jugadores
             const otherPlayerScores = Object.entries(gameData.scores)
               .filter(([playerId]) => playerId !== userPlayerId)
-              .map(([, scores]) => (scores as number[]).reduce((sum: number, score: number) => sum + score, 0))
-            
-            if (otherPlayerScores.length === 0 || userTotalScore <= Math.min(...otherPlayerScores)) {
+              .map(([, scores]) =>
+                (scores as number[]).reduce(
+                  (sum: number, score: number) => sum + score,
+                  0
+                )
+              )
+
+            if (
+              otherPlayerScores.length === 0 ||
+              userTotalScore <= Math.min(...otherPlayerScores)
+            ) {
               gamesWon++
             }
           }
@@ -753,7 +773,8 @@ export const getAllUsersRanking = async () => {
       rankingUsers.push({
         id: userDoc.id,
         name: userData.name || '',
-        username: userData.username || userData.email?.split('@')[0] || 'Usuario',
+        username:
+          userData.username || userData.email?.split('@')[0] || 'Usuario',
         gamesPlayed: totalGames,
         averageScore: averageScore,
         totalStrokes: totalStrokes,
