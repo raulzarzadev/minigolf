@@ -40,15 +40,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [firebaseError, setFirebaseError] = useState<string | null>(null)
 
   useEffect(() => {
+    let mounted = true
+
     try {
       const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
         try {
-          if (firebaseUser) {
+          if (firebaseUser && mounted) {
             setFirebaseUser(firebaseUser)
 
             // Get user data from Firestore
             const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid))
-            if (userDoc.exists()) {
+            if (userDoc.exists() && mounted) {
               const userData = userDoc.data()
               setUser({
                 id: firebaseUser.uid,
@@ -59,35 +61,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                 averageScore: userData.averageScore || 0
               })
             }
-          } else {
+          } else if (mounted) {
             setFirebaseUser(null)
             setUser(null)
           }
-          setFirebaseError(null)
+
+          if (mounted) {
+            setFirebaseError(null)
+          }
         } catch (error) {
           console.error('Error in auth state change:', error)
-          setFirebaseError(
-            error instanceof Error ? error.message : 'Error de autenticación'
-          )
+          if (mounted) {
+            setFirebaseError(
+              error instanceof Error ? error.message : 'Error de autenticación'
+            )
+          }
         } finally {
-          setLoading(false)
+          if (mounted) {
+            setLoading(false)
+          }
         }
       })
 
-      return () => unsubscribe()
+      return () => {
+        mounted = false
+        unsubscribe()
+      }
     } catch (error) {
       console.error('Error initializing Firebase auth:', error)
-      setFirebaseError(
-        error instanceof Error
-          ? error.message
-          : 'Error de configuración de Firebase'
-      )
-      setLoading(false)
+      if (mounted) {
+        setFirebaseError(
+          error instanceof Error
+            ? error.message
+            : 'Error de configuración de Firebase'
+        )
+        setLoading(false)
+      }
     }
   }, [])
 
   const signInWithGoogle = async () => {
     try {
+      setLoading(true)
       const provider = new GoogleAuthProvider()
       const result = await signInWithPopup(auth, provider)
 
@@ -103,9 +118,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         }
         await setDoc(doc(db, 'users', result.user.uid), userData)
       }
+
+      // Force refresh user data after creation/login
+      const updatedUserDoc = await getDoc(doc(db, 'users', result.user.uid))
+      if (updatedUserDoc.exists()) {
+        const userData = updatedUserDoc.data()
+        setUser({
+          id: result.user.uid,
+          name: userData.name,
+          email: userData.email,
+          createdAt: userData.createdAt.toDate(),
+          gamesPlayed: userData.gamesPlayed || 0,
+          averageScore: userData.averageScore || 0
+        })
+      }
+
+      setFirebaseUser(result.user)
     } catch (error) {
       console.error('Error signing in with Google:', error)
       throw error
+    } finally {
+      setLoading(false)
     }
   }
 

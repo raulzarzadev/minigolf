@@ -1,30 +1,56 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import Logo from './Logo'
 
 const AuthForm: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isSigningIn, setIsSigningIn] = useState(false)
 
-  const { signInWithGoogle } = useAuth()
+  const { signInWithGoogle, loading: authLoading, user } = useAuth()
+
+  // Si el usuario está presente, significa que ya se autenticó
+  useEffect(() => {
+    if (user) {
+      setIsSigningIn(false)
+      setIsLoading(false)
+    }
+  }, [user])
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true)
+    setIsSigningIn(true)
     setError(null)
 
     try {
       await signInWithGoogle()
+      // El usuario debería ser redirigido automáticamente por el AuthContext
     } catch (error) {
       const errorMessage =
         error instanceof Error
           ? error.message
           : 'Error al iniciar sesión con Google'
       setError(errorMessage)
+      setIsSigningIn(false)
     } finally {
       setIsLoading(false)
     }
+  }
+
+  // Mostrar spinner si está cargando la autenticación o el proceso de login
+  if (authLoading || isSigningIn) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">
+            {isSigningIn ? 'Iniciando sesión...' : 'Cargando...'}
+          </p>
+        </div>
+      </div>
+    )
   }
 
   return (
