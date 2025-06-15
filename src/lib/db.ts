@@ -663,3 +663,122 @@ export const getUserByUsername = async (
     return null
   }
 }
+
+export const getAllUsersRanking = async () => {
+  try {
+    // Obtener todos los usuarios
+    const usersRef = collection(db, 'users')
+    const usersQuery = query(usersRef, orderBy('createdAt', 'desc'))
+    const usersSnapshot = await getDocs(usersQuery)
+
+    // Obtener todas las partidas finalizadas de una vez
+    const gamesQuery = query(
+      collection(db, 'games'),
+      where('status', '==', 'finished'),
+      orderBy('finishedAt', 'desc')
+    )
+    const gamesSnapshot = await getDocs(gamesQuery)
+
+    const rankingUsers = []
+
+    for (const userDoc of usersSnapshot.docs) {
+      const userData = userDoc.data()
+      
+      let totalStrokes = 0
+      let totalHoles = 0
+      let holesInOne = 0
+      let gamesWon = 0
+      let totalGames = 0
+
+      // Procesar todas las partidas para encontrar las del usuario
+      gamesSnapshot.docs.forEach((gameDoc) => {
+        const gameData = gameDoc.data()
+        
+        // Verificar si el usuario participó en esta partida (como creador o invitado)
+        const isCreator = gameData.createdBy === userDoc.id
+        const isParticipant = gameData.players?.some((player: { userId?: string }) => 
+          player.userId === userDoc.id
+        )
+
+        if (isCreator || isParticipant) {
+          // Buscar las puntuaciones del usuario en la partida
+          let userPlayerId = null
+          
+          if (isCreator) {
+            // Si es el creador, buscar su ID en los players o usar directamente su userId
+            const creatorPlayer = gameData.players?.find((player: { userId?: string }) => 
+              player.userId === userDoc.id
+            )
+            userPlayerId = creatorPlayer?.id || userDoc.id
+          } else {
+            // Si es participante, encontrar su player ID
+            const participantPlayer = gameData.players?.find((player: { userId?: string }) => 
+              player.userId === userDoc.id
+            )
+            userPlayerId = participantPlayer?.id
+          }
+
+          // Verificar si tiene puntuaciones registradas
+          if (userPlayerId && gameData.scores && gameData.scores[userPlayerId]) {
+            totalGames++
+            const userScores = gameData.scores[userPlayerId]
+            
+            totalStrokes += userScores.reduce((sum: number, score: number) => sum + score, 0)
+            totalHoles += userScores.length
+            holesInOne += userScores.filter((score: number) => score === 1).length
+
+            // Determinar si ganó la partida (menor puntuación total)
+            const userTotalScore = userScores.reduce((sum: number, score: number) => sum + score, 0)
+            
+            // Obtener puntuaciones de otros jugadores
+            const otherPlayerScores = Object.entries(gameData.scores)
+              .filter(([playerId]) => playerId !== userPlayerId)
+              .map(([, scores]) => (scores as number[]).reduce((sum: number, score: number) => sum + score, 0))
+            
+            if (otherPlayerScores.length === 0 || userTotalScore <= Math.min(...otherPlayerScores)) {
+              gamesWon++
+            }
+          }
+        }
+      })
+
+      // Solo incluir usuarios que hayan jugado al menos una partida
+      if (totalGames === 0) {
+        continue
+      }
+
+      const averageScore = totalHoles > 0 ? totalStrokes / totalHoles : 0
+      const winRate = totalGames > 0 ? gamesWon / totalGames : 0
+
+      rankingUsers.push({
+        id: userDoc.id,
+        name: userData.name || '',
+        username: userData.username || userData.email?.split('@')[0] || 'Usuario',
+        gamesPlayed: totalGames,
+        averageScore: averageScore,
+        totalStrokes: totalStrokes,
+        holesInOne: holesInOne,
+        winRate: winRate,
+        position: 0 // Se calculará después de ordenar
+      })
+    }
+
+    // Ordenar por promedio de golpes (menor es mejor)
+    rankingUsers.sort((a, b) => {
+      if (a.averageScore === 0 && b.averageScore === 0) return 0
+      if (a.averageScore === 0) return 1
+      if (b.averageScore === 0) return -1
+      return a.averageScore - b.averageScore
+    })
+
+    // Asignar posiciones
+    rankingUsers.forEach((user, index) => {
+      user.position = index + 1
+    })
+
+    return rankingUsers
+  } catch (error) {
+    console.error('Error getting users ranking:', error)
+    throw error
+  }
+}

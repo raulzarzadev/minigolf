@@ -11,7 +11,8 @@ import {
   Plus,
   Menu,
   X,
-  Settings
+  Settings,
+  Medal
 } from 'lucide-react'
 import Logo from './Logo'
 
@@ -64,6 +65,14 @@ const Navbar: React.FC = () => {
             >
               <Plus size={18} />
               <span className="hidden lg:inline">Nueva Partida</span>
+            </Link>
+
+            <Link
+              href="/ranking"
+              className="flex items-center space-x-1 px-2 lg:px-3 py-2 rounded-md text-sm font-medium hover:bg-yellow-100 hover:text-yellow-700 transition-colors"
+            >
+              <Medal size={18} />
+              <span className="hidden lg:inline">Ranking</span>
             </Link>
 
             <Link
@@ -140,6 +149,15 @@ const Navbar: React.FC = () => {
               >
                 <Plus size={20} />
                 <span>Nueva Partida</span>
+              </Link>
+
+              <Link
+                href="/ranking"
+                onClick={closeMobileMenu}
+                className="flex items-center space-x-3 px-3 py-3 rounded-md text-base font-medium hover:bg-yellow-100 transition-colors active:bg-yellow-100 touch-manipulation"
+              >
+                <Medal size={20} />
+                <span>Ranking</span>
               </Link>
 
               <Link

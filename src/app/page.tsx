@@ -98,6 +98,24 @@ export default function Home() {
             </div>
           </Link>
 
+          <Link href="/ranking" className="group">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 hover:shadow-md transition-all group-hover:border-yellow-500 active:scale-95 touch-manipulation">
+              <div className="flex flex-col items-center text-center space-y-2">
+                <div className="bg-yellow-100 rounded-lg p-2">
+                  <Trophy className="h-5 w-5 text-yellow-600" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-gray-900">
+                    Ranking
+                  </h3>
+                  <p className="text-xs text-gray-500">
+                    Mejores jugadores
+                  </p>
+                </div>
+              </div>
+            </div>
+          </Link>
+
           <Link href="/tournaments" className="group">
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 hover:shadow-md transition-all group-hover:border-gray-400 active:scale-95 touch-manipulation">
               <div className="flex flex-col items-center text-center space-y-2">
