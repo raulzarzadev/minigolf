@@ -8,9 +8,10 @@ import {
   GoogleAuthProvider,
   signOut
 } from 'firebase/auth'
-import { doc, getDoc, setDoc } from 'firebase/firestore'
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore'
 import { auth, db } from '@/lib/firebase'
 import { User } from '@/types'
+import { generateUniqueUsername, updateUserUsername } from '@/lib/db'
 
 interface AuthContextType {
   user: User | null
@@ -19,6 +20,7 @@ interface AuthContextType {
   firebaseError: string | null
   signInWithGoogle: () => Promise<void>
   logout: () => Promise<void>
+  updateUsername: (newUsername: string) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -52,9 +54,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid))
             if (userDoc.exists() && mounted) {
               const userData = userDoc.data()
+
+              // Check if user needs username migration
+              if (!userData.username) {
+                console.log(
+                  'User needs username migration, generating username...'
+                )
+                const username = await generateUniqueUsername(
+                  userData.name || firebaseUser.email || 'user'
+                )
+
+                // Update user document with username
+                const userRef = doc(db, 'users', firebaseUser.uid)
+                await updateDoc(userRef, { username })
+
+                // Update local data
+                userData.username = username
+              }
+
               setUser({
                 id: firebaseUser.uid,
                 name: userData.name,
+                username: userData.username,
                 email: userData.email,
                 createdAt: userData.createdAt.toDate(),
                 gamesPlayed: userData.gamesPlayed || 0,
@@ -110,8 +131,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       // Check if user exists in Firestore, if not create them
       const userDoc = await getDoc(doc(db, 'users', result.user.uid))
       if (!userDoc.exists()) {
+        // Generate unique username
+        const username = await generateUniqueUsername(
+          result.user.displayName || result.user.email || 'user'
+        )
+
         const userData: Omit<User, 'id'> = {
           name: result.user.displayName || 'Usuario',
+          username: username,
           email: result.user.email || '',
           createdAt: new Date(),
           gamesPlayed: 0,
@@ -128,6 +155,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         setUser({
           id: result.user.uid,
           name: userData.name,
+          username: userData.username,
           email: userData.email,
           createdAt: userData.createdAt.toDate(),
           gamesPlayed: userData.gamesPlayed || 0,
@@ -154,13 +182,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }
 
+  const updateUsername = async (newUsername: string) => {
+    try {
+      if (!user) {
+        throw new Error('No hay usuario autenticado')
+      }
+
+      await updateUserUsername(user.id, newUsername)
+
+      // Update local user state
+      setUser((prev) => (prev ? { ...prev, username: newUsername } : null))
+    } catch (error) {
+      console.error('Error updating username:', error)
+      throw error
+    }
+  }
+
   const value = {
     user,
     firebaseUser,
     loading,
     firebaseError,
     signInWithGoogle,
-    logout
+    logout,
+    updateUsername
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

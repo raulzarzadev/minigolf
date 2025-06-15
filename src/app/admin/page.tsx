@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { AdminStats, AdminUser, AdminGame } from '@/types'
 import { getAdminStats, getAdminUsers, getAdminGames } from '@/lib/admin'
 import { createSampleData } from '@/lib/sampleData'
+import { migrateExistingUsers, checkMigrationStatus } from '@/lib/migration'
 import AdminProtectedRoute from '@/components/AdminProtectedRoute'
 
 export default function AdminPanel() {
@@ -13,9 +14,9 @@ export default function AdminPanel() {
   const [users, setUsers] = useState<AdminUser[]>([])
   const [games, setGames] = useState<AdminGame[]>([])
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'games'>(
-    'overview'
-  )
+  const [activeTab, setActiveTab] = useState<
+    'overview' | 'users' | 'games' | 'migration'
+  >('overview')
 
   useEffect(() => {
     console.log('AdminPanel useEffect - user:', user)
@@ -102,12 +103,15 @@ export default function AdminPanel() {
               {[
                 { id: 'overview', label: 'Resumen' },
                 { id: 'users', label: 'Usuarios' },
-                { id: 'games', label: 'Partidas' }
+                { id: 'games', label: 'Partidas' },
+                { id: 'migration', label: 'Migración' }
               ].map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() =>
-                    setActiveTab(tab.id as 'overview' | 'users' | 'games')
+                    setActiveTab(
+                      tab.id as 'overview' | 'users' | 'games' | 'migration'
+                    )
                   }
                   className={`py-2 px-1 border-b-2 font-medium text-sm ${
                     activeTab === tab.id
@@ -135,6 +139,7 @@ export default function AdminPanel() {
           {activeTab === 'overview' && <OverviewTab stats={stats} />}
           {activeTab === 'users' && <UsersTab users={users} />}
           {activeTab === 'games' && <GamesTab games={games} />}
+          {activeTab === 'migration' && <MigrationTab />}
         </div>
       </div>
     </AdminProtectedRoute>
@@ -227,6 +232,9 @@ function UsersTab({ users }: { users: AdminUser[] }) {
                   Usuario
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Username
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Email
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -249,6 +257,11 @@ function UsersTab({ users }: { users: AdminUser[] }) {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">
                       {user.name}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-500 font-mono">
+                      @{user.username || 'Sin username'}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -376,6 +389,169 @@ function GamesTab({ games }: { games: AdminGame[] }) {
           </table>
         </div>
       </div>
+    </div>
+  )
+}
+
+function MigrationTab() {
+  const [migrationStatus, setMigrationStatus] = useState<{
+    totalUsers: number
+    usersWithUsername: number
+    needsMigration: boolean
+  } | null>(null)
+  const [migrating, setMigrating] = useState(false)
+  const [migrationResult, setMigrationResult] = useState<{
+    migratedCount: number
+    skippedCount: number
+  } | null>(null)
+
+  useEffect(() => {
+    loadMigrationStatus()
+  }, [])
+
+  const loadMigrationStatus = async () => {
+    try {
+      const status = await checkMigrationStatus()
+      setMigrationStatus(status)
+    } catch (error) {
+      console.error('Error loading migration status:', error)
+    }
+  }
+
+  const runMigration = async () => {
+    try {
+      setMigrating(true)
+      const result = await migrateExistingUsers()
+      setMigrationResult(result)
+      // Refresh status after migration
+      await loadMigrationStatus()
+    } catch (error) {
+      console.error('Migration failed:', error)
+      alert(
+        'Error durante la migración: ' +
+          (error instanceof Error ? error.message : 'Error desconocido')
+      )
+    } finally {
+      setMigrating(false)
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          Migración de Usernames
+        </h3>
+        <p className="text-gray-600 mb-6">
+          Esta herramienta permite migrar usuarios existentes para agregar
+          usernames únicos.
+        </p>
+      </div>
+
+      {/* Migration Status */}
+      <div className="bg-white p-6 rounded-lg border border-gray-200">
+        <h4 className="font-semibold text-gray-900 mb-3">
+          Estado de la Migración
+        </h4>
+
+        {migrationStatus ? (
+          <div className="space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600">Total de usuarios:</span>
+              <span className="font-semibold">
+                {migrationStatus.totalUsers}
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600">Usuarios con username:</span>
+              <span className="font-semibold">
+                {migrationStatus.usersWithUsername}
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600">Necesita migración:</span>
+              <span
+                className={`font-semibold ${
+                  migrationStatus.needsMigration
+                    ? 'text-orange-600'
+                    : 'text-green-600'
+                }`}
+              >
+                {migrationStatus.needsMigration ? 'Sí' : 'No'}
+              </span>
+            </div>
+
+            {migrationStatus.needsMigration && (
+              <div className="mt-4 p-3 bg-orange-50 border border-orange-200 rounded">
+                <p className="text-orange-800 text-sm">
+                  Hay{' '}
+                  {migrationStatus.totalUsers -
+                    migrationStatus.usersWithUsername}{' '}
+                  usuario(s) que necesitan username.
+                </p>
+              </div>
+            )}
+          </div>
+        ) : (
+          <p className="text-gray-500">Cargando estado...</p>
+        )}
+      </div>
+
+      {/* Migration Actions */}
+      <div className="bg-white p-6 rounded-lg border border-gray-200">
+        <h4 className="font-semibold text-gray-900 mb-3">Acciones</h4>
+
+        <div className="space-y-3">
+          <button
+            onClick={loadMigrationStatus}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Actualizar Estado
+          </button>
+
+          {migrationStatus?.needsMigration && (
+            <button
+              onClick={runMigration}
+              disabled={migrating}
+              className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {migrating ? 'Migrando...' : 'Ejecutar Migración'}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Migration Results */}
+      {migrationResult && (
+        <div className="bg-white p-6 rounded-lg border border-gray-200">
+          <h4 className="font-semibold text-gray-900 mb-3">
+            Resultado de la Migración
+          </h4>
+
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600">Usuarios migrados:</span>
+              <span className="font-semibold text-green-600">
+                {migrationResult.migratedCount}
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600">Usuarios omitidos:</span>
+              <span className="font-semibold text-gray-600">
+                {migrationResult.skippedCount}
+              </span>
+            </div>
+          </div>
+
+          {migrationResult.migratedCount > 0 && (
+            <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded">
+              <p className="text-green-800 text-sm">
+                ✅ Migración completada exitosamente.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }

@@ -561,3 +561,105 @@ export const calculateUserStats = async (userId: string) => {
     }
   }
 }
+
+// Username Management Functions
+export const generateUniqueUsername = async (
+  baseName: string
+): Promise<string> => {
+  try {
+    // Clean base name - remove spaces, special chars, convert to lowercase
+    const cleanBaseName = baseName
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '')
+      .substring(0, 15) // Limit length
+
+    let username = cleanBaseName
+    let counter = 1
+
+    // Keep trying until we find a unique username
+    while (await isUsernameTaken(username)) {
+      username = `${cleanBaseName}${counter}`
+      counter++
+
+      // Prevent infinite loop
+      if (counter > 9999) {
+        username = `${cleanBaseName}${Math.floor(Math.random() * 999999)}`
+        break
+      }
+    }
+
+    return username
+  } catch (error) {
+    console.error('Error generating unique username:', error)
+    // Fallback to random username
+    return `user${Math.floor(Math.random() * 999999)}`
+  }
+}
+
+export const isUsernameTaken = async (username: string): Promise<boolean> => {
+  try {
+    const usersRef = collection(db, 'users')
+    const q = query(usersRef, where('username', '==', username))
+    const querySnapshot = await getDocs(q)
+    return !querySnapshot.empty
+  } catch (error) {
+    console.error('Error checking username availability:', error)
+    return true // Assume taken on error to be safe
+  }
+}
+
+export const updateUserUsername = async (
+  userId: string,
+  newUsername: string
+): Promise<void> => {
+  try {
+    // Check if username is available
+    if (await isUsernameTaken(newUsername)) {
+      throw new Error('Username ya está en uso')
+    }
+
+    // Validate username format
+    if (!/^[a-z0-9_]{3,20}$/.test(newUsername)) {
+      throw new Error(
+        'Username debe tener entre 3-20 caracteres y solo puede contener letras minúsculas, números y guiones bajos'
+      )
+    }
+
+    const userRef = doc(db, 'users', userId)
+    await updateDoc(userRef, { username: newUsername })
+  } catch (error) {
+    console.error('Error updating username:', error)
+    throw error
+  }
+}
+
+export const getUserByUsername = async (
+  username: string
+): Promise<User | null> => {
+  try {
+    const usersRef = collection(db, 'users')
+    const q = query(usersRef, where('username', '==', username))
+    const querySnapshot = await getDocs(q)
+
+    if (querySnapshot.empty) {
+      return null
+    }
+
+    const userDoc = querySnapshot.docs[0]
+    const userData = userDoc.data()
+
+    return {
+      id: userDoc.id,
+      name: userData.name,
+      username: userData.username,
+      email: userData.email,
+      createdAt: userData.createdAt.toDate(),
+      gamesPlayed: userData.gamesPlayed || 0,
+      averageScore: userData.averageScore || 0,
+      isAdmin: userData.isAdmin || false
+    }
+  } catch (error) {
+    console.error('Error getting user by username:', error)
+    return null
+  }
+}

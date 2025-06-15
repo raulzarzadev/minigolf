@@ -6,6 +6,7 @@ import { getUserGames } from '@/lib/db'
 import { Game } from '@/types'
 import Navbar from '@/components/Navbar'
 import UserStats from '@/components/UserStats'
+import UsernameEditor from '@/components/UsernameEditor'
 import Link from 'next/link'
 import {
   User,
@@ -107,7 +108,7 @@ export default function ProfilePage() {
       <div className="max-w-7xl mx-auto py-3 px-3 sm:px-6 lg:px-8">
         {/* Profile Header */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-3 mb-4">
             <div className="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
               <User className="h-6 w-6 text-green-600" />
             </div>
@@ -130,6 +131,11 @@ export default function ProfilePage() {
               </div>
               <div className="text-xs text-gray-500">Partidas</div>
             </div>
+          </div>
+
+          {/* Username Section */}
+          <div className="border-t border-gray-100 pt-4">
+            <UsernameEditor />
           </div>
         </div>
 

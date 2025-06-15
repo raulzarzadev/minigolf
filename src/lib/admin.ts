@@ -142,12 +142,14 @@ export async function getAdminUsers(): Promise<AdminUser[]> {
       const adminUser: AdminUser = {
         id: doc.id,
         name: userData.name || '',
+        username: userData.username || '',
         email: userData.email || '',
         createdAt: userData.createdAt?.toDate
           ? userData.createdAt.toDate()
           : new Date(),
         gamesPlayed: userData.gamesPlayed || 0,
         averageScore: userData.averageScore || 0,
+        isAdmin: userData.isAdmin || false,
         lastLoginAt: userData.lastLoginAt?.toDate
           ? userData.lastLoginAt.toDate()
           : undefined,
