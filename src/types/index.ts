@@ -6,6 +6,7 @@ export interface User {
   createdAt: Date
   gamesPlayed: number
   averageScore: number
+  isAdmin?: boolean
 }
 
 // Player in a game (can be registered user or guest)
@@ -117,4 +118,58 @@ export interface UserStats {
   bestGame: number
   holesInOne: number
   tournamentsWon: number
+}
+
+// Admin panel types
+export interface AdminStats {
+  totalUsers: number
+  totalGames: number
+  totalTournaments: number
+  activeGames: number
+  todayGames: number
+  weeklyGames: number
+  monthlyGames: number
+}
+
+export interface AdminUser extends User {
+  lastLoginAt?: Date
+  isActive: boolean
+  gameHistory: {
+    gameId: string
+    finishedAt: Date
+    totalStrokes: number
+  }[]
+}
+
+export interface AdminGame extends Game {
+  duration?: number // in minutes
+  averageScore: number
+  playerCount: number
+}
+
+// Admin panel types
+export interface AdminStats {
+  totalUsers: number
+  totalGames: number
+  totalTournaments: number
+  activeGames: number
+  todayGames: number
+  weeklyGames: number
+  monthlyGames: number
+}
+
+export interface AdminUser extends User {
+  lastLoginAt?: Date
+  isActive: boolean
+  gameHistory: {
+    gameId: string
+    finishedAt: Date
+    totalStrokes: number
+  }[]
+}
+
+export interface AdminGame extends Game {
+  duration?: number // in minutes
+  averageScore: number
+  playerCount: number
 }

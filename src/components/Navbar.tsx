@@ -3,7 +3,16 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
-import { LogOut, User, Home, Trophy, Plus, Menu, X } from 'lucide-react'
+import {
+  LogOut,
+  User,
+  Home,
+  Trophy,
+  Plus,
+  Menu,
+  X,
+  Settings
+} from 'lucide-react'
 import Logo from './Logo'
 
 const Navbar: React.FC = () => {
@@ -64,6 +73,16 @@ const Navbar: React.FC = () => {
               <Trophy size={18} />
               <span className="hidden lg:inline">Torneos</span>
             </Link>
+
+            {user.isAdmin && (
+              <Link
+                href="/admin"
+                className="flex items-center space-x-1 px-2 lg:px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-100 hover:text-blue-700 transition-colors"
+              >
+                <Settings size={18} />
+                <span className="hidden lg:inline">Admin</span>
+              </Link>
+            )}
 
             <div className="flex items-center space-x-1 lg:space-x-4 border-l border-gray-300 pl-2 lg:pl-4 ml-2 lg:ml-4">
               <Link
@@ -137,6 +156,17 @@ const Navbar: React.FC = () => {
                 <Trophy size={20} />
                 <span>Mis Partidas</span>
               </Link>
+
+              {user.isAdmin && (
+                <Link
+                  href="/admin"
+                  onClick={closeMobileMenu}
+                  className="flex items-center space-x-3 px-3 py-3 rounded-md text-base font-medium hover:bg-blue-100 transition-colors active:bg-blue-100 touch-manipulation"
+                >
+                  <Settings size={20} />
+                  <span>Panel de Admin</span>
+                </Link>
+              )}
 
               <div className="border-t border-gray-300 pt-4 mt-4">
                 <Link

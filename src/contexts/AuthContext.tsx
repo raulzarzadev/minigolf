@@ -58,7 +58,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                 email: userData.email,
                 createdAt: userData.createdAt.toDate(),
                 gamesPlayed: userData.gamesPlayed || 0,
-                averageScore: userData.averageScore || 0
+                averageScore: userData.averageScore || 0,
+                isAdmin: userData.isAdmin || false
               })
             }
           } else if (mounted) {
@@ -114,7 +115,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           email: result.user.email || '',
           createdAt: new Date(),
           gamesPlayed: 0,
-          averageScore: 0
+          averageScore: 0,
+          isAdmin: false
         }
         await setDoc(doc(db, 'users', result.user.uid), userData)
       }
@@ -129,7 +131,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           email: userData.email,
           createdAt: userData.createdAt.toDate(),
           gamesPlayed: userData.gamesPlayed || 0,
-          averageScore: userData.averageScore || 0
+          averageScore: userData.averageScore || 0,
+          isAdmin: userData.isAdmin || false
         })
       }
 
