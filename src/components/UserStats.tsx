@@ -9,7 +9,7 @@ interface UserStatsProps {
   user: User
 }
 
-interface UserStatistics {
+export interface UserStatistics {
   totalGames: number
   gamesWon: number
   totalStrokes: number
@@ -267,78 +267,118 @@ const UserStats: React.FC<UserStatsProps> = ({ user }) => {
 
 export default UserStats
 
-export const MainUserStats = ({ stats }: { stats }) => {
+export type StatsList =
+  | 'totalGame'
+  | 'averagePerHole'
+  | 'winRate'
+  | 'holesInOne'
+  | 'bestGame'
+
+export const MainUserStats = ({
+  stats,
+  list = []
+}: {
+  stats?: UserStatistics | null
+  list?: StatsList[]
+}) => {
+  if (stats === undefined)
+    return (
+      <div>
+        <div className="text-center py-8">
+          <div className="text-gray-500">Cargando estadísticas...</div>
+        </div>
+      </div>
+    )
+  if (!stats) {
+    return (
+      <div className="text-center py-8">
+        <div className="text-gray-500">
+          No se pudieron cargar las estadísticas
+        </div>
+      </div>
+    )
+  }
   return (
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-      <div className="bg-white rounded-lg border border-gray-200 p-3">
-        <div className="flex items-center">
-          <div className="flex-shrink-0">
-            <Trophy className="h-5 w-5 text-green-600" />
-          </div>
-          <div className="ml-3">
-            <div className="text-lg font-bold text-gray-900">
-              {stats.totalGames}
+      {(list.length === 0 || list.includes('totalGame')) && (
+        <div className="bg-white rounded-lg border border-gray-200 p-3">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <Trophy className="h-5 w-5 text-green-600" />
             </div>
-            <div className="text-xs text-gray-500">Partidas jugadas</div>
+            <div className="ml-3">
+              <div className="text-lg font-bold text-gray-900">
+                {stats.totalGames}
+              </div>
+              <div className="text-xs text-gray-500">Partidas jugadas</div>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
-      <div className="bg-white rounded-lg border border-gray-200 p-3">
-        <div className="flex items-center">
-          <div className="flex-shrink-0">
-            <Target className="h-5 w-5 text-green-600" />
-          </div>
-          <div className="ml-3">
-            <div className="text-lg font-bold text-gray-900">
-              {stats.averagePerHole}
+      {(list.length === 0 || list.includes('averagePerHole')) && (
+        <div className="bg-white rounded-lg border border-gray-200 p-3">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <Target className="h-5 w-5 text-green-600" />
             </div>
-            <div className="text-xs text-gray-500">Promedio por hoyo</div>
+            <div className="ml-3">
+              <div className="text-lg font-bold text-gray-900">
+                {stats.averagePerHole}
+              </div>
+              <div className="text-xs text-gray-500">Promedio por hoyo</div>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
-      <div className="bg-white rounded-lg border border-gray-200 p-3">
-        <div className="flex items-center">
-          <div className="flex-shrink-0">
-            <TrendingUp className="h-5 w-5 text-blue-600" />
-          </div>
-          <div className="ml-3">
-            <div className="text-lg font-bold text-gray-900">
-              {stats.winRate}%
+      {(list.length === 0 || list.includes('winRate')) && (
+        <div className="bg-white rounded-lg border border-gray-200 p-3">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <TrendingUp className="h-5 w-5 text-blue-600" />
             </div>
-            <div className="text-xs text-gray-500">Tasa de victoria</div>
+            <div className="ml-3">
+              <div className="text-lg font-bold text-gray-900">
+                {stats.winRate}%
+              </div>
+              <div className="text-xs text-gray-500">Tasa de victoria</div>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
-      <div className="bg-white rounded-lg border border-gray-200 p-3">
-        <div className="flex items-center space-x-2">
-          <div className="bg-green-100 rounded-lg p-2">
-            <Target className="h-4 w-4 text-green-600" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="text-lg font-bold text-gray-900">
-              {stats.holesInOne}
+      {(list.length === 0 || list.includes('holesInOne')) && (
+        <div className="bg-white rounded-lg border border-gray-200 p-3">
+          <div className="flex items-center space-x-2">
+            <div className="bg-green-100 rounded-lg p-2">
+              <Target className="h-4 w-4 text-green-600" />
             </div>
-            <div className="text-xs text-gray-500">Hole-in-1</div>
+            <div className="min-w-0 flex-1">
+              <div className="text-lg font-bold text-gray-900">
+                {stats.holesInOne}
+              </div>
+              <div className="text-xs text-gray-500">Hole-in-1</div>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
-      <div className="bg-white rounded-lg border border-gray-200 p-3">
-        <div className="flex items-center space-x-2">
-          <div className="bg-purple-100 rounded-lg p-2">
-            <Flag className="h-4 w-4 text-purple-600" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="text-lg font-bold text-gray-900">
-              {stats.bestGame || '--'}
+      {(list.length === 0 || list.includes('bestGame')) && (
+        <div className="bg-white rounded-lg border border-gray-200 p-3">
+          <div className="flex items-center space-x-2">
+            <div className="bg-purple-100 rounded-lg p-2">
+              <Flag className="h-4 w-4 text-purple-600" />
             </div>
-            <div className="text-xs text-gray-500">Mejor</div>
+            <div className="min-w-0 flex-1">
+              <div className="text-lg font-bold text-gray-900">
+                {stats.bestGame || '--'}
+              </div>
+              <div className="text-xs text-gray-500">Mejor</div>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }

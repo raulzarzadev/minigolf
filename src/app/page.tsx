@@ -8,11 +8,17 @@ import Link from 'next/link'
 import { Plus, Trophy, BarChart3, Clock, Users, User } from 'lucide-react'
 import { Game } from '@/types'
 import { getAllUserGames } from '@/lib/db'
+import {
+  getUserStats,
+  MainUserStats,
+  UserStatistics
+} from '@/components/UserStats'
 
 export default function Home() {
   const { user, loading, firebaseError } = useAuth()
   const [recentGames, setRecentGames] = useState<Game[]>([])
   const [loadingGames, setLoadingGames] = useState(false)
+  const [stats, setStats] = useState<UserStatistics | null>()
 
   useEffect(() => {
     const loadRecentGames = async () => {
@@ -22,6 +28,8 @@ export default function Home() {
       }
 
       try {
+        const stats = await getUserStats({ userId: user.id })
+        setStats(stats)
         setLoadingGames(true)
         const userGames = await getAllUserGames(user.id)
         // Tomar solo las 3 partidas más recientes
@@ -141,24 +149,11 @@ export default function Home() {
           <h2 className="text-base font-semibold text-gray-900 mb-3">
             Tu actividad
           </h2>
-          <div className="grid grid-cols-3 gap-3">
-            <div className="text-center p-2 bg-green-600 rounded-lg">
-              <div className="text-xl font-bold text-white">
-                {user.gamesPlayed}
-              </div>
-              <div className="text-xs text-green-100 mt-1">Partidas</div>
-            </div>
-            <div className="text-center p-2 bg-gray-100 rounded-lg">
-              <div className="text-xl font-bold text-black">
-                {user.averageScore > 0 ? user.averageScore.toFixed(1) : '--'}
-              </div>
-              <div className="text-xs text-gray-500 mt-1">Promedio</div>
-            </div>
-            <div className="text-center p-2 bg-gray-200 rounded-lg">
-              <div className="text-xl font-bold text-black">--</div>
-              <div className="text-xs text-gray-500 mt-1">Ranking</div>
-            </div>
-          </div>
+
+          <MainUserStats
+            stats={stats}
+            list={['averagePerHole', 'holesInOne', 'winRate', 'totalGame']}
+          />
         </div>
         {/* Recent Games - Optimizado para móvil */}
         <div>
