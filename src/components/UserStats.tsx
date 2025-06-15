@@ -33,151 +33,12 @@ const UserStats: React.FC<UserStatsProps> = ({ user }) => {
   useEffect(() => {
     const loadUserStats = async () => {
       try {
-        const games = await getUserGames(user.id)
-
-        // Filter games by time range
-        const now = new Date()
-        const filteredGames = games.filter((game) => {
-          const gameDate = new Date(game.createdAt)
-          const diffTime = now.getTime() - gameDate.getTime()
-          const diffDays = diffTime / (1000 * 60 * 60 * 24)
-
-          switch (timeRange) {
-            case 'week':
-              return diffDays <= 7
-            case 'month':
-              return diffDays <= 30
-            case 'year':
-              return diffDays <= 365
-            default:
-              return true
-          }
-        })
-
-        const finishedGames = filteredGames.filter(
-          (game) => game.status === 'finished'
-        )
-
-        if (finishedGames.length === 0) {
-          setStats({
-            totalGames: 0,
-            gamesWon: 0,
-            totalStrokes: 0,
-            totalHoles: 0,
-            averagePerHole: 0,
-            bestGame: 0,
-            holesInOne: 0,
-            averageGameTime: 0,
-            favoriteGameType: null,
-            winRate: 0,
-            recentForm: []
+        getUserStats({ userId: user.id })
+          .then((stats) => setStats(stats))
+          .catch((error) => {
+            console.error('Error fetching user stats:', error)
+            setStats(null)
           })
-          setLoading(false)
-          return
-        }
-
-        let totalStrokes = 0
-        let totalHoles = 0
-        let holesInOne = 0
-        let gamesWon = 0
-        let totalGameTime = 0
-        let individualGames = 0
-        let multiplayerGames = 0
-        const recentGameResults: number[] = []
-
-        finishedGames.forEach((game) => {
-          const userPlayer = game.players.find((p) => p.userId === user.id)
-          if (!userPlayer) return
-
-          const playerScores = game.scores[userPlayer.id] || []
-          const validScores = playerScores.filter((score) => score > 0)
-
-          totalStrokes += validScores.reduce((sum, score) => sum + score, 0)
-          totalHoles += validScores.length
-          holesInOne += validScores.filter((score) => score === 1).length
-
-          // Check if user won this game (lowest score in multiplayer)
-          if (game.isMultiplayer) {
-            const allPlayerTotals = game.players.map((player) => {
-              const scores = game.scores[player.id] || []
-              return scores.reduce((sum, score) => sum + score, 0)
-            })
-            const userTotal = totalStrokes
-            const minScore = Math.min(...allPlayerTotals)
-            if (userTotal === minScore) {
-              gamesWon++
-            }
-            multiplayerGames++
-          } else {
-            // For individual games, consider "winning" as completing the game
-            if (validScores.length === game.holeCount) {
-              gamesWon++
-            }
-            individualGames++
-          }
-
-          // Calculate game duration
-          if (game.finishedAt) {
-            const duration =
-              game.finishedAt.getTime() - game.createdAt.getTime()
-            totalGameTime += duration
-          }
-
-          // Recent form (last 10 games)
-          if (recentGameResults.length < 10) {
-            const gameScore =
-              validScores.length > 0
-                ? validScores.reduce((sum, score) => sum + score, 0) /
-                  validScores.length
-                : 0
-            recentGameResults.push(gameScore)
-          }
-        })
-
-        const averagePerHole = totalHoles > 0 ? totalStrokes / totalHoles : 0
-        const bestGame = finishedGames.reduce((best, game) => {
-          const userPlayer = game.players.find((p) => p.userId === user.id)
-          if (!userPlayer) return best
-
-          const playerScores = game.scores[userPlayer.id] || []
-          const validScores = playerScores.filter((score) => score > 0)
-          const gameAverage =
-            validScores.length > 0
-              ? validScores.reduce((sum, score) => sum + score, 0) /
-                validScores.length
-              : 0
-
-          return gameAverage > 0 && (best === 0 || gameAverage < best)
-            ? gameAverage
-            : best
-        }, 0)
-
-        const averageGameTime =
-          finishedGames.length > 0 ? totalGameTime / finishedGames.length : 0
-
-        const favoriteGameType =
-          multiplayerGames > individualGames
-            ? 'multiplayer'
-            : individualGames > multiplayerGames
-            ? 'individual'
-            : null
-
-        const winRate =
-          finishedGames.length > 0 ? (gamesWon / finishedGames.length) * 100 : 0
-
-        setStats({
-          totalGames: finishedGames.length,
-          gamesWon,
-          totalStrokes,
-          totalHoles,
-          averagePerHole: Math.round(averagePerHole * 100) / 100,
-          bestGame: Math.round(bestGame * 100) / 100,
-          holesInOne,
-          averageGameTime: averageGameTime / (1000 * 60), // Convert to minutes
-          favoriteGameType,
-          winRate: Math.round(winRate * 10) / 10,
-          recentForm: recentGameResults.reverse()
-        })
       } catch (error) {
         console.error('Error loading user stats:', error)
       } finally {
@@ -296,78 +157,7 @@ const UserStats: React.FC<UserStatsProps> = ({ user }) => {
       ) : (
         <>
           {/* Main Stats Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-            <div className="bg-white rounded-lg border border-gray-200 p-3">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <Trophy className="h-5 w-5 text-green-600" />
-                </div>
-                <div className="ml-3">
-                  <div className="text-lg font-bold text-gray-900">
-                    {stats.totalGames}
-                  </div>
-                  <div className="text-xs text-gray-500">Partidas jugadas</div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg border border-gray-200 p-3">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <Target className="h-5 w-5 text-green-600" />
-                </div>
-                <div className="ml-3">
-                  <div className="text-lg font-bold text-gray-900">
-                    {stats.averagePerHole}
-                  </div>
-                  <div className="text-xs text-gray-500">Promedio por hoyo</div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg border border-gray-200 p-3">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <TrendingUp className="h-5 w-5 text-blue-600" />
-                </div>
-                <div className="ml-3">
-                  <div className="text-lg font-bold text-gray-900">
-                    {stats.winRate}%
-                  </div>
-                  <div className="text-xs text-gray-500">Tasa de victoria</div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg border border-gray-200 p-3">
-              <div className="flex items-center space-x-2">
-                <div className="bg-green-100 rounded-lg p-2">
-                  <Target className="h-4 w-4 text-green-600" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="text-lg font-bold text-gray-900">
-                    {stats.holesInOne}
-                  </div>
-                  <div className="text-xs text-gray-500">Hole-in-1</div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg border border-gray-200 p-3">
-              <div className="flex items-center space-x-2">
-                <div className="bg-purple-100 rounded-lg p-2">
-                  <Flag className="h-4 w-4 text-purple-600" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="text-lg font-bold text-gray-900">
-                    {stats.bestGame || '--'}
-                  </div>
-                  <div className="text-xs text-gray-500">Mejor</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
+          <MainUserStats stats={stats} />
           {/* Detailed Stats */}
           <div className="bg-white rounded-lg border border-gray-200 p-3">
             <h4 className="font-semibold text-gray-900 mb-3 text-sm">
@@ -476,3 +266,192 @@ const UserStats: React.FC<UserStatsProps> = ({ user }) => {
 }
 
 export default UserStats
+
+export const MainUserStats = ({ stats }: { stats }) => {
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+      <div className="bg-white rounded-lg border border-gray-200 p-3">
+        <div className="flex items-center">
+          <div className="flex-shrink-0">
+            <Trophy className="h-5 w-5 text-green-600" />
+          </div>
+          <div className="ml-3">
+            <div className="text-lg font-bold text-gray-900">
+              {stats.totalGames}
+            </div>
+            <div className="text-xs text-gray-500">Partidas jugadas</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-lg border border-gray-200 p-3">
+        <div className="flex items-center">
+          <div className="flex-shrink-0">
+            <Target className="h-5 w-5 text-green-600" />
+          </div>
+          <div className="ml-3">
+            <div className="text-lg font-bold text-gray-900">
+              {stats.averagePerHole}
+            </div>
+            <div className="text-xs text-gray-500">Promedio por hoyo</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-lg border border-gray-200 p-3">
+        <div className="flex items-center">
+          <div className="flex-shrink-0">
+            <TrendingUp className="h-5 w-5 text-blue-600" />
+          </div>
+          <div className="ml-3">
+            <div className="text-lg font-bold text-gray-900">
+              {stats.winRate}%
+            </div>
+            <div className="text-xs text-gray-500">Tasa de victoria</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-lg border border-gray-200 p-3">
+        <div className="flex items-center space-x-2">
+          <div className="bg-green-100 rounded-lg p-2">
+            <Target className="h-4 w-4 text-green-600" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="text-lg font-bold text-gray-900">
+              {stats.holesInOne}
+            </div>
+            <div className="text-xs text-gray-500">Hole-in-1</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-lg border border-gray-200 p-3">
+        <div className="flex items-center space-x-2">
+          <div className="bg-purple-100 rounded-lg p-2">
+            <Flag className="h-4 w-4 text-purple-600" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="text-lg font-bold text-gray-900">
+              {stats.bestGame || '--'}
+            </div>
+            <div className="text-xs text-gray-500">Mejor</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export const getUserStats = async ({
+  userId
+}: {
+  userId: string
+}): Promise<UserStatistics> => {
+  const games = await getUserGames(userId)
+
+  const finishedGames = games.filter((game) => game.status === 'finished')
+
+  let totalStrokes = 0
+  let totalHoles = 0
+  let holesInOne = 0
+  let gamesWon = 0
+  let totalGameTime = 0
+  let individualGames = 0
+  let multiplayerGames = 0
+  const recentGameResults: number[] = []
+
+  finishedGames.forEach((game) => {
+    const userPlayer = game.players.find((p) => p.userId === userId)
+    if (!userPlayer) return
+
+    const playerScores = game.scores[userPlayer.id] || []
+    const validScores = playerScores.filter((score) => score > 0)
+
+    totalStrokes += validScores.reduce((sum, score) => sum + score, 0)
+    totalHoles += validScores.length
+    holesInOne += validScores.filter((score) => score === 1).length
+
+    // Check if user won this game (lowest score in multiplayer)
+    if (game.isMultiplayer) {
+      const allPlayerTotals = game.players.map((player) => {
+        const scores = game.scores[player.id] || []
+        return scores.reduce((sum, score) => sum + score, 0)
+      })
+      const userTotal = totalStrokes
+      const minScore = Math.min(...allPlayerTotals)
+      if (userTotal === minScore) {
+        gamesWon++
+      }
+      multiplayerGames++
+    } else {
+      // For individual games, consider "winning" as completing the game
+      if (validScores.length === game.holeCount) {
+        gamesWon++
+      }
+      individualGames++
+    }
+
+    // Calculate game duration
+    if (game.finishedAt) {
+      const duration = game.finishedAt.getTime() - game.createdAt.getTime()
+      totalGameTime += duration
+    }
+
+    // Recent form (last 10 games)
+    if (recentGameResults.length < 10) {
+      const gameScore =
+        validScores.length > 0
+          ? validScores.reduce((sum, score) => sum + score, 0) /
+            validScores.length
+          : 0
+      recentGameResults.push(gameScore)
+    }
+  })
+
+  const averagePerHole = totalHoles > 0 ? totalStrokes / totalHoles : 0
+  const bestGame = finishedGames.reduce((best, game) => {
+    const userPlayer = game.players.find((p) => p.userId === userId)
+    if (!userPlayer) return best
+
+    const playerScores = game.scores[userPlayer.id] || []
+    const validScores = playerScores.filter((score) => score > 0)
+    const gameAverage =
+      validScores.length > 0
+        ? validScores.reduce((sum, score) => sum + score, 0) /
+          validScores.length
+        : 0
+
+    return gameAverage > 0 && (best === 0 || gameAverage < best)
+      ? gameAverage
+      : best
+  }, 0)
+
+  const averageGameTime =
+    finishedGames.length > 0 ? totalGameTime / finishedGames.length : 0
+
+  const favoriteGameType: 'individual' | 'multiplayer' | null =
+    multiplayerGames > individualGames
+      ? 'multiplayer'
+      : individualGames > multiplayerGames
+      ? 'individual'
+      : null
+
+  const winRate =
+    finishedGames.length > 0 ? (gamesWon / finishedGames.length) * 100 : 0
+  const stats = {
+    totalGames: finishedGames.length,
+    gamesWon,
+    totalStrokes,
+    totalHoles,
+    averagePerHole: Math.round(averagePerHole * 100) / 100,
+    bestGame: Math.round(bestGame * 100) / 100,
+    holesInOne,
+    averageGameTime: averageGameTime / (1000 * 60), // Convert to minutes
+    favoriteGameType,
+    winRate: Math.round(winRate * 10) / 10,
+    recentForm: recentGameResults.reverse()
+  }
+
+  return stats
+}
