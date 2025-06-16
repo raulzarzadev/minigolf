@@ -675,6 +675,8 @@ export const getAllUsersRanking = async () => {
     const gamesQuery = query(
       collection(db, 'games'),
       where('status', '==', 'finished'),
+      where('holeCount', '==', 9), // Asegurarse de que hay hoyos
+      where('currentHole', '==', 9), // Asegurarse de que la partida está completa
       orderBy('finishedAt', 'desc')
     )
     const gamesSnapshot = await getDocs(gamesQuery)

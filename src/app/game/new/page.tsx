@@ -254,8 +254,9 @@ export default function NewGamePage() {
                 Número de hoyos
               </label>
               <select
+                disabled // disabled until we support more than 9 holes
                 {...form.register('holeCount', { valueAsNumber: true })}
-                className="w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-black focus:border-black text-base"
+                className="w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-black focus:border-black text-base disabled:opacity-30 disabled:cursor-not-allowed "
               >
                 <option value={9}>9 hoyos</option>
                 <option value={18}>18 hoyos</option>
