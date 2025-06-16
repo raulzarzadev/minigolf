@@ -218,7 +218,7 @@ export default function RankingPage() {
                           {/* Player Info */}
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center space-x-2">
-                              <h3 className="text-sm font-medium text-gray-900 truncate">
+                              <h3 className="text-sm font-medium text-gray-900 truncate whitespace-pre-line">
                                 {player.name}
                               </h3>
                               {isCurrentUser && (
