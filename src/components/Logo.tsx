@@ -1,10 +1,7 @@
 'use client'
 
 import Image from 'next/image'
-import React, { useState } from 'react'
-import { useLogoPreloader } from './LogoPreloader'
-import LogoFallback from './LogoFallback'
-
+import React from 'react'
 interface LogoProps {
   size?: 'sm' | 'md' | 'lg' | 'xl'
   variant?: 'dark' | 'light'
@@ -18,9 +15,9 @@ const Logo: React.FC<LogoProps> = ({
   className = '',
   showText = true
 }) => {
-  const [imageError, setImageError] = useState(false)
-  const [imageLoaded, setImageLoaded] = useState(false)
-  const logoPreloaded = useLogoPreloader()
+  // const [imageError, setImageError] = useState(false)
+  // const [imageLoaded, setImageLoaded] = useState(false)
+  // const logoPreloaded = useLogoPreloader()
 
   const sizes = {
     sm: 32,
@@ -29,31 +26,31 @@ const Logo: React.FC<LogoProps> = ({
     xl: 68
   }
 
-  // Si hay error o no está cargada la imagen, mostrar fallback
-  if (imageError || (!imageLoaded && !logoPreloaded)) {
-    return (
-      <LogoFallback
-        size={size}
-        variant={variant}
-        showText={showText}
-        className={className}
-      />
-    )
-  }
+  // // Si hay error o no está cargada la imagen, mostrar fallback
+  // if (imageError || (!imageLoaded && !logoPreloaded)) {
+  //   return (
+  //     <LogoFallback
+  //       size={size}
+  //       variant={variant}
+  //       showText={showText}
+  //       className={className}
+  //     />
+  //   )
+  // }
 
   return (
     <div className={`flex items-center space-x-2 ${className}`}>
       <div className="relative">
         <Image
-          src="/logo-baja-mini-golf.png"
+          src="/android-chrome-192x192.png"
           alt="Baja Mini Golf"
           className="object-contain transition-opacity duration-300"
           width={sizes[size]}
           height={sizes[size]}
-          priority
-          onLoad={() => setImageLoaded(true)}
-          onError={() => setImageError(true)}
-          unoptimized={false}
+          // priority
+          // onLoad={() => setImageLoaded(true)}
+          // onError={() => setImageError(true)}
+          // unoptimized={false}
         />
       </div>
       {showText && (
