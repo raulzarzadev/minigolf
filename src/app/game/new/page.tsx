@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { generateGuestId, createGame, searchUsers } from '@/lib/db'
+import { saveLocalGame } from '@/lib/localStorage'
 import { Game, Player } from '@/types'
 import Navbar from '@/components/Navbar'
 import {
@@ -40,6 +41,7 @@ export default function NewGamePage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [searchResults, setSearchResults] = useState<SearchUser[]>([])
   const [isSearching, setIsSearching] = useState(false)
+  const [guestPlayerName, setGuestPlayerName] = useState('')
 
   const form = useForm<GameFormData>({
     defaultValues: {
@@ -119,18 +121,38 @@ export default function NewGamePage() {
   }
 
   const onSubmit = async (data: GameFormData) => {
-    if (!user) return
     setIsLoading(true)
     setError(null)
     try {
       // convertir a booleano
       const multi = data.isMultiplayer === 'true'
+
+      // For guest users, create a temporary player
+      let creatorPlayer: Player
+      if (user) {
+        creatorPlayer = {
+          id: user.id,
+          name: user.name,
+          userId: user.id,
+          isGuest: false
+        }
+      } else {
+        // Guest user - create a temporary player
+        if (!guestPlayerName.trim()) {
+          setError('Por favor ingresa tu nombre')
+          return
+        }
+        creatorPlayer = {
+          id: generateGuestId(),
+          name: guestPlayerName.trim(),
+          isGuest: true
+        }
+      }
+
       const gameData: Omit<Game, 'id' | 'createdAt'> = {
-        createdBy: user.id,
+        createdBy: user?.id || creatorPlayer.id,
         holeCount: data.holeCount,
-        players: multi
-          ? players
-          : [{ id: user.id, name: user.name, userId: user.id, isGuest: false }],
+        players: multi ? [creatorPlayer, ...players] : [creatorPlayer],
         scores: {} as Record<string, number[]>,
         status: 'in_progress',
         tournamentId: data.tournamentId || null,
@@ -141,8 +163,16 @@ export default function NewGamePage() {
         gameData.scores[p.id] = Array(data.holeCount).fill(0)
       })
 
-      const id = await createGame(gameData)
-      router.push(`/game/${id}`)
+      let gameId: string
+      if (user) {
+        // Usuario autenticado: guardar en el servidor
+        gameId = await createGame(gameData)
+      } else {
+        // Usuario invitado: guardar localmente
+        gameId = saveLocalGame(gameData)
+      }
+
+      router.push(`/game/${gameId}`)
     } catch (e) {
       console.error('Error creating game:', e)
       setError(e instanceof Error ? e.message : 'Error al crear')
@@ -151,7 +181,188 @@ export default function NewGamePage() {
     }
   }
 
-  if (!user) return <div>Cargando...</div>
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="max-w-3xl mx-auto py-4 px-3 sm:px-6 lg:px-8">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <h1 className="text-xl font-bold text-gray-900 mb-4">
+              Nueva Partida 🏌️‍♂️
+            </h1>
+
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <AlertCircle className="h-4 w-4 text-red-400" />
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-red-800">
+                      Error al crear la partida
+                    </h3>
+                    <div className="mt-1 text-sm text-red-700">{error}</div>
+                    <div className="mt-2">
+                      <button
+                        type="button"
+                        onClick={() => setError(null)}
+                        className="text-sm text-red-600 hover:text-red-500"
+                      >
+                        Cerrar
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              {/* Guest Player Name */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Tu nombre
+                </label>
+                <input
+                  type="text"
+                  value={guestPlayerName}
+                  onChange={(e) => setGuestPlayerName(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+                  placeholder="Ingresa tu nombre"
+                  required
+                />
+              </div>
+
+              {/* Hole Count */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Número de hoyos
+                </label>
+                <select
+                  {...form.register('holeCount', { valueAsNumber: true })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+                >
+                  <option value={9}>9 hoyos</option>
+                  <option value={18}>18 hoyos</option>
+                </select>
+              </div>
+
+              {/* Game Type */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Tipo de partida
+                </label>
+                <div className="space-y-2">
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      value="false"
+                      {...form.register('isMultiplayer')}
+                      className="mr-2"
+                    />
+                    <UserIcon className="h-4 w-4 mr-2 text-gray-600" />
+                    <span className="text-sm">Individual</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      value="true"
+                      {...form.register('isMultiplayer')}
+                      className="mr-2"
+                    />
+                    <Users className="h-4 w-4 mr-2 text-gray-600" />
+                    <span className="text-sm">Multijugador</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Guest players for multiplayer */}
+              {isMultiplayer && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Jugadores adicionales (invitados)
+                  </label>
+                  <div className="space-y-2">
+                    <div className="flex space-x-2">
+                      <input
+                        type="text"
+                        value={guestName}
+                        onChange={(e) => setGuestName(e.target.value)}
+                        placeholder="Nombre del jugador"
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault()
+                            addGuestPlayer()
+                          }
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={addGuestPlayer}
+                        className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </button>
+                    </div>
+
+                    {players.length > 0 && (
+                      <div className="space-y-2">
+                        {players.map((player) => (
+                          <div
+                            key={player.id}
+                            className="flex items-center justify-between p-2 bg-gray-50 rounded-md"
+                          >
+                            <span className="text-sm font-medium">
+                              {player.name}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => removePlayer(player.id)}
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Submit Button */}
+              <div className="flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => router.back()}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                >
+                  {isLoading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Creando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="h-4 w-4" />
+                      <span>Crear Partida</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

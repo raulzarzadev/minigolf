@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import AuthForm from '@/components/AuthForm'
 import Navbar from '@/components/Navbar'
 import { Trophy, Medal, Award, Star, Users, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
@@ -41,10 +40,8 @@ export default function RankingPage() {
       }
     }
 
-    if (user) {
-      loadRanking()
-    }
-  }, [user, sortBy])
+    loadRanking()
+  }, [sortBy])
 
   if (loading) {
     return (
@@ -55,10 +52,6 @@ export default function RankingPage() {
         </div>
       </div>
     )
-  }
-
-  if (!user) {
-    return <AuthForm />
   }
 
   const getRankIcon = (position: number) => {
@@ -190,7 +183,7 @@ export default function RankingPage() {
               <div className="space-y-3">
                 {sortedRanking.map((player, index) => {
                   const actualPosition = index + 1
-                  const isCurrentUser = player.id === user.id
+                  const isCurrentUser = user ? player.id === user.id : false
 
                   return (
                     <div

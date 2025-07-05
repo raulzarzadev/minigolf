@@ -28,10 +28,6 @@ const Navbar: React.FC = () => {
     }
   }
 
-  if (!user) {
-    return null
-  }
-
   const closeMobileMenu = () => setIsMobileMenuOpen(false)
 
   return (
@@ -75,46 +71,65 @@ const Navbar: React.FC = () => {
               <span className="hidden lg:inline">Ranking</span>
             </Link>
 
-            <Link
-              href="/tournaments"
-              className="flex items-center space-x-1 px-2 lg:px-3 py-2 rounded-md text-sm font-medium hover:bg-green-100 hover:text-green-700 transition-colors"
-            >
-              <Trophy size={18} />
-              <span className="hidden lg:inline">Torneos</span>
-            </Link>
+            {user && (
+              <>
+                <Link
+                  href="/tournaments"
+                  className="flex items-center space-x-1 px-2 lg:px-3 py-2 rounded-md text-sm font-medium hover:bg-green-100 hover:text-green-700 transition-colors"
+                >
+                  <Trophy size={18} />
+                  <span className="hidden lg:inline">Torneos</span>
+                </Link>
 
-            {user.isAdmin && (
-              <Link
-                href="/admin"
-                className="flex items-center space-x-1 px-2 lg:px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-100 hover:text-blue-700 transition-colors"
-              >
-                <Settings size={18} />
-                <span className="hidden lg:inline">Admin</span>
-              </Link>
+                {user.isAdmin && (
+                  <Link
+                    href="/admin"
+                    className="flex items-center space-x-1 px-2 lg:px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-100 hover:text-blue-700 transition-colors"
+                  >
+                    <Settings size={18} />
+                    <span className="hidden lg:inline">Admin</span>
+                  </Link>
+                )}
+
+                <div className="flex items-center space-x-1 lg:space-x-4 border-l border-gray-300 pl-2 lg:pl-4 ml-2 lg:ml-4">
+                  <Link
+                    href="/profile"
+                    className="flex items-center space-x-1 px-2 lg:px-3 py-2 rounded-md text-sm font-medium hover:bg-green-100 hover:text-green-700 transition-colors"
+                  >
+                    <User size={18} />
+                    <div className="hidden lg:block">
+                      <div className="truncate max-w-24 text-sm">
+                        {user.name}
+                      </div>
+                      <div className="truncate max-w-24 text-xs text-gray-500 font-mono">
+                        @{user.username}
+                      </div>
+                    </div>
+                  </Link>
+
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center space-x-1 px-2 lg:px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-100 transition-colors"
+                  >
+                    <LogOut size={18} />
+                    <span className="hidden lg:inline">Salir</span>
+                  </button>
+                </div>
+              </>
             )}
 
-            <div className="flex items-center space-x-1 lg:space-x-4 border-l border-gray-300 pl-2 lg:pl-4 ml-2 lg:ml-4">
-              <Link
-                href="/profile"
-                className="flex items-center space-x-1 px-2 lg:px-3 py-2 rounded-md text-sm font-medium hover:bg-green-100 hover:text-green-700 transition-colors"
-              >
-                <User size={18} />
-                <div className="hidden lg:block">
-                  <div className="truncate max-w-24 text-sm">{user.name}</div>
-                  <div className="truncate max-w-24 text-xs text-gray-500 font-mono">
-                    @{user.username}
-                  </div>
-                </div>
-              </Link>
-
-              <button
-                onClick={handleLogout}
-                className="flex items-center space-x-1 px-2 lg:px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-100 transition-colors"
-              >
-                <LogOut size={18} />
-                <span className="hidden lg:inline">Salir</span>
-              </button>
-            </div>
+            {/* Login button for non-authenticated users */}
+            {!user && (
+              <div className="flex items-center space-x-1 lg:space-x-4 border-l border-gray-300 pl-2 lg:pl-4 ml-2 lg:ml-4">
+                <Link
+                  href="/login"
+                  className="flex items-center space-x-1 px-2 lg:px-3 py-2 rounded-md text-sm font-medium bg-green-600 text-white hover:bg-green-700 transition-colors"
+                >
+                  <User size={18} />
+                  <span className="hidden lg:inline">Iniciar Sesión</span>
+                </Link>
+              </div>
+            )}
           </div>
 
           {/* Botón menú móvil */}
@@ -160,61 +175,79 @@ const Navbar: React.FC = () => {
                 <span>Ranking</span>
               </Link>
 
-              <Link
-                href="/tournaments"
-                onClick={closeMobileMenu}
-                className="flex items-center space-x-3 px-3 py-3 rounded-md text-base font-medium hover:bg-gray-100 transition-colors active:bg-gray-100 touch-manipulation"
-              >
-                <Trophy size={20} />
-                <span>Torneos</span>
-              </Link>
+              {user && (
+                <>
+                  <Link
+                    href="/tournaments"
+                    onClick={closeMobileMenu}
+                    className="flex items-center space-x-3 px-3 py-3 rounded-md text-base font-medium hover:bg-gray-100 transition-colors active:bg-gray-100 touch-manipulation"
+                  >
+                    <Trophy size={20} />
+                    <span>Torneos</span>
+                  </Link>
 
-              <Link
-                href="/games"
-                onClick={closeMobileMenu}
-                className="flex items-center space-x-3 px-3 py-3 rounded-md text-base font-medium hover:bg-gray-100 transition-colors active:bg-gray-100 touch-manipulation"
-              >
-                <Trophy size={20} />
-                <span>Mis Partidas</span>
-              </Link>
+                  <Link
+                    href="/games"
+                    onClick={closeMobileMenu}
+                    className="flex items-center space-x-3 px-3 py-3 rounded-md text-base font-medium hover:bg-gray-100 transition-colors active:bg-gray-100 touch-manipulation"
+                  >
+                    <Trophy size={20} />
+                    <span>Mis Partidas</span>
+                  </Link>
 
-              {user.isAdmin && (
-                <Link
-                  href="/admin"
-                  onClick={closeMobileMenu}
-                  className="flex items-center space-x-3 px-3 py-3 rounded-md text-base font-medium hover:bg-blue-100 transition-colors active:bg-blue-100 touch-manipulation"
-                >
-                  <Settings size={20} />
-                  <span>Panel de Admin</span>
-                </Link>
+                  {user.isAdmin && (
+                    <Link
+                      href="/admin"
+                      onClick={closeMobileMenu}
+                      className="flex items-center space-x-3 px-3 py-3 rounded-md text-base font-medium hover:bg-blue-100 transition-colors active:bg-blue-100 touch-manipulation"
+                    >
+                      <Settings size={20} />
+                      <span>Panel de Admin</span>
+                    </Link>
+                  )}
+
+                  <div className="border-t border-gray-300 pt-4 mt-4">
+                    <Link
+                      href="/profile"
+                      onClick={closeMobileMenu}
+                      className="flex items-center space-x-3 px-3 py-3 rounded-md text-base font-medium hover:bg-gray-100 transition-colors active:bg-gray-100 touch-manipulation"
+                    >
+                      <User size={20} />
+                      <div>
+                        <div className="text-base">{user.name}</div>
+                        <div className="text-sm text-gray-500 font-mono">
+                          @{user.username}
+                        </div>
+                      </div>
+                    </Link>
+
+                    <button
+                      onClick={() => {
+                        handleLogout()
+                        closeMobileMenu()
+                      }}
+                      className="flex items-center space-x-3 px-3 py-3 rounded-md text-base font-medium hover:bg-gray-100 transition-colors active:bg-gray-100 w-full text-left touch-manipulation"
+                    >
+                      <LogOut size={20} />
+                      <span>Cerrar Sesión</span>
+                    </button>
+                  </div>
+                </>
               )}
 
-              <div className="border-t border-gray-300 pt-4 mt-4">
-                <Link
-                  href="/profile"
-                  onClick={closeMobileMenu}
-                  className="flex items-center space-x-3 px-3 py-3 rounded-md text-base font-medium hover:bg-gray-100 transition-colors active:bg-gray-100 touch-manipulation"
-                >
-                  <User size={20} />
-                  <div>
-                    <div className="text-base">{user.name}</div>
-                    <div className="text-sm text-gray-500 font-mono">
-                      @{user.username}
-                    </div>
-                  </div>
-                </Link>
-
-                <button
-                  onClick={() => {
-                    handleLogout()
-                    closeMobileMenu()
-                  }}
-                  className="flex items-center space-x-3 px-3 py-3 rounded-md text-base font-medium hover:bg-gray-100 transition-colors active:bg-gray-100 w-full text-left touch-manipulation"
-                >
-                  <LogOut size={20} />
-                  <span>Cerrar Sesión</span>
-                </button>
-              </div>
+              {/* Login button for mobile - non-authenticated users */}
+              {!user && (
+                <div className="border-t border-gray-300 pt-4 mt-4">
+                  <Link
+                    href="/login"
+                    onClick={closeMobileMenu}
+                    className="flex items-center space-x-3 px-3 py-3 rounded-md text-base font-medium bg-green-600 text-white hover:bg-green-700 transition-colors active:bg-green-700 touch-manipulation"
+                  >
+                    <User size={20} />
+                    <span>Iniciar Sesión</span>
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         )}

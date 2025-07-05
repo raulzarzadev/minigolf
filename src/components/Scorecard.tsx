@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { Game, Player } from '@/types'
 import { updatePlayerScore, calculateGameStats, updateGame } from '@/lib/db'
+import { updateLocalGame, isLocalGame } from '@/lib/localStorage'
 import { Minus, Plus, Trophy, Target, Clock, CheckCircle } from 'lucide-react'
 
 interface ScorecardProps {
@@ -10,16 +11,19 @@ interface ScorecardProps {
   currentPlayer?: Player
   canEdit?: boolean
   onScoreUpdate?: () => void
+  onGameUpdate?: (game: Game) => void // Para actualizar partidas locales
 }
 
 const Scorecard: React.FC<ScorecardProps> = ({
   game,
   currentPlayer,
   canEdit = false,
-  onScoreUpdate
+  onScoreUpdate,
+  onGameUpdate
 }) => {
   const [isUpdating, setIsUpdating] = useState<string | null>(null)
   const [autoAdvanceHole, setAutoAdvanceHole] = useState(true)
+  const isLocal = isLocalGame(game.id)
 
   // Auto-advance to next hole when all players complete current hole
   useEffect(() => {
@@ -34,7 +38,15 @@ const Scorecard: React.FC<ScorecardProps> = ({
     if (allPlayersCompletedCurrentHole && game.currentHole < game.holeCount) {
       // Auto-advance to next hole
       setTimeout(() => {
-        updateGame(game.id, { currentHole: game.currentHole + 1 })
+        if (isLocal) {
+          // Local game: update locally
+          const updatedGame = { ...game, currentHole: game.currentHole + 1 }
+          updateLocalGame(game.id, { currentHole: game.currentHole + 1 })
+          onGameUpdate?.(updatedGame)
+        } else {
+          // Server game: update on server
+          updateGame(game.id, { currentHole: game.currentHole + 1 })
+        }
       }, 1500) // Small delay for better UX
     }
   }, [
@@ -45,7 +57,10 @@ const Scorecard: React.FC<ScorecardProps> = ({
     autoAdvanceHole,
     game.id,
     game.status,
-    game.holeCount
+    game.holeCount,
+    isLocal,
+    onGameUpdate,
+    game
   ])
 
   const updateScore = async (
@@ -57,8 +72,23 @@ const Scorecard: React.FC<ScorecardProps> = ({
 
     setIsUpdating(`${playerId}-${holeIndex}`)
     try {
-      await updatePlayerScore(game.id, playerId, holeIndex, newScore)
-      onScoreUpdate?.()
+      if (isLocal) {
+        // Local game: update locally
+        const newScores = { ...game.scores }
+        if (!newScores[playerId]) {
+          newScores[playerId] = Array(game.holeCount).fill(0)
+        }
+        newScores[playerId][holeIndex] = newScore
+
+        const updatedGame = { ...game, scores: newScores }
+        updateLocalGame(game.id, { scores: newScores })
+        onGameUpdate?.(updatedGame)
+        onScoreUpdate?.()
+      } else {
+        // Server game: update on server
+        await updatePlayerScore(game.id, playerId, holeIndex, newScore)
+        onScoreUpdate?.()
+      }
     } catch (error) {
       console.error('Error updating score:', error)
     } finally {
@@ -82,6 +112,11 @@ const Scorecard: React.FC<ScorecardProps> = ({
 
   const canEditScore = (playerId: string): boolean => {
     if (!canEdit) return false
+
+    // For local games (isLocal is true), anyone can edit any score
+    if (isLocal) return true
+
+    // For server games, require authentication
     if (!currentPlayer) return false
 
     // Creator can edit all scores, players can only edit their own
@@ -93,7 +128,6 @@ const Scorecard: React.FC<ScorecardProps> = ({
   const renderHoleInputs = (player: Player) => {
     const holes = Array.from({ length: game.holeCount }, (_, i) => i)
     const currentHoleIndex = game.currentHole - 1
-
     return (
       <div className="grid grid-cols-4 xs:grid-cols-5 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-9 gap-1">
         {holes.map((holeIndex) => {

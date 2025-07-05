@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { subscribeToGame, finishGame } from '@/lib/db'
+import { getLocalGame, updateLocalGame, isLocalGame } from '@/lib/localStorage'
 import { Game, Player } from '@/types'
 import Navbar from '@/components/Navbar'
 import Scorecard from '@/components/Scorecard'
@@ -17,12 +18,37 @@ export default function GamePage() {
   const [currentPlayer, setCurrentPlayer] = useState<Player | null>(null)
   const [loading, setLoading] = useState(true)
   const [isFinishing, setIsFinishing] = useState(false)
+  const [isLocalGameState, setIsLocalGameState] = useState(false)
 
   const gameId = params.id as string
 
   useEffect(() => {
     if (!gameId) return
 
+    // Check if it's a local game
+    if (isLocalGame(gameId)) {
+      setIsLocalGameState(true)
+      const localGame = getLocalGame(gameId)
+      if (localGame) {
+        // Convert LocalGame to Game format
+        const gameData: Game = {
+          ...localGame,
+          id: localGame.id,
+          createdAt: new Date(localGame.createdAt)
+        }
+        setGame(gameData)
+
+        // For local games, find the current player differently
+        if (gameData.players.length > 0) {
+          setCurrentPlayer(gameData.players[0])
+        }
+      }
+      setLoading(false)
+      return
+    }
+
+    // Server game - use real-time subscription
+    setIsLocalGameState(false)
     const unsubscribe = subscribeToGame(gameId, (gameData) => {
       setGame(gameData)
       setLoading(false)
@@ -44,8 +70,15 @@ export default function GamePage() {
 
     setIsFinishing(true)
     try {
-      await finishGame(game.id)
-      // The real-time listener will update the game state
+      if (isLocalGameState) {
+        // Local game: update locally
+        updateLocalGame(game.id, { status: 'finished' })
+        setGame((prev) => (prev ? { ...prev, status: 'finished' } : null))
+      } else {
+        // Server game: update on server
+        await finishGame(game.id)
+        // The real-time listener will update the game state
+      }
     } catch {
       console.error('Error finishing game:')
     } finally {
@@ -80,7 +113,15 @@ export default function GamePage() {
   }
 
   const canEdit = () => {
-    if (!game || !user || !currentPlayer) return false
+    if (!game) return false
+
+    // For local games, always allow editing if game is in progress
+    if (isLocalGameState) {
+      return game.status === 'in_progress'
+    }
+
+    // For server games, require authentication
+    if (!user || !currentPlayer) return false
     return (
       game.status === 'in_progress' &&
       (game.createdBy === user.id || currentPlayer.userId === user.id)
@@ -88,7 +129,15 @@ export default function GamePage() {
   }
 
   const isGameCreator = () => {
-    return game && user && game.createdBy === user.id
+    if (!game) return false
+
+    // For local games, always consider the user as the creator
+    if (isLocalGameState) {
+      return true
+    }
+
+    // For server games, check actual creator
+    return user && game.createdBy === user.id
   }
 
   const allPlayersFinished = () => {
@@ -241,7 +290,14 @@ export default function GamePage() {
           currentPlayer={currentPlayer || undefined}
           canEdit={canEdit()}
           onScoreUpdate={() => {
-            // The real-time listener will handle updates
+            // The real-time listener will handle updates for server games
+            // Local games are handled by onGameUpdate
+          }}
+          onGameUpdate={(updatedGame) => {
+            // For local games, update the state directly
+            if (isLocalGameState) {
+              setGame(updatedGame)
+            }
           }}
         />
 
