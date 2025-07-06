@@ -301,6 +301,59 @@ export default function GamePage() {
           }}
         />
 
+        {/* Save/Publish Options for Local Games */}
+        {isLocalGameState && !user && (
+          <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <h3 className="font-medium text-yellow-800 mb-2 text-sm">
+              {game.status === 'finished'
+                ? '🎉 ¡Partida terminada!'
+                : '📝 Opciones para tu partida'}
+            </h3>
+            <p className="text-yellow-700 text-xs mb-3">
+              {game.status === 'finished'
+                ? 'Tu partida se guardó localmente. ¡Comparte tu puntuación o guárdala en la nube!'
+                : 'Tu partida se guarda automáticamente en este dispositivo. Para más opciones:'}
+            </p>
+            <div className="space-y-2">
+              <button
+                onClick={() =>
+                  router.push(
+                    '/login?redirect=' +
+                      encodeURIComponent(window.location.pathname)
+                  )
+                }
+                className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm touch-manipulation"
+              >
+                🔐 Iniciar sesión para guardar en tu cuenta
+              </button>
+              {game.status === 'finished' && (
+                <button
+                  onClick={() =>
+                    router.push(
+                      '/login?redirect=' +
+                        encodeURIComponent(window.location.pathname)
+                    )
+                  }
+                  className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm touch-manipulation"
+                >
+                  🏆 Publicar en el ranking global
+                </button>
+              )}
+            </div>
+            <div className="mt-3 pt-3 border-t border-yellow-200">
+              <p className="text-yellow-600 text-xs">
+                💡 <strong>Beneficios de crear una cuenta:</strong>
+              </p>
+              <ul className="text-yellow-600 text-xs mt-1 space-y-1">
+                <li>• Sincroniza tus partidas en todos tus dispositivos</li>
+                <li>• Aparece en el ranking global</li>
+                <li>• Guarda tu historial de partidas</li>
+                <li>• Comparte partidas con otros usuarios</li>
+              </ul>
+            </div>
+          </div>
+        )}
+
         {/* Help Text */}
         {canEdit() && game.status === 'in_progress' && (
           <div className="mt-4 bg-blue-50 rounded-lg p-3">

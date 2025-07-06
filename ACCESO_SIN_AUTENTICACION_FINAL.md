@@ -224,14 +224,66 @@ Además del problema en `Scorecard.tsx`, la función `canEdit()` en `game/[id]/p
 - ✅ Se preserva la seguridad en partidas del servidor
 - ✅ La detección automática del tipo de partida funciona perfectamente
 
-## Estado Final
+## Problemas Resueltos y Optimizaciones ⚡
 
-🎯 **Funciona perfectamente**:
+### Error de Migración de Datos Firebase
 
-- Los usuarios pueden jugar sin registrarse
-- Las partidas se guardan localmente
-- Se mantienen al cerrar el navegador
-- La experiencia es idéntica a usuarios registrados
-- El botón de login está visible en el header
-- **Los usuarios invitados pueden editar scores y finalizar partidas**
-- **Todos los controles de edición funcionan correctamente**
+**Problema identificado**:
+
+```
+FirebaseError: Function addDoc() called with invalid data.
+Unsupported field value: undefined
+```
+
+**Causa raíz**: Firebase no permite valores `undefined` en documentos
+
+**Solución implementada**:
+
+- Función `cleanFirebaseData()` que limpia recursivamente objetos
+- Filtrado de campos `undefined` antes de enviar a Firebase
+- Manejo correcto de campos opcionales (`finishedAt`, `userId`)
+- Validación de tipos en jugadores invitados vs registrados
+
+### Bucle Infinito en useEffect
+
+**Problema identificado**:
+
+```
+Maximum update depth exceeded. This can happen when a component
+calls setState inside useEffect
+```
+
+**Causa raíz**: Dependencias de useEffect que cambiaban en cada render
+
+**Solución implementada**:
+
+- Optimización de dependencias en useEffect de migración
+- Actualización manual del contador `localGamesCount`
+- Control de estado `isMigrating` para evitar múltiples ejecuciones
+- Comentarios eslint para dependencias específicas
+
+### Compatibilidad TypeScript
+
+**Mejoras implementadas**:
+
+- Tipos correctos para todas las funciones de migración
+- Manejo adecuado de valores opcionales y nullables
+- Eliminación de warnings de TypeScript y ESLint
+- Anotaciones explícitas para `any` types cuando necesario
+
+### Robustez del Sistema
+
+**Optimizaciones añadidas**:
+
+- Manejo de errores en migración individual de partidas
+- Continuación del proceso aunque falle una partida específica
+- Redirección garantizada incluso en caso de errores
+- Logging detallado para debugging
+
+### Limpieza de Código y Comentarios
+
+**Acciones realizadas**:
+
+- Eliminación de código y comentarios innecesarios
+- Organización y estructuración del código para mayor claridad
+- Comentarios explicativos en secciones complejas

@@ -1,4 +1,5 @@
 import { Game } from '@/types'
+import { createGame } from './db'
 
 // Clave para almacenar partidas locales
 const LOCAL_GAMES_KEY = 'minigolf_local_games'
@@ -148,4 +149,91 @@ export const getUnfinishedLocalGames = (): LocalGame[] => {
 // Obtener partidas locales terminadas
 export const getFinishedLocalGames = (): LocalGame[] => {
   return getLocalGames().filter((game) => game.status === 'finished')
+}
+
+// Publicar partida local al servidor
+export const publishLocalGameToServer = async (
+  localGameId: string,
+  userId: string
+): Promise<string> => {
+  const localGame = getLocalGame(localGameId)
+  if (!localGame) {
+    throw new Error('Partida local no encontrada')
+  }
+
+  // Convertir partida local a formato servidor
+  const serverGameData = convertLocalGameToServerGame(localGame)
+
+  // Limpiar datos para evitar valores undefined
+  const cleanGameData = {
+    ...serverGameData,
+    createdBy: userId,
+    // Actualizar los jugadores sin valores undefined
+    players: serverGameData.players.map((player) => {
+      const cleanPlayer = {
+        ...player,
+        // Solo añadir userId si no es invitado
+        ...(player.isGuest ? {} : { userId })
+      }
+      return cleanPlayer
+    }),
+    // Asegurar que finishedAt sea undefined si no existe
+    finishedAt: serverGameData.finishedAt || undefined
+  }
+
+  // Limpiar cualquier valor undefined del objeto completo
+  const finalCleanData = cleanFirebaseData(cleanGameData)
+
+  // Crear en el servidor
+  const serverGameId = await createGame(finalCleanData)
+
+  // Eliminar partida local
+  deleteLocalGame(localGameId)
+
+  return serverGameId
+}
+
+// Migrar todas las partidas locales al servidor (útil después del login)
+export const migrateLocalGamesToServer = async (
+  userId: string
+): Promise<string[]> => {
+  const localGames = getLocalGames()
+  const migratedGameIds: string[] = []
+
+  for (const localGame of localGames) {
+    try {
+      const serverGameId = await publishLocalGameToServer(localGame.id, userId)
+      migratedGameIds.push(serverGameId)
+    } catch (error) {
+      console.error(`Error migrating local game ${localGame.id}:`, error)
+    }
+  }
+
+  return migratedGameIds
+}
+
+// Función auxiliar para limpiar objetos de valores undefined (Firebase no los permite)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const cleanFirebaseData = (obj: any): any => {
+  if (obj === null || obj === undefined) {
+    return undefined
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map(cleanFirebaseData).filter((item) => item !== undefined)
+  }
+
+  if (typeof obj === 'object' && obj.constructor === Object) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const cleaned: any = {}
+    for (const [key, value] of Object.entries(obj)) {
+      const cleanedValue = cleanFirebaseData(value)
+      if (cleanedValue !== undefined) {
+        cleaned[key] = cleanedValue
+      }
+    }
+    return cleaned
+  }
+
+  return obj
 }
