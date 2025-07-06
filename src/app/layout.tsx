@@ -18,6 +18,18 @@ export const metadata: Metadata = {
   title: 'Baja Mini Golf',
   description:
     'Administra partidas de Baja Mini Golf y torneos digitales en La Paz, Baja California Sur.',
+  keywords: [
+    'baja mini golf',
+    'torneos digitales',
+    'La Paz',
+    'Baja California Sur',
+    'juegos de mesa',
+    'administración de partidas',
+    'mini golf',
+    'minigolf',
+    'entretenimiento',
+    'cita de juego'
+  ],
   icons: {
     icon: '/favicon.ico',
     shortcut: '/favicon.ico',
