@@ -179,6 +179,7 @@ export default function Home() {
           ) : (
             <>
               <button
+                type="button"
                 onClick={() => setShowAuthForm(true)}
                 className="group w-full"
               >

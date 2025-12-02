@@ -173,6 +173,7 @@ export default function GamePage() {
         <div className="mb-4">
           <div className="flex items-center justify-between mb-3">
             <button
+              type="button"
               onClick={() => router.back()}
               className="inline-flex items-center text-gray-600 hover:text-gray-900 active:scale-95 transition-all touch-manipulation"
             >
@@ -242,6 +243,7 @@ export default function GamePage() {
                 </p>
               </div>
               <button
+                type="button"
                 onClick={handleFinishGame}
                 disabled={isFinishing}
                 className="self-start px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm touch-manipulation"
@@ -284,6 +286,7 @@ export default function GamePage() {
             </p>
             <div className="space-y-2">
               <button
+                type="button"
                 onClick={() =>
                   router.push(
                     '/login?redirect=' +
@@ -296,6 +299,7 @@ export default function GamePage() {
               </button>
               {game.status === 'finished' && (
                 <button
+                  type="button"
                   onClick={() =>
                     router.push(
                       '/login?redirect=' +

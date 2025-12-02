@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter, useSearchParams } from 'next/navigation'
-import React, { Suspense, useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import AuthForm from '@/components/AuthForm'
 import Navbar from '@/components/Navbar'
 import { useAuth } from '@/contexts/AuthContext'
@@ -50,7 +50,7 @@ function LoginContent() {
     }
     // Remover user y localGamesCount de las dependencias para evitar bucle infinito
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, isMigrating, router, redirectPath])
+  }, [user, isMigrating, router, redirectPath, localGamesCount])
 
   if (user) {
     if (isMigrating) {

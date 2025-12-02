@@ -47,12 +47,13 @@ export default function AdminProtectedRoute({
           <p className="text-gray-600 mb-6">
             Debes estar autenticado para acceder a esta página.
           </p>
-          <button
+          {/* <button
+            type="button"
             onClick={() => (window.location.href = '/')}
             className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition-colors"
           >
             Volver al Inicio
-          </button>
+          </button> */}
         </div>
       </div>
     )

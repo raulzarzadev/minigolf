@@ -189,6 +189,7 @@ export default function CelebrationPage() {
       <div className="max-w-4xl mx-auto py-4 px-3 sm:px-6 lg:px-8 space-y-4">
         <div className="flex items-center justify-between">
           <button
+            type="button"
             onClick={handleBackToGame}
             className="inline-flex items-center text-gray-600 hover:text-gray-900 text-sm"
           >
@@ -294,8 +295,8 @@ export default function CelebrationPage() {
                       completed
                         ? 'border-green-200 text-green-700 bg-white'
                         : isFinished
-                          ? 'border-black text-black hover:bg-black hover:text-white'
-                          : 'border-gray-200 text-gray-400'
+                        ? 'border-black text-black hover:bg-black hover:text-white'
+                        : 'border-gray-200 text-gray-400'
                     }`}
                   >
                     {completed ? '¡Dado ganado!' : 'Quiero mi dado'}

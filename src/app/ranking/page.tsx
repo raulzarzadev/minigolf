@@ -41,7 +41,7 @@ export default function RankingPage() {
     }
 
     loadRanking()
-  }, [sortBy])
+  }, [])
 
   if (loading) {
     return (
@@ -125,6 +125,7 @@ export default function RankingPage() {
           </h3>
           <div className="flex flex-wrap gap-2">
             <button
+              type="button"
               onClick={() => setSortBy('averageScore')}
               className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                 sortBy === 'averageScore'
@@ -135,6 +136,7 @@ export default function RankingPage() {
               Promedio de golpes
             </button>
             <button
+              type="button"
               onClick={() => setSortBy('gamesPlayed')}
               className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                 sortBy === 'gamesPlayed'
@@ -145,6 +147,7 @@ export default function RankingPage() {
               Partidas jugadas
             </button>
             <button
+              type="button"
               onClick={() => setSortBy('winRate')}
               className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                 sortBy === 'winRate'
