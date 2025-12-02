@@ -1,6 +1,12 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef
+} from 'react'
 import { Game, Player } from '@/types'
 import { updatePlayerScore, calculateGameStats, updateGame } from '@/lib/db'
 import { updateLocalGame, isLocalGame } from '@/lib/localStorage'
@@ -23,7 +29,46 @@ const Scorecard: React.FC<ScorecardProps> = ({
 }) => {
   const [isUpdating, setIsUpdating] = useState<string | null>(null)
   const [autoAdvanceHole, setAutoAdvanceHole] = useState(true)
+  const [activeControl, setActiveControl] = useState<{
+    playerId: string
+    holeIndex: number
+  } | null>(null)
+  const [stickyOffset, setStickyOffset] = useState(72)
   const isLocal = isLocalGame(game.id)
+  const stickyControlsRef = useRef<HTMLDivElement | null>(null)
+  const pendingScrollRef = useRef(false)
+
+  const getDefaultHoleIndex = useCallback(() => {
+    return Math.min(Math.max(game.currentHole - 1, 0), game.holeCount - 1)
+  }, [game.currentHole, game.holeCount])
+
+  const focusHole = useCallback(
+    (playerId: string, holeIndex?: number, shouldScroll = false) => {
+      if (shouldScroll) {
+        pendingScrollRef.current = true
+      }
+
+      setActiveControl((prev) => {
+        const fallbackHole =
+          typeof holeIndex === 'number'
+            ? holeIndex
+            : prev?.holeIndex ?? getDefaultHoleIndex()
+
+        return {
+          playerId,
+          holeIndex: Math.min(Math.max(fallbackHole, 0), game.holeCount - 1)
+        }
+      })
+    },
+    [getDefaultHoleIndex, game.holeCount]
+  )
+
+  const activePlayer = useMemo(() => {
+    if (!activeControl) return null
+    return (
+      game.players.find((player) => player.id === activeControl.playerId) || null
+    )
+  }, [activeControl, game.players])
 
   // Auto-advance to next hole when all players complete current hole
   useEffect(() => {
@@ -110,26 +155,120 @@ const Scorecard: React.FC<ScorecardProps> = ({
     return scores.filter((score) => score > 0).length
   }
 
-  const canEditScore = (playerId: string): boolean => {
-    if (!canEdit) return false
+  const canEditScore = useCallback(
+    (playerId: string): boolean => {
+      if (!canEdit) return false
 
-    // For local games (isLocal is true), anyone can edit any score
-    if (isLocal) return true
+      // For local games (isLocal is true), anyone can edit any score
+      if (isLocal) return true
 
-    // For server games, require authentication
-    if (!currentPlayer) return false
+      // For server games, require authentication
+      if (!currentPlayer) return false
 
-    // Creator can edit all scores, players can only edit their own
-    return (
-      game.createdBy === currentPlayer.userId || playerId === currentPlayer.id
-    )
-  }
+      // Creator can edit all scores, players can only edit their own
+      return (
+        game.createdBy === currentPlayer.userId || playerId === currentPlayer.id
+      )
+    },
+    [canEdit, currentPlayer, game.createdBy, isLocal]
+  )
+
+  const editablePlayers = useMemo(
+    () => game.players.filter((player) => canEditScore(player.id)),
+    [game.players, canEditScore]
+  )
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const calculateOffset = () => {
+      const fallbackSpacing = window.matchMedia('(max-width: 639px)').matches
+        ? 8
+        : 12
+      const nav = document.querySelector('nav')
+      if (!nav) {
+        setStickyOffset(fallbackSpacing)
+        return
+      }
+
+      const rect = nav.getBoundingClientRect()
+      const navBottom = Math.max(rect.bottom, 0)
+      const newOffset = (navBottom > 0 ? navBottom : 0) + fallbackSpacing
+      setStickyOffset((prev) =>
+        Math.abs(prev - newOffset) < 0.5 ? prev : newOffset
+      )
+    }
+
+    calculateOffset()
+    window.addEventListener('scroll', calculateOffset, { passive: true })
+    window.addEventListener('resize', calculateOffset)
+
+    return () => {
+      window.removeEventListener('scroll', calculateOffset)
+      window.removeEventListener('resize', calculateOffset)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!canEdit || game.status === 'finished') {
+      setActiveControl(null)
+      return
+    }
+
+    setActiveControl((prev) => {
+      if (
+        prev &&
+        canEditScore(prev.playerId) &&
+        prev.holeIndex < game.holeCount
+      ) {
+        return prev
+      }
+
+      const fallbackPlayer = game.players.find((player) =>
+        canEditScore(player.id)
+      )
+
+      if (!fallbackPlayer) return null
+
+      return {
+        playerId: fallbackPlayer.id,
+        holeIndex: Math.min(
+          Math.max(game.currentHole - 1, 0),
+          game.holeCount - 1
+        )
+      }
+    })
+  }, [
+    canEdit,
+    canEditScore,
+    game.currentHole,
+    game.holeCount,
+    game.players,
+    game.status
+  ])
+
+  useEffect(() => {
+    if (!pendingScrollRef.current || !activeControl) return
+    pendingScrollRef.current = false
+
+    if (typeof window === 'undefined') return
+    const isMobile = window.matchMedia('(max-width: 639px)').matches
+    if (!isMobile) return
+
+    const target = stickyControlsRef.current
+    if (!target) return
+
+    const targetTop = target.getBoundingClientRect().top + window.scrollY - 16
+    window.scrollTo({ top: Math.max(targetTop, 0), behavior: 'smooth' })
+  }, [activeControl])
 
   const renderHoleInputs = (player: Player) => {
     const holes = Array.from({ length: game.holeCount }, (_, i) => i)
     const currentHoleIndex = game.currentHole - 1
+    const allowEditing = canEditScore(player.id) && game.status !== 'finished'
+
     return (
-      <div className="grid grid-cols-4 xs:grid-cols-5 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-9 gap-1">
+      <div className="grid grid-cols-4 xs:grid-cols-5 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-9 gap-2">
         {holes.map((holeIndex) => {
           const score = getPlayerScore(player.id, holeIndex)
           const isUpdatingThisHole = isUpdating === `${player.id}-${holeIndex}`
@@ -137,9 +276,34 @@ const Scorecard: React.FC<ScorecardProps> = ({
           const isCurrentHole = holeIndex === currentHoleIndex
           const isCompletedHole = score > 0
           const isFutureHole = holeIndex > currentHoleIndex
+          const isSelectedHole =
+            activeControl?.playerId === player.id &&
+            activeControl.holeIndex === holeIndex
+          const allowSelection = allowEditing && canEditThisScore
+
+          const handleSelectHole = () => {
+            if (!allowSelection) return
+            focusHole(player.id, holeIndex, true)
+          }
 
           return (
-            <div key={holeIndex} className="text-center">
+            <div
+              key={holeIndex}
+              className={`text-center ${
+                allowSelection ? 'cursor-pointer select-none' : ''
+              }`}
+              role={allowSelection ? 'button' : undefined}
+              tabIndex={allowSelection ? 0 : undefined}
+              aria-pressed={allowSelection ? isSelectedHole : undefined}
+              onClick={handleSelectHole}
+              onKeyDown={(event) => {
+                if (!allowSelection) return
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault()
+                  handleSelectHole()
+                }
+              }}
+            >
               <div
                 className={`text-xs mb-1 flex items-center justify-center ${
                   isCurrentHole
@@ -155,40 +319,46 @@ const Scorecard: React.FC<ScorecardProps> = ({
               </div>
               {canEditThisScore ? (
                 <div
-                  className={`flex flex-col items-center justify-center space-y-1 rounded-lg p-1 ${
-                    isCurrentHole
-                      ? 'bg-gray-50 border-2 border-gray-200'
+                  className={`flex flex-col items-center justify-center space-y-1 rounded-2xl p-2 border transition-all duration-200 ${
+                    isSelectedHole
+                      ? 'bg-white ring-2 ring-green-500 shadow-lg'
+                      : isCurrentHole
+                      ? 'bg-green-50 border-green-200'
                       : isFutureHole
-                      ? 'bg-gray-50 opacity-60'
-                      : 'bg-gray-50'
+                      ? 'bg-gray-50 border-dashed border-gray-200 opacity-70'
+                      : 'bg-gray-50 border-transparent'
                   }`}
                 >
                   <button
+                    type="button"
                     onClick={() =>
                       updateScore(player.id, holeIndex, Math.max(0, score - 1))
                     }
                     disabled={isUpdatingThisHole || score <= 0}
-                    className="w-6 h-6 rounded-full bg-gray-200 text-green-900 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center active:scale-95 transition-all touch-manipulation"
+                    className="w-10 h-10 rounded-full bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center text-lg font-bold active:scale-95 transition-all touch-manipulation"
+                    aria-label={`Restar golpe del hoyo ${holeIndex + 1}`}
                   >
-                    <Minus size={12} />
+                    <Minus size={18} />
                   </button>
-                  <div className="w-full h-6 flex items-center justify-center font-bold text-base min-w-0">
+                  <div className="w-full h-8 flex items-center justify-center font-bold text-lg min-w-0">
                     {isUpdatingThisHole ? '⋯' : score || '-'}
                   </div>
                   <button
+                    type="button"
                     onClick={() => updateScore(player.id, holeIndex, score + 1)}
                     disabled={isUpdatingThisHole}
-                    className="w-6 h-6 rounded-full bg-green-700 text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center active:scale-95 transition-all touch-manipulation"
+                    className="w-10 h-10 rounded-full bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center text-lg font-bold active:scale-95 transition-all touch-manipulation"
+                    aria-label={`Sumar golpe al hoyo ${holeIndex + 1}`}
                   >
-                    <Plus size={12} />
+                    <Plus size={18} />
                   </button>
                 </div>
               ) : (
                 <div
-                  className={`h-16 flex items-center justify-center font-bold text-lg ${
+                  className={`h-16 flex items-center justify-center font-bold text-lg rounded-2xl ${
                     isCurrentHole
-                      ? 'bg-gray-50 border-2 border-black rounded-lg'
-                      : ''
+                      ? 'bg-gray-50 border border-black'
+                      : 'bg-white'
                   }`}
                 >
                   {score || '-'}
@@ -197,6 +367,169 @@ const Scorecard: React.FC<ScorecardProps> = ({
             </div>
           )
         })}
+      </div>
+    )
+  }
+
+  const renderStickyControlPad = () => {
+    if (game.status === 'finished') {
+      return (
+        <div className="text-center text-xs text-gray-400">
+          La partida ha finalizado
+        </div>
+      )
+    }
+
+    if (!activeControl || !canEditScore(activeControl.playerId)) {
+      return (
+        <div className="text-center text-xs text-gray-500">
+          Selecciona un hoyo para usar el control rápido
+        </div>
+      )
+    }
+
+    const { playerId, holeIndex } = activeControl
+    const player = game.players.find((p) => p.id === playerId)
+    if (!player) return null
+
+    const score = getPlayerScore(playerId, holeIndex)
+    const isUpdatingThisHole = isUpdating === `${playerId}-${holeIndex}`
+    const quickSetValues = [0, 1, 2, 3, 4, 5, 6]
+
+    const applyScore = (value: number) => {
+      updateScore(playerId, holeIndex, Math.max(0, value))
+    }
+
+    const adjustScore = (delta: number) => {
+      applyScore(score + delta)
+    }
+
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center justify-between text-xs text-gray-600">
+          <span>Control táctil rápido</span>
+          <span>
+            Hoyo {holeIndex + 1} • {player.name}
+          </span>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => adjustScore(-1)}
+            disabled={isUpdatingThisHole || score <= 0}
+            className="flex-1 h-14 rounded-2xl bg-white border border-gray-200 text-3xl font-bold text-gray-700 active:scale-95 transition-all touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
+            aria-label="Restar golpe"
+          >
+            −
+          </button>
+          <div className="flex flex-col items-center justify-center flex-1">
+            <div className="text-4xl font-bold text-gray-900 tracking-tight">
+              {isUpdatingThisHole ? '⋯' : score || 0}
+            </div>
+            <div className="text-[11px] text-gray-500 uppercase tracking-wide">
+              Golpes
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => adjustScore(1)}
+            disabled={isUpdatingThisHole}
+            className="flex-1 h-14 rounded-2xl bg-green-600 text-white text-3xl font-bold active:scale-95 transition-all touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
+            aria-label="Sumar golpe"
+          >
+            +
+          </button>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {quickSetValues.map((value) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => applyScore(value)}
+              disabled={isUpdatingThisHole}
+              className={`px-3 py-2 rounded-full border text-sm font-semibold active:scale-95 transition-all touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed ${
+                value === score
+                  ? 'border-green-500 bg-green-50 text-green-700'
+                  : 'border-gray-200 bg-white text-gray-800'
+              }`}
+            >
+              {value}
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => applyScore(score + 2)}
+            disabled={isUpdatingThisHole}
+            className="px-3 py-2 rounded-full border border-green-200 bg-green-50 text-sm font-semibold text-green-700 active:scale-95 transition-all touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            +2
+          </button>
+          <button
+            type="button"
+            onClick={() => applyScore(score + 3)}
+            disabled={isUpdatingThisHole}
+            className="px-3 py-2 rounded-full border border-green-200 bg-green-50 text-sm font-semibold text-green-700 active:scale-95 transition-all touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            +3
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  const renderPlayerSwitcher = () => {
+    if (editablePlayers.length === 0 || game.status === 'finished') return null
+
+    return (
+      <div
+        className="sm:hidden sticky z-20 -mx-1"
+        ref={stickyControlsRef}
+        style={{ top: stickyOffset }}
+      >
+        <div className="px-1">
+          <div className="rounded-2xl border border-gray-200 bg-white/95 backdrop-blur shadow-md p-3 space-y-3">
+            <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+              <span>Panel rápido</span>
+              {activePlayer && activeControl ? (
+                <span className="text-green-700">
+                  H{activeControl.holeIndex + 1} • {activePlayer.name}
+                </span>
+              ) : (
+                <span className="text-gray-400">Selecciona un hoyo</span>
+              )}
+            </div>
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {game.players.map((player) => {
+                const isEditable = canEditScore(player.id)
+                const isActive = activeControl?.playerId === player.id
+
+                return (
+                  <button
+                    key={player.id}
+                    type="button"
+                    onClick={() =>
+                      isEditable && focusHole(player.id, undefined, true)
+                    }
+                    disabled={!isEditable || game.status === 'finished'}
+                    className={`min-w-[96px] px-3 py-2 rounded-xl border text-left text-sm font-semibold transition-all active:scale-95 ${
+                      isActive
+                        ? 'bg-black text-white border-black'
+                        : isEditable
+                        ? 'bg-white text-gray-800 border-gray-200'
+                        : 'bg-gray-100 text-gray-400 border-gray-100 cursor-not-allowed'
+                    }`}
+                  >
+                    <div className="truncate">{player.name}</div>
+                    <div className="text-[11px] font-normal opacity-80">
+                      {getCompletedHoles(player.id)} / {game.holeCount} hoyos
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+            {renderStickyControlPad()}
+          </div>
+        </div>
       </div>
     )
   }
@@ -265,6 +598,7 @@ const Scorecard: React.FC<ScorecardProps> = ({
 
   return (
     <div className="space-y-3">
+      {renderPlayerSwitcher()}
       {/* Game Info */}
       <div className="bg-white rounded-lg p-3 border-2 border-green-200">
         <div className="flex items-center justify-between mb-3">
