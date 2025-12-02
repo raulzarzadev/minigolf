@@ -4,7 +4,6 @@ import {
   ArrowLeft,
   Camera,
   CheckCircle2,
-  Dice5,
   Gift,
   Instagram,
   Loader2,
@@ -12,7 +11,7 @@ import {
   Trophy
 } from 'lucide-react'
 import { useParams, useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Navbar from '@/components/Navbar'
 import { useAuth } from '@/contexts/AuthContext'
 import { subscribeToGame } from '@/lib/db'
@@ -27,6 +26,12 @@ import {
   setLastInstruction,
   triggerRewardStepAction
 } from '@/lib/rewards'
+import {
+  rouletteGradient,
+  rouletteSegmentAngle,
+  rouletteSegments,
+  ROULETTE_SPIN_DURATION_MS
+} from '@/lib/roulette'
 import { Game } from '@/types'
 
 type StepConfig = {
@@ -55,7 +60,7 @@ const stepConfigs: StepConfig[] = [
     id: 'share',
     title: 'Publicar tu foto',
     description:
-      'Publica una foto o reel con #BajaMiniGolf y valida en caja para recibir el dado adicional.',
+      'Publica una foto o reel con #BajaMiniGolf y valida en caja para recibir la tirada adicional.',
     icon: Camera
   }
 ]
@@ -78,6 +83,10 @@ export default function CelebrationPage() {
   const [availableRolls, setAvailableRolls] = useState(0)
   const [rollHistory, setRollHistory] = useState<RollResult[]>([])
   const [rewardInitialized, setRewardInitialized] = useState(false)
+  const [isSpinning, setIsSpinning] = useState(false)
+  const [wheelRotation, setWheelRotation] = useState(0)
+  const [lastResult, setLastResult] = useState<RollResult['tier'] | null>(null)
+  const spinTimeoutRef = useRef<number | null>(null)
 
   const gameId = params.id as string
 
@@ -87,8 +96,17 @@ export default function CelebrationPage() {
     setCompletedSteps(stored.completedSteps)
     setAvailableRolls(stored.availableRolls)
     setRollHistory(stored.rollHistory)
+    setLastResult(stored.rollHistory[0]?.tier ?? null)
     setRewardInitialized(true)
   }, [gameId])
+
+  useEffect(() => {
+    return () => {
+      if (spinTimeoutRef.current) {
+        window.clearTimeout(spinTimeoutRef.current)
+      }
+    }
+  }, [])
 
   const syncRewardState = (
     next: Partial<{
@@ -137,8 +155,12 @@ export default function CelebrationPage() {
     setLastInstruction(gameId, null)
   }
 
-  const handleRollDice = () => {
-    if (!rewardInitialized || availableRolls <= 0) return
+  const handleSpinRoulette = () => {
+    if (!rewardInitialized || availableRolls <= 0 || !isFinished || isSpinning)
+      return
+
+    setIsSpinning(true)
+    setLastResult(null)
 
     const tier = rollPrizeOutcome()
     const newRoll: RollResult = {
@@ -146,11 +168,42 @@ export default function CelebrationPage() {
       tier,
       timestamp: Date.now()
     }
-    const updatedHistory = [newRoll, ...rollHistory]
-    const nextRolls = Math.max(0, availableRolls - 1)
-    setRollHistory(updatedHistory)
-    setAvailableRolls(nextRolls)
-    syncRewardState({ rollHistory: updatedHistory, availableRolls: nextRolls })
+
+    const segmentIndex = rouletteSegments.findIndex(
+      (segment) => segment.tier === tier
+    )
+    const safeIndex = segmentIndex === -1 ? 0 : segmentIndex
+    const extraSpins = 4 + Math.floor(Math.random() * 3)
+    const rotationOffset =
+      safeIndex * rouletteSegmentAngle + rouletteSegmentAngle / 2
+
+    setWheelRotation((prev) => {
+      const normalizedPrev = prev % 360
+      const alignmentOffset = rotationOffset - normalizedPrev
+      return prev + extraSpins * 360 + alignmentOffset
+    })
+
+    if (spinTimeoutRef.current) {
+      window.clearTimeout(spinTimeoutRef.current)
+    }
+
+    spinTimeoutRef.current = window.setTimeout(() => {
+      setRollHistory((prevHistory) => {
+        const updatedHistory = [newRoll, ...prevHistory]
+        setAvailableRolls((prevRolls) => {
+          const nextRolls = Math.max(0, prevRolls - 1)
+          syncRewardState({
+            rollHistory: updatedHistory,
+            availableRolls: nextRolls
+          })
+          return nextRolls
+        })
+        return updatedHistory
+      })
+      setIsSpinning(false)
+      setLastResult(tier)
+      spinTimeoutRef.current = null
+    }, ROULETTE_SPIN_DURATION_MS)
   }
 
   const handleBackToGame = () => {
@@ -182,6 +235,21 @@ export default function CelebrationPage() {
   }
 
   const isFinished = game.status === 'finished'
+  const rouletteHelperMessage = isFinished
+    ? availableRolls > 0
+      ? `${availableRolls} tirada(s) disponible(s)`
+      : 'Completa acciones pendientes para ganar más tiradas'
+    : 'Termina la partida para desbloquear las tiradas'
+  const lastResultMeta =
+    lastResult && lastResult !== 'none' ? prizeCatalog[lastResult] : null
+  const rouletteStatusLabel = lastResult
+    ? (lastResultMeta?.label ?? 'Sin premio esta vez')
+    : 'Listo para girar'
+  const rouletteStatusDescription = lastResult
+    ? lastResult !== 'none'
+      ? (lastResultMeta?.description ?? 'Reclámalo con el staff.')
+      : 'Esta vez no salió premio. Inténtalo de nuevo.'
+    : 'Pulsa la ruleta cuando tengas tiradas disponibles.'
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -232,7 +300,7 @@ export default function CelebrationPage() {
           </div>
           {!isFinished && (
             <div className="mt-3 text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-xl p-3">
-              Termina la partida para habilitar los dados.
+              Termina la partida para habilitar las tiradas.
             </div>
           )}
         </div>
@@ -244,11 +312,11 @@ export default function CelebrationPage() {
                 Elige tus pasos
               </p>
               <h3 className="text-base font-semibold text-gray-900">
-                Cada acción desbloquea 1 tiro de dados
+                Cada acción desbloquea 1 tirada extra
               </h3>
             </div>
             <div className="text-right">
-              <p className="text-xs text-gray-500">Tiros disponibles</p>
+              <p className="text-xs text-gray-500">Tiradas disponibles</p>
               <span className="text-2xl font-bold text-gray-900">
                 {availableRolls}
               </span>
@@ -299,7 +367,7 @@ export default function CelebrationPage() {
                           : 'border-gray-200 text-gray-400'
                     }`}
                   >
-                    {completed ? '¡Dado ganado!' : 'Quiero mi dado'}
+                    {completed ? '¡Tirada ganada!' : 'Quiero mi tirada'}
                   </button>
                 </div>
               )
@@ -307,33 +375,109 @@ export default function CelebrationPage() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-black bg-gradient-to-br from-gray-900 via-gray-800 to-black p-4 text-white">
+        <div className="rounded-2xl border border-black bg-linear-to-br from-gray-900 via-gray-800 to-black p-4 text-white">
           <div className="flex items-center justify-between mb-4">
             <div>
               <p className="text-xs uppercase tracking-wide text-gray-300">
-                Zona de dados
+                Zona de tiradas
               </p>
-              <h3 className="text-xl font-semibold">Tira para ganar</h3>
+              <h3 className="text-xl font-semibold">Gira para ganar</h3>
               <p className="text-sm text-gray-400">
                 Premios físicos y experiencias especiales dentro del parque.
               </p>
             </div>
             <Gift className="h-8 w-8 text-green-300" />
           </div>
-          <div className="flex flex-wrap gap-3 items-center">
-            <button
-              type="button"
-              onClick={handleRollDice}
-              disabled={!isFinished || availableRolls === 0}
-              className="inline-flex items-center px-4 py-3 rounded-2xl bg-green-500 text-black font-semibold text-sm hover:bg-green-400 disabled:opacity-40"
-            >
-              <Dice5 className="h-5 w-5 mr-2" /> Tirar dado
-            </button>
-            <div className="text-xs text-gray-300">
-              {availableRolls > 0
-                ? `${availableRolls} tiro(s) restante(s)`
-                : 'Completa acciones para ganar tiros'}
+          <div className="flex flex-col gap-6 lg:flex-row">
+            <div className="flex flex-col items-center gap-3">
+              <button
+                type="button"
+                onClick={handleSpinRoulette}
+                disabled={!isFinished || availableRolls === 0 || isSpinning}
+                className="relative h-44 w-44 rounded-full focus-visible:outline-none disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute -top-4 left-1/2 flex -translate-x-1/2 flex-col items-center"
+                >
+                  <div className="h-5 w-1 rounded bg-white shadow" />
+                  <div
+                    className="drop-shadow"
+                    style={{
+                      width: 0,
+                      height: 0,
+                      borderLeft: '9px solid transparent',
+                      borderRight: '9px solid transparent',
+                      borderTop: '14px solid white'
+                    }}
+                  />
+                </div>
+                <div
+                  className="absolute inset-0 rounded-full border-4 border-white shadow-lg transition-transform ease-out"
+                  style={{
+                    backgroundImage: rouletteGradient,
+                    transform: `rotate(${wheelRotation}deg)`,
+                    transitionDuration: `${ROULETTE_SPIN_DURATION_MS}ms`
+                  }}
+                />
+                <div className="absolute inset-0 rounded-full overflow-hidden">
+                  <div className="absolute inset-3 rounded-full bg-white/90 backdrop-blur flex flex-col items-center justify-center text-center px-4">
+                    <p className="text-[11px] uppercase tracking-wide text-gray-400">
+                      Ruleta
+                    </p>
+                    <p className="text-base font-semibold text-gray-900">
+                      {isSpinning ? 'Girando...' : 'Toca para girar'}
+                    </p>
+                    <p className="text-[11px] text-gray-500">
+                      {availableRolls} tirada(s)
+                    </p>
+                  </div>
+                </div>
+              </button>
+              <p className="text-xs text-gray-400 text-center">
+                {isFinished
+                  ? 'Deja que el staff valide el premio al terminar el giro.'
+                  : 'Termina la partida para activar la ruleta.'}
+              </p>
             </div>
+            <div className="flex-1 space-y-3">
+              <p className="text-xs text-gray-400">Tiradas disponibles</p>
+              <p className="text-3xl font-bold text-white">{availableRolls}</p>
+              <p className="text-xs text-gray-400">{rouletteHelperMessage}</p>
+              <div className="rounded-xl border border-white/10 bg-white/5 p-3 space-y-1">
+                <p className="text-xs text-gray-400">Último resultado</p>
+                <p className="text-sm font-semibold text-white">
+                  {rouletteStatusLabel}
+                </p>
+                <p className="text-xs text-gray-400">
+                  {rouletteStatusDescription}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleSpinRoulette}
+                disabled={!isFinished || availableRolls === 0 || isSpinning}
+                className="w-full inline-flex items-center justify-center px-4 py-3 rounded-2xl bg-green-500 text-black font-semibold text-sm hover:bg-green-400 disabled:opacity-40"
+              >
+                {isSpinning ? 'Girando...' : 'Girar ruleta'}
+              </button>
+            </div>
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-2 text-[11px] text-gray-300">
+            {rouletteSegments.map((segment) => (
+              <div
+                key={segment.tier}
+                className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-2 py-1.5"
+              >
+                <span
+                  className="h-2 w-2 rounded-full"
+                  style={{ backgroundColor: segment.color }}
+                />
+                <span className="font-semibold text-white">
+                  {segment.label}
+                </span>
+              </div>
+            ))}
           </div>
           {rollHistory.length > 0 ? (
             <div className="mt-4 space-y-2">
@@ -372,7 +516,7 @@ export default function CelebrationPage() {
             </div>
           ) : (
             <p className="mt-4 text-sm text-gray-300">
-              Aún no tienes premios mostrados. Completa un paso y tira los dados
+              Aún no tienes premios mostrados. Completa un paso y gira la ruleta
               para descubrir tu recompensa.
             </p>
           )}

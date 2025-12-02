@@ -17,28 +17,12 @@ import {
   rollPrizeOutcome
 } from '@/lib/rewards'
 import { Game } from '@/types'
-
-const wheelSegments: Array<{
-  tier: RewardPrize
-  label: string
-  color: string
-}> = [
-  { tier: 'large', label: 'Gran premio', color: '#a855f7' },
-  { tier: 'medium', label: 'Premio mediano', color: '#3b82f6' },
-  { tier: 'small', label: 'Premio chico', color: '#22c55e' },
-  { tier: 'none', label: 'Sin premio', color: '#f97316' }
-]
-
-const wheelSegmentAngle = 360 / wheelSegments.length
-
-const wheelGradient = (() => {
-  const segments = wheelSegments.map((segment, index) => {
-    const start = index * wheelSegmentAngle
-    const end = start + wheelSegmentAngle
-    return `${segment.color} ${start}deg ${end}deg`
-  })
-  return `conic-gradient(${segments.join(', ')})`
-})()
+import {
+  rouletteGradient,
+  rouletteSegmentAngle,
+  rouletteSegments,
+  ROULETTE_SPIN_DURATION_MS
+} from '@/lib/roulette'
 
 interface RewardLogrosCardProps {
   games: Game[]
@@ -128,9 +112,9 @@ const RewardLogrosCard: FC<RewardLogrosCardProps> = ({ games }) => {
   const isFinishedGame = selectedGame?.status === 'finished'
   const rouletteHelperMessage = isFinishedGame
     ? rollsAvailable > 0
-      ? `${rollsAvailable} tiro(s) disponible(s)`
-      : 'Completa acciones pendientes para ganar más dados'
-    : 'Termina esta partida para desbloquear los dados'
+      ? `${rollsAvailable} tirada(s) disponible(s)`
+      : 'Completa acciones pendientes para ganar más tiradas'
+    : 'Termina esta partida para desbloquear las tiradas'
   const lastResultMeta =
     lastResult && lastResult !== 'none' ? prizeCatalog[lastResult] : null
   const rouletteStatusLabel = lastResult
@@ -140,7 +124,7 @@ const RewardLogrosCard: FC<RewardLogrosCardProps> = ({ games }) => {
     ? lastResult !== 'none'
       ? (lastResultMeta?.description ?? 'Reclámalo con el staff.')
       : 'Esta vez no tocó premio, vuelve a intentarlo.'
-    : 'Pulsa la ruleta cuando tengas dados disponibles.'
+    : 'Pulsa la ruleta cuando tengas tiradas disponibles.'
 
   const handleSpinRoulette = () => {
     if (!currentState || !isFinishedGame || rollsAvailable <= 0 || isSpinning)
@@ -157,12 +141,13 @@ const RewardLogrosCard: FC<RewardLogrosCardProps> = ({ games }) => {
       delivered: false
     }
 
-    const segmentIndex = wheelSegments.findIndex(
+    const segmentIndex = rouletteSegments.findIndex(
       (segment) => segment.tier === tier
     )
     const safeIndex = segmentIndex === -1 ? 0 : segmentIndex
     const extraSpins = 4 + Math.floor(Math.random() * 3)
-    const rotationOffset = safeIndex * wheelSegmentAngle + wheelSegmentAngle / 2
+    const rotationOffset =
+      safeIndex * rouletteSegmentAngle + rouletteSegmentAngle / 2
 
     setWheelRotation((prev) => {
       const normalizedPrev = prev % 360
@@ -192,7 +177,7 @@ const RewardLogrosCard: FC<RewardLogrosCardProps> = ({ games }) => {
       setIsSpinning(false)
       setLastResult(tier)
       spinTimeoutRef.current = null
-    }, 1800)
+    }, ROULETTE_SPIN_DURATION_MS)
   }
 
   const handleAdminGrant = () => {
@@ -212,7 +197,7 @@ const RewardLogrosCard: FC<RewardLogrosCardProps> = ({ games }) => {
       )
     )
     setAdminRollInput('1')
-    setAdminStatus(`+${rollsToGrant} dado(s) asignado(s)`)
+    setAdminStatus(`+${rollsToGrant} tirada(s) asignada(s)`)
     setTimeout(() => setAdminStatus(null), 2500)
   }
 
@@ -256,7 +241,7 @@ const RewardLogrosCard: FC<RewardLogrosCardProps> = ({ games }) => {
           <h4 className="text-sm font-semibold text-gray-900">Logros</h4>
           {!isFinishedGame && (
             <p className="text-[11px] text-gray-500 mt-1">
-              Termina la partida y completa acciones para ganar tiros de dado y
+              Termina la partida y completa acciones para ganar tiradas y
               premios.
             </p>
           )}
@@ -292,7 +277,7 @@ const RewardLogrosCard: FC<RewardLogrosCardProps> = ({ games }) => {
             onClick={handleAdminGrant}
             className="px-3 py-1 rounded bg-black text-white font-semibold"
           >
-            Dar dados
+            Dar tiradas
           </button>
           {adminStatus && (
             <span className="text-green-600 font-medium">{adminStatus}</span>
@@ -311,10 +296,27 @@ const RewardLogrosCard: FC<RewardLogrosCardProps> = ({ games }) => {
                 className="relative h-44 w-44 rounded-full focus-visible:outline-none disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <div
-                  className="absolute inset-0 rounded-full border-4 border-white shadow-lg transition-transform duration-[1800ms] ease-out"
+                  aria-hidden="true"
+                  className="pointer-events-none absolute -top-4 left-1/2 flex -translate-x-1/2 flex-col items-center"
+                >
+                  <div className="h-5 w-1 rounded bg-white shadow" />
+                  <div
+                    className="drop-shadow"
+                    style={{
+                      width: 0,
+                      height: 0,
+                      borderLeft: '9px solid transparent',
+                      borderRight: '9px solid transparent',
+                      borderTop: '14px solid white'
+                    }}
+                  />
+                </div>
+                <div
+                  className="absolute inset-0 rounded-full border-4 border-white shadow-lg transition-transform ease-out"
                   style={{
-                    backgroundImage: wheelGradient,
-                    transform: `rotate(${wheelRotation}deg)`
+                    backgroundImage: rouletteGradient,
+                    transform: `rotate(${wheelRotation}deg)`,
+                    transitionDuration: `${ROULETTE_SPIN_DURATION_MS}ms`
                   }}
                 />
                 <div className="absolute inset-0 rounded-full overflow-hidden">
@@ -326,7 +328,7 @@ const RewardLogrosCard: FC<RewardLogrosCardProps> = ({ games }) => {
                       {isSpinning ? 'Girando...' : 'Tocar para girar'}
                     </p>
                     <p className="text-[11px] text-gray-500">
-                      {rollsAvailable} dado(s)
+                      {rollsAvailable} tirada(s)
                     </p>
                   </div>
                 </div>
@@ -339,7 +341,7 @@ const RewardLogrosCard: FC<RewardLogrosCardProps> = ({ games }) => {
             </div>
 
             <div className="flex-1 space-y-2">
-              <p className="text-xs text-gray-500">Tiros disponibles</p>
+              <p className="text-xs text-gray-500">Tiradas disponibles</p>
               <p className="text-3xl font-bold text-gray-900">
                 {rollsAvailable}
               </p>
@@ -367,7 +369,7 @@ const RewardLogrosCard: FC<RewardLogrosCardProps> = ({ games }) => {
           </div>
 
           <div className="grid grid-cols-2 gap-2 text-[11px] text-gray-600">
-            {wheelSegments.map((segment) => (
+            {rouletteSegments.map((segment) => (
               <div
                 key={segment.tier}
                 className="flex items-center gap-2 rounded-lg border border-gray-100 bg-white px-2 py-1.5"

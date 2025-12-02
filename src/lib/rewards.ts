@@ -276,7 +276,7 @@ export const rewardStepMeta: Record<
     label: 'Compartido',
     instructions: [
       'Copia el texto oficial del reto y publícalo con tu foto o reel.',
-      'Enséñale la publicación al staff para validar tu dado.'
+      'Enséñale la publicación al staff para validar tu tirada.'
     ],
     ctaLabel: 'Copiar copy'
   }

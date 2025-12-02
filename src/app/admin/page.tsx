@@ -1,8 +1,8 @@
 'use client'
 
 import {
+  Aperture,
   CheckCircle2,
-  Dice5,
   Edit3,
   Gift,
   Loader2,
@@ -592,7 +592,7 @@ function RewardsTab({
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-xl font-semibold text-gray-900">
-            Premios y dados
+            Premios y tiradas
           </h3>
           <p className="text-sm text-gray-500">
             Controla las probabilidades, catálogo de premios y seguimiento de
@@ -1174,7 +1174,7 @@ function UsersTab({
     })
     setRowStatus((prev) => ({
       ...prev,
-      [userId]: `Se otorgaron ${amount} tiro(s)`
+      [userId]: `Se otorgaron ${amount} tirada(s)`
     }))
     setGrantInputs((prev) => ({ ...prev, [userId]: '1' }))
     onRefreshRewards()
@@ -1218,7 +1218,7 @@ function UsersTab({
               Usuarios Registrados ({users.length})
             </h3>
             <p className="text-sm text-gray-500">
-              Visualiza dados utilizados, pendientes y valida premios desde
+              Visualiza tiradas utilizadas, pendientes y valida premios desde
               aquí.
             </p>
           </div>
@@ -1242,7 +1242,7 @@ function UsersTab({
                   Datos de juego
                 </th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">
-                  Dados
+                  Tiradas
                 </th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">
                   Premios
@@ -1311,14 +1311,14 @@ function UsersTab({
                     </td>
                     <td className="px-4 py-4 align-top text-xs text-gray-600">
                       <p className="flex items-center gap-1">
-                        <Dice5 className="h-4 w-4 text-green-600" />
+                        <Aperture className="h-4 w-4 text-green-600" />
                         Tiradas usadas:{' '}
                         <span className="font-semibold text-gray-900">
                           {entry.totalRolls}
                         </span>
                       </p>
                       <p className="flex items-center gap-1 mt-1">
-                        <Dice5 className="h-4 w-4 text-amber-600" />
+                        <Aperture className="h-4 w-4 text-amber-600" />
                         Por tirar:{' '}
                         <span className="font-semibold text-gray-900">
                           {entry.availableRolls}
@@ -1389,7 +1389,7 @@ function UsersTab({
                             className="inline-flex items-center gap-1 px-2 py-1 rounded bg-green-600 text-white font-semibold text-xs disabled:opacity-50"
                             disabled={entry.states.length === 0}
                           >
-                            Dar tiros
+                            Dar tiradas
                           </button>
                         </div>
                         {rowStatus[user.id] && (
