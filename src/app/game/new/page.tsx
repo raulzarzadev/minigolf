@@ -381,6 +381,23 @@ export default function NewGamePage() {
                     >
                       <Plus className="h-4 w-4 mr-2" /> Agregar otro jugador
                     </button>
+                    {guestPlayersFromInputs.length > 0 && (
+                      <div className="text-xs text-gray-600">
+                        <p className="font-semibold text-gray-700 mb-1">
+                          Jugadores listos:
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {guestPlayersFromInputs.map((player) => (
+                            <span
+                              key={player.id}
+                              className="inline-flex items-center px-2 py-1 bg-gray-100 rounded-full text-gray-700"
+                            >
+                              {player.name}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                     <p className="text-xs text-gray-500">
                       Estos jugadores se agregarán automáticamente al guardar la
                       partida.
@@ -621,6 +638,23 @@ export default function NewGamePage() {
                   >
                     <Plus className="h-4 w-4 mr-2" /> Agregar otro invitado
                   </button>
+                  {guestPlayersFromInputs.length > 0 && (
+                    <div className="mt-3 text-xs text-gray-600">
+                      <p className="font-semibold text-gray-700 mb-1">
+                        Se agregarán:
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {guestPlayersFromInputs.map((player) => (
+                          <span
+                            key={player.id}
+                            className="inline-flex items-center px-2 py-1 bg-gray-100 rounded-full text-gray-700"
+                          >
+                            {player.name}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Search Users */}
