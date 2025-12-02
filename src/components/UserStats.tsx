@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { User } from '@/types'
 import { getUserGames } from '@/lib/db'
-import { Trophy, Target, TrendingUp, Star, Award, Flag } from 'lucide-react'
+import { Trophy, Target, TrendingUp, Flag } from 'lucide-react'
 
 interface UserStatsProps {
   user: User
@@ -72,52 +72,6 @@ const UserStats: React.FC<UserStatsProps> = ({ user }) => {
       </div>
     )
   }
-
-  const getAchievements = () => {
-    const achievements = []
-
-    if (stats.holesInOne >= 1) {
-      achievements.push({
-        name: 'Ace!',
-        description: `${stats.holesInOne} hole${
-          stats.holesInOne > 1 ? 's' : ''
-        }-in-one`,
-        icon: Star,
-        color: 'text-green-600 bg-green-100'
-      })
-    }
-
-    if (stats.totalGames >= 10) {
-      achievements.push({
-        name: 'Veterano',
-        description: `${stats.totalGames} partidas jugadas`,
-        icon: Award,
-        color: 'text-blue-600 bg-blue-100'
-      })
-    }
-
-    if (stats.winRate >= 70) {
-      achievements.push({
-        name: 'Ganador',
-        description: `${stats.winRate}% de victorias`,
-        icon: Trophy,
-        color: 'text-green-600 bg-green-100'
-      })
-    }
-
-    if (stats.averagePerHole <= 2.5) {
-      achievements.push({
-        name: 'Precisión',
-        description: `Promedio de ${stats.averagePerHole} por hoyo`,
-        icon: Target,
-        color: 'text-purple-600 bg-purple-100'
-      })
-    }
-
-    return achievements
-  }
-
-  const achievements = getAchievements()
 
   return (
     <div className="space-y-4">
@@ -200,65 +154,6 @@ const UserStats: React.FC<UserStatsProps> = ({ user }) => {
               </div>
             </div>
           </div>
-
-          {/* Achievements */}
-          <div className="bg-white rounded-lg border border-gray-200 p-3">
-            <h4 className="font-semibold text-gray-900 mb-3 text-sm">Logros</h4>
-            {achievements.length > 0 ? (
-              <div className="space-y-2">
-                {achievements.map((achievement, index) => (
-                  <div key={index} className="flex items-center space-x-2">
-                    <div className={`p-1.5 rounded-lg ${achievement.color}`}>
-                      <achievement.icon className="h-3 w-3" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="font-medium text-gray-900 text-xs">
-                        {achievement.name}
-                      </div>
-                      <div className="text-xs text-gray-500 truncate">
-                        {achievement.description}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-gray-500 text-center py-3">
-                <Award className="h-6 w-6 mx-auto mb-2 text-gray-400" />
-                <p className="text-xs">
-                  ¡Sigue jugando para desbloquear logros!
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* Recent Form */}
-          {stats.recentForm.length > 0 && (
-            <div className="bg-white rounded-lg border border-gray-200 p-3">
-              <h4 className="font-semibold text-gray-900 mb-3 text-sm">
-                Forma reciente
-              </h4>
-              <div className="flex items-center space-x-1">
-                {stats.recentForm.slice(0, 5).map((score, index) => (
-                  <div
-                    key={index}
-                    className={`w-6 h-6 rounded flex items-center justify-center text-xs font-medium ${
-                      score <= 2
-                        ? 'bg-green-100 text-green-600'
-                        : score <= 3
-                        ? 'bg-yellow-100 text-yellow-600'
-                        : 'bg-red-100 text-red-600'
-                    }`}
-                  >
-                    {score.toFixed(1)}
-                  </div>
-                ))}
-                <div className="text-xs text-gray-500 ml-2">
-                  Promedio por hoyo (últimas partidas)
-                </div>
-              </div>
-            </div>
-          )}
         </>
       )}
     </div>

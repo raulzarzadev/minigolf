@@ -7,6 +7,7 @@ import { Game } from '@/types'
 import Navbar from '@/components/Navbar'
 import UserStats from '@/components/UserStats'
 import DiscreteUsernameEditor from '@/components/DiscreteUsernameEditor'
+import RewardLogrosCard from '@/components/RewardLogrosCard'
 import Link from 'next/link'
 import { User, Clock, Play, Flag } from 'lucide-react'
 
@@ -123,6 +124,10 @@ export default function ProfilePage() {
         {/* Stats Grid */}
 
         <UserStats user={user} />
+
+        <div className="mt-4">
+          <RewardLogrosCard games={userGames} />
+        </div>
 
         {/* Games History */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">

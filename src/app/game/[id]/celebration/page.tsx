@@ -8,6 +8,12 @@ import { Game } from '@/types'
 import { subscribeToGame } from '@/lib/db'
 import { getLocalGame, isLocalGame } from '@/lib/localStorage'
 import {
+  loadRewardState,
+  persistRewardState,
+  prizeCatalog,
+  PrizeTier
+} from '@/lib/rewards'
+import {
   ArrowLeft,
   Dice5,
   Gift,
@@ -20,26 +26,6 @@ import {
 } from 'lucide-react'
 
 const instagramProfile = 'https://www.instagram.com/baja_mini_golf/'
-
-const prizeCatalog = {
-  small: {
-    label: 'Premio chico',
-    description: '1 partida de minigolf gratis para tu próxima visita.',
-    accent: 'bg-green-100 text-green-800'
-  },
-  medium: {
-    label: 'Premio mediano',
-    description: 'Acceso al muro de escalar y foto en el mural de campeones.',
-    accent: 'bg-blue-100 text-blue-800'
-  },
-  large: {
-    label: 'Premio grande',
-    description: 'Challenge sorpresa en otra atracción del parque.',
-    accent: 'bg-purple-100 text-purple-800'
-  }
-} as const
-
-type PrizeTier = keyof typeof prizeCatalog
 
 interface RollResult {
   id: string
@@ -58,8 +44,34 @@ export default function CelebrationPage() {
   )
   const [availableRolls, setAvailableRolls] = useState(0)
   const [rollHistory, setRollHistory] = useState<RollResult[]>([])
+  const [rewardInitialized, setRewardInitialized] = useState(false)
 
   const gameId = params.id as string
+
+  useEffect(() => {
+    if (!gameId) return
+    const stored = loadRewardState(gameId)
+    setCompletedSteps(stored.completedSteps)
+    setAvailableRolls(stored.availableRolls)
+    setRollHistory(stored.rollHistory)
+    setRewardInitialized(true)
+  }, [gameId])
+
+  const syncRewardState = (
+    next: Partial<{
+      completedSteps: Record<string, boolean>
+      availableRolls: number
+      rollHistory: RollResult[]
+    }>
+  ) => {
+    if (!gameId) return
+    const merged = {
+      completedSteps: next.completedSteps ?? completedSteps,
+      availableRolls: next.availableRolls ?? availableRolls,
+      rollHistory: next.rollHistory ?? rollHistory
+    }
+    persistRewardState(gameId, merged)
+  }
 
   useEffect(() => {
     if (!gameId) return
@@ -137,15 +149,18 @@ export default function CelebrationPage() {
   )
 
   const handleMarkStep = async (stepId: string) => {
-    if (completedSteps[stepId]) return
+    if (!rewardInitialized || completedSteps[stepId]) return
     const step = steps.find((item) => item.id === stepId)
     step?.onAction?.()
-    setCompletedSteps((prev) => ({ ...prev, [stepId]: true }))
-    setAvailableRolls((prev) => prev + 1)
+    const updatedSteps = { ...completedSteps, [stepId]: true }
+    const nextRolls = availableRolls + 1
+    setCompletedSteps(updatedSteps)
+    setAvailableRolls(nextRolls)
+    syncRewardState({ completedSteps: updatedSteps, availableRolls: nextRolls })
   }
 
   const handleRollDice = () => {
-    if (availableRolls <= 0) return
+    if (!rewardInitialized || availableRolls <= 0) return
 
     const random = Math.random()
     let tier: PrizeTier
@@ -153,11 +168,16 @@ export default function CelebrationPage() {
     else if (random < 0.85) tier = 'medium'
     else tier = 'large'
 
-    setRollHistory((prev) => [
-      { id: `${tier}-${Date.now()}`, tier, timestamp: Date.now() },
-      ...prev
-    ])
-    setAvailableRolls((prev) => Math.max(0, prev - 1))
+    const newRoll: RollResult = {
+      id: `${tier}-${Date.now()}`,
+      tier,
+      timestamp: Date.now()
+    }
+    const updatedHistory = [newRoll, ...rollHistory]
+    const nextRolls = Math.max(0, availableRolls - 1)
+    setRollHistory(updatedHistory)
+    setAvailableRolls(nextRolls)
+    syncRewardState({ rollHistory: updatedHistory, availableRolls: nextRolls })
   }
 
   const handleBackToGame = () => {
