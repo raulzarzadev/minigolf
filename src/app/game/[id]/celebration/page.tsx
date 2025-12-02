@@ -375,18 +375,18 @@ export default function CelebrationPage() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-black bg-linear-to-br from-gray-900 via-gray-800 to-black p-4 text-white">
+        <div className="rounded-2xl border border-slate-200 bg-linear-to-br from-blue-50 via-slate-50 to-emerald-50 p-4 text-slate-900">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="text-xs uppercase tracking-wide text-gray-300">
+              <p className="text-xs uppercase tracking-wide text-emerald-700">
                 Zona de tiradas
               </p>
               <h3 className="text-xl font-semibold">Gira para ganar</h3>
-              <p className="text-sm text-gray-400">
+              <p className="text-sm text-slate-600">
                 Premios físicos y experiencias especiales dentro del parque.
               </p>
             </div>
-            <Gift className="h-8 w-8 text-green-300" />
+            <Gift className="h-8 w-8 text-emerald-700" />
           </div>
           <div className="flex flex-col gap-6 lg:flex-row">
             <div className="flex flex-col items-center gap-3">
@@ -434,22 +434,24 @@ export default function CelebrationPage() {
                   </div>
                 </div>
               </button>
-              <p className="text-xs text-gray-400 text-center">
+              <p className="text-xs text-slate-500 text-center">
                 {isFinished
                   ? 'Deja que el staff valide el premio al terminar el giro.'
                   : 'Termina la partida para activar la ruleta.'}
               </p>
             </div>
             <div className="flex-1 space-y-3">
-              <p className="text-xs text-gray-400">Tiradas disponibles</p>
-              <p className="text-3xl font-bold text-white">{availableRolls}</p>
-              <p className="text-xs text-gray-400">{rouletteHelperMessage}</p>
-              <div className="rounded-xl border border-white/10 bg-white/5 p-3 space-y-1">
-                <p className="text-xs text-gray-400">Último resultado</p>
-                <p className="text-sm font-semibold text-white">
+              <p className="text-xs text-slate-500">Tiradas disponibles</p>
+              <p className="text-3xl font-bold text-emerald-700">
+                {availableRolls}
+              </p>
+              <p className="text-xs text-slate-500">{rouletteHelperMessage}</p>
+              <div className="rounded-xl border border-slate-200 bg-white p-3 space-y-1">
+                <p className="text-xs text-slate-500">Último resultado</p>
+                <p className="text-sm font-semibold text-slate-900">
                   {rouletteStatusLabel}
                 </p>
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-slate-500">
                   {rouletteStatusDescription}
                 </p>
               </div>
@@ -457,23 +459,23 @@ export default function CelebrationPage() {
                 type="button"
                 onClick={handleSpinRoulette}
                 disabled={!isFinished || availableRolls === 0 || isSpinning}
-                className="w-full inline-flex items-center justify-center px-4 py-3 rounded-2xl bg-green-500 text-black font-semibold text-sm hover:bg-green-400 disabled:opacity-40"
+                className="w-full inline-flex items-center justify-center px-4 py-3 rounded-2xl bg-emerald-500 text-white font-semibold text-sm hover:bg-emerald-400 disabled:opacity-40"
               >
                 {isSpinning ? 'Girando...' : 'Girar ruleta'}
               </button>
             </div>
           </div>
-          <div className="mt-4 grid grid-cols-2 gap-2 text-[11px] text-gray-300">
+          <div className="mt-4 grid grid-cols-2 gap-2 text-[11px] text-slate-600">
             {rouletteSegments.map((segment) => (
               <div
                 key={segment.tier}
-                className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-2 py-1.5"
+                className="flex items-center gap-2 rounded-lg border border-slate-100 bg-white px-2 py-1.5"
               >
                 <span
                   className="h-2 w-2 rounded-full"
                   style={{ backgroundColor: segment.color }}
                 />
-                <span className="font-semibold text-white">
+                <span className="font-semibold text-slate-900">
                   {segment.label}
                 </span>
               </div>
@@ -494,11 +496,13 @@ export default function CelebrationPage() {
                 return (
                   <div
                     key={roll.id}
-                    className="flex items-center justify-between bg-white/5 rounded-xl px-3 py-2"
+                    className="flex items-center justify-between bg-white rounded-xl px-3 py-2"
                   >
                     <div>
-                      <p className="text-sm font-semibold">{prize.label}</p>
-                      <p className="text-xs text-gray-300">
+                      <p className="text-sm font-semibold text-slate-900">
+                        {prize.label}
+                      </p>
+                      <p className="text-xs text-slate-500">
                         {prize.description}
                       </p>
                     </div>
