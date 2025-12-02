@@ -1,12 +1,6 @@
 'use client'
 
-import React, {
-  useState,
-  useEffect,
-  useCallback,
-  useMemo,
-  useRef
-} from 'react'
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Game, Player } from '@/types'
 import { updatePlayerScore, calculateGameStats, updateGame } from '@/lib/db'
 import { updateLocalGame, isLocalGame } from '@/lib/localStorage'
@@ -66,7 +60,8 @@ const Scorecard: React.FC<ScorecardProps> = ({
   const activePlayer = useMemo(() => {
     if (!activeControl) return null
     return (
-      game.players.find((player) => player.id === activeControl.playerId) || null
+      game.players.find((player) => player.id === activeControl.playerId) ||
+      null
     )
   }, [activeControl, game.players])
 
