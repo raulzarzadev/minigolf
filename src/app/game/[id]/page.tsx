@@ -273,6 +273,35 @@ export default function GamePage() {
           }}
         />
 
+        {canFinish && (
+          <div className="mt-6">
+            <div className="rounded-2xl border border-green-200 bg-linear-to-r from-green-600 via-emerald-500 to-green-500 p-4 text-white shadow-lg">
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-white/70">
+                    Preparar cierre
+                  </p>
+                  <h3 className="text-lg font-semibold">¿Lista la partida?</h3>
+                  <p className="text-sm text-white/80">
+                    {allPlayersFinished()
+                      ? 'Todos los jugadores tienen sus golpes guardados. Puedes finalizar cuando gustes.'
+                      : 'Puedes finalizar en cualquier momento; los cambios se guardan automáticamente.'}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleFinishGame}
+                  disabled={isFinishing}
+                  className="inline-flex items-center justify-center rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-green-700 transition-all hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-70"
+                >
+                  <Flag className="mr-2 h-4 w-4 text-green-600" />
+                  {isFinishing ? 'Finalizando...' : 'Finalizar partida'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Save/Publish Options for Local Games */}
         {isLocalGameState && !user && (
           <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
