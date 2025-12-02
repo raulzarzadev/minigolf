@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Navbar from '@/components/Navbar'
 import { useAuth } from '@/contexts/AuthContext'
@@ -11,7 +11,10 @@ import {
   loadRewardState,
   persistRewardState,
   prizeCatalog,
-  PrizeTier
+  PrizeTier,
+  RewardStepId,
+  triggerRewardStepAction,
+  setLastInstruction
 } from '@/lib/rewards'
 import {
   ArrowLeft,
@@ -25,7 +28,36 @@ import {
   Loader2
 } from 'lucide-react'
 
-const instagramProfile = 'https://www.instagram.com/baja_mini_golf/'
+type StepConfig = {
+  id: RewardStepId
+  title: string
+  description: string
+  icon: typeof Save
+}
+
+const stepConfigs: StepConfig[] = [
+  {
+    id: 'register',
+    title: 'Registrar mi partida',
+    description:
+      'Sincroniza tu score con tu cuenta para participar en sorteos oficiales.',
+    icon: Save
+  },
+  {
+    id: 'follow',
+    title: 'Seguirnos en Instagram',
+    description:
+      'Dale follow a @bajaminigolf y entérate de los próximos retos.',
+    icon: Instagram
+  },
+  {
+    id: 'share',
+    title: 'Publicar tu foto',
+    description:
+      'Sube una foto o reel etiquetándonos con #BajaMiniGolf para sumar otro tiro.',
+    icon: Camera
+  }
+]
 
 interface RollResult {
   id: string
@@ -62,15 +94,11 @@ export default function CelebrationPage() {
       completedSteps: Record<string, boolean>
       availableRolls: number
       rollHistory: RollResult[]
+      lastInstruction: RewardStepId | null
     }>
   ) => {
     if (!gameId) return
-    const merged = {
-      completedSteps: next.completedSteps ?? completedSteps,
-      availableRolls: next.availableRolls ?? availableRolls,
-      rollHistory: next.rollHistory ?? rollHistory
-    }
-    persistRewardState(gameId, merged)
+    persistRewardState(gameId, next)
   }
 
   useEffect(() => {
@@ -93,70 +121,19 @@ export default function CelebrationPage() {
     return () => unsubscribe()
   }, [gameId])
 
-  const steps = useMemo(
-    () => [
-      {
-        id: 'register',
-        title: 'Registrar mi partida',
-        description:
-          'Sincroniza tu score con tu cuenta para participar en sorteos oficiales.',
-        icon: Save,
-        onAction: () => {
-          if (typeof window === 'undefined') return
-          const redirectTo = `/login?redirect=${encodeURIComponent(
-            `/game/${gameId}/celebration`
-          )}`
-          if (user) {
-            window.open('/profile', '_blank')
-          } else {
-            window.open(redirectTo, '_blank')
-          }
-        }
-      },
-      {
-        id: 'follow',
-        title: 'Seguirnos en Instagram',
-        description:
-          'Dale follow a @bajaminigolf y entérate de los próximos retos.',
-        icon: Instagram,
-        onAction: () => {
-          if (typeof window === 'undefined') return
-          window.open(instagramProfile, '_blank')
-        }
-      },
-      {
-        id: 'share',
-        title: 'Publicar tu foto',
-        description:
-          'Sube una foto o reel etiquetándonos con #BajaMiniGolf para sumar otro tiro.',
-        icon: Camera,
-        onAction: async () => {
-          if (typeof navigator === 'undefined') return
-          try {
-            await navigator.clipboard.writeText(
-              '📸 Terminé mi partida en Baja Mini Golf. ¡Acepto el reto! #BajaMiniGolf #BajaBlast'
-            )
-            alert(
-              'Texto copiado. Pega el copy al subir tu foto en Instagram 📲'
-            )
-          } catch {
-            // ignore copy failures silently
-          }
-        }
-      }
-    ],
-    [gameId, user]
-  )
-
-  const handleMarkStep = async (stepId: string) => {
+  const handleMarkStep = async (stepId: RewardStepId) => {
     if (!rewardInitialized || completedSteps[stepId]) return
-    const step = steps.find((item) => item.id === stepId)
-    step?.onAction?.()
+    triggerRewardStepAction(stepId, { gameId, user })
     const updatedSteps = { ...completedSteps, [stepId]: true }
     const nextRolls = availableRolls + 1
     setCompletedSteps(updatedSteps)
     setAvailableRolls(nextRolls)
-    syncRewardState({ completedSteps: updatedSteps, availableRolls: nextRolls })
+    syncRewardState({
+      completedSteps: updatedSteps,
+      availableRolls: nextRolls,
+      lastInstruction: null
+    })
+    setLastInstruction(gameId, null)
   }
 
   const handleRollDice = () => {
@@ -281,7 +258,7 @@ export default function CelebrationPage() {
             </div>
           </div>
           <div className="space-y-3">
-            {steps.map((step) => {
+            {stepConfigs.map((step) => {
               const Icon = step.icon
               const completed = completedSteps[step.id]
               return (

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react'
 import { Game } from '@/types'
+import { useAuth } from '@/contexts/AuthContext'
 import {
   getAllRewardStates,
   loadRewardState,
@@ -9,33 +10,16 @@ import {
   prizeCatalog,
   PrizeTier,
   RewardState,
-  RewardStepId
+  RewardStepId,
+  rewardStepMeta,
+  triggerRewardStepAction,
+  setLastInstruction,
+  rewardPerks
 } from '@/lib/rewards'
 import { CheckCircle2, Dice5, Gift, Loader2, X } from 'lucide-react'
 
 interface RewardLogrosCardProps {
   games: Game[]
-}
-
-const stepDetails: Record<
-  RewardStepId,
-  { label: string; instructions: string }
-> = {
-  register: {
-    label: 'Registro',
-    instructions:
-      'Inicia sesión o crea tu cuenta y abre la partida desde el Centro de Recompensas para vincular tu marcador.'
-  },
-  follow: {
-    label: 'Instagram',
-    instructions:
-      'Abre @bajaminigolf en Instagram, da follow y muestra tu perfil siguiendo la cuenta para validar el tiro.'
-  },
-  share: {
-    label: 'Compartido',
-    instructions:
-      'Sube una foto o reel etiquetándonos con #BajaMiniGolf y el copy oficial para desbloquear este dado.'
-  }
 }
 
 const RewardLogrosCard: React.FC<RewardLogrosCardProps> = ({ games }) => {
@@ -44,6 +28,7 @@ const RewardLogrosCard: React.FC<RewardLogrosCardProps> = ({ games }) => {
   const [currentState, setCurrentState] = useState<RewardState | null>(null)
   const [loading, setLoading] = useState(true)
   const [activeStep, setActiveStep] = useState<RewardStepId | null>(null)
+  const { user } = useAuth()
 
   const gameOptions = useMemo(() => {
     return rewardStates.map((state) => {
@@ -68,7 +53,13 @@ const RewardLogrosCard: React.FC<RewardLogrosCardProps> = ({ games }) => {
     const initial = states.find((state) => state.gameId === selectedGameId)
     const fallback = initial ?? states[0] ?? null
     setSelectedGameId(fallback?.gameId ?? null)
-    setCurrentState(fallback ? loadRewardState(fallback.gameId) : null)
+    const resolvedState = fallback ? loadRewardState(fallback.gameId) : null
+    setCurrentState(resolvedState)
+    setActiveStep(
+      resolvedState && resolvedState.lastInstruction
+        ? resolvedState.lastInstruction
+        : null
+    )
     setLoading(false)
   }
 
@@ -82,13 +73,25 @@ const RewardLogrosCard: React.FC<RewardLogrosCardProps> = ({ games }) => {
       setCurrentState(null)
       return
     }
-    setCurrentState(loadRewardState(selectedGameId))
-    setActiveStep(null)
+    const nextState = loadRewardState(selectedGameId)
+    setCurrentState(nextState)
   }, [selectedGameId])
 
   useEffect(() => {
-    setActiveStep(null)
-  }, [currentState?.gameId])
+    if (!currentState) {
+      setActiveStep(null)
+      return
+    }
+    const pendingInstruction = currentState.lastInstruction
+    if (
+      pendingInstruction &&
+      !currentState.completedSteps[pendingInstruction]
+    ) {
+      setActiveStep(pendingInstruction)
+    } else {
+      setActiveStep(null)
+    }
+  }, [currentState])
 
   const handleRollFromLogros = () => {
     if (!currentState || currentState.availableRolls <= 0) return
@@ -121,6 +124,21 @@ const RewardLogrosCard: React.FC<RewardLogrosCardProps> = ({ games }) => {
     if (!currentState) return
     if (currentState.completedSteps[stepId]) return
     setActiveStep(stepId)
+    setLastInstruction(currentState.gameId, stepId)
+  }
+
+  const closeInstructions = () => {
+    if (!currentState) return
+    setActiveStep(null)
+    setLastInstruction(currentState.gameId, null)
+  }
+
+  const handleStepAction = () => {
+    if (!currentState || !activeStep) return
+    triggerRewardStepAction(activeStep, {
+      gameId: currentState.gameId,
+      user
+    })
   }
 
   if (loading) {
@@ -192,7 +210,7 @@ const RewardLogrosCard: React.FC<RewardLogrosCardProps> = ({ games }) => {
           Acciones desbloqueadas
         </p>
         <div className="flex flex-wrap gap-2">
-          {(Object.keys(stepDetails) as RewardStepId[]).map((stepId) => {
+          {(Object.keys(rewardStepMeta) as RewardStepId[]).map((stepId) => {
             const completed = currentState.completedSteps[stepId]
             return (
               <button
@@ -207,7 +225,7 @@ const RewardLogrosCard: React.FC<RewardLogrosCardProps> = ({ games }) => {
                 }`}
               >
                 <CheckCircle2 className="h-3 w-3 mr-1" />
-                {stepDetails[stepId].label}
+                {rewardStepMeta[stepId].label}
               </button>
             )
           })}
@@ -217,15 +235,26 @@ const RewardLogrosCard: React.FC<RewardLogrosCardProps> = ({ games }) => {
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-sm font-semibold text-gray-900">
-                  {stepDetails[activeStep].label}
+                  {rewardStepMeta[activeStep].label}
                 </p>
-                <p className="text-xs text-gray-600">
-                  {stepDetails[activeStep].instructions}
-                </p>
+                <ul className="text-xs text-gray-600 list-disc list-inside space-y-1 mt-1">
+                  {rewardStepMeta[activeStep].instructions.map(
+                    (line, index) => (
+                      <li key={`${activeStep}-instruction-${index}`}>{line}</li>
+                    )
+                  )}
+                </ul>
+                <button
+                  type="button"
+                  onClick={handleStepAction}
+                  className="mt-3 inline-flex items-center text-[11px] font-semibold px-3 py-1.5 rounded-full border border-green-500 text-green-700 hover:bg-green-50"
+                >
+                  {rewardStepMeta[activeStep].ctaLabel}
+                </button>
               </div>
               <button
                 type="button"
-                onClick={() => setActiveStep(null)}
+                onClick={closeInstructions}
                 className="text-gray-400 hover:text-gray-600"
                 aria-label="Cerrar instrucciones"
               >
@@ -234,6 +263,33 @@ const RewardLogrosCard: React.FC<RewardLogrosCardProps> = ({ games }) => {
             </div>
           </div>
         )}
+      </div>
+
+      <div className="bg-white border border-gray-100 rounded-xl p-3">
+        <p className="text-xs font-semibold text-gray-600 mb-2">
+          Logros del reto
+        </p>
+        <ul className="space-y-1 text-xs">
+          {(Object.keys(rewardStepMeta) as RewardStepId[]).map((stepId) => (
+            <li
+              key={`summary-${stepId}`}
+              className="flex items-center justify-between"
+            >
+              <span className="text-gray-600">
+                {rewardStepMeta[stepId].label}
+              </span>
+              <span
+                className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+                  currentState.completedSteps[stepId]
+                    ? 'bg-green-100 text-green-700'
+                    : 'bg-gray-100 text-gray-500'
+                }`}
+              >
+                {currentState.completedSteps[stepId] ? 'Listo' : 'Pendiente'}
+              </span>
+            </li>
+          ))}
+        </ul>
       </div>
 
       <div className="rounded-2xl border border-black bg-gradient-to-r from-gray-900 via-gray-800 to-black p-4 text-white">
@@ -300,6 +356,40 @@ const RewardLogrosCard: React.FC<RewardLogrosCardProps> = ({ games }) => {
             Aún no has tirado dados en esta partida.
           </div>
         )}
+      </div>
+
+      <div>
+        <p className="text-xs font-semibold text-gray-600 mb-2">
+          Premios que puedes ganar
+        </p>
+        <div className="space-y-2">
+          {rewardPerks.map((perk) => (
+            <div
+              key={perk.id}
+              className="border border-gray-200 rounded-xl px-3 py-2 flex items-center justify-between"
+            >
+              <div>
+                <p className="text-sm font-semibold text-gray-900">
+                  {perk.title}
+                </p>
+                <p className="text-xs text-gray-500">{perk.description}</p>
+              </div>
+              <span
+                className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+                  perk.tier === 'small'
+                    ? 'bg-green-50 text-green-600'
+                    : perk.tier === 'medium'
+                    ? 'bg-blue-50 text-blue-600'
+                    : perk.tier === 'large'
+                    ? 'bg-purple-50 text-purple-600'
+                    : 'bg-gray-100 text-gray-600'
+                }`}
+              >
+                {perk.tier === 'bonus' ? 'Bonus' : `Premio ${perk.tier}`}
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   )
