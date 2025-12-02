@@ -12,7 +12,7 @@ import {
   Plus,
   X,
   Search,
-  Users,
+  Users as UsersIcon,
   AlertCircle,
   User as UserIcon
 } from 'lucide-react'
@@ -436,7 +436,7 @@ export default function NewGamePage() {
                     }`}
                   >
                     <div className="flex justify-end space-x-3">
-                      <UserIcon className="h-5 w-5 text-green-600" />
+                      <UsersIcon className="h-5 w-5 text-green-600" />
                       <div>
                         <div className="font-medium">Multijugador</div>
                         <div className="text-sm text-gray-500">
