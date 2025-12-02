@@ -16,13 +16,13 @@ import {
   RewardState,
   rollPrizeOutcome
 } from '@/lib/rewards'
-import { Game } from '@/types'
 import {
+  ROULETTE_SPIN_DURATION_MS,
   rouletteGradient,
   rouletteSegmentAngle,
-  rouletteSegments,
-  ROULETTE_SPIN_DURATION_MS
+  rouletteSegments
 } from '@/lib/roulette'
+import { Game } from '@/types'
 
 interface RewardLogrosCardProps {
   games: Game[]

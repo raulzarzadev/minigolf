@@ -27,10 +27,10 @@ import {
   triggerRewardStepAction
 } from '@/lib/rewards'
 import {
+  ROULETTE_SPIN_DURATION_MS,
   rouletteGradient,
   rouletteSegmentAngle,
-  rouletteSegments,
-  ROULETTE_SPIN_DURATION_MS
+  rouletteSegments
 } from '@/lib/roulette'
 import { Game } from '@/types'
 
