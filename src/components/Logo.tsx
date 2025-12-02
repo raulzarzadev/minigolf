@@ -1,7 +1,7 @@
 'use client'
 
 import Image from 'next/image'
-import React from 'react'
+import { FC } from 'react'
 
 interface LogoProps {
   size?: 'sm' | 'md' | 'lg' | 'xl'
@@ -10,7 +10,7 @@ interface LogoProps {
   className?: string
 }
 
-const Logo: React.FC<LogoProps> = ({
+const Logo: FC<LogoProps> = ({
   size = 'md',
   variant = 'dark',
   className = '',

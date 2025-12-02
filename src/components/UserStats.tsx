@@ -1,7 +1,7 @@
 'use client'
 
 import { Flag, Target, TrendingUp, Trophy } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { FC, useEffect, useState } from 'react'
 import { getUserGames } from '@/lib/db'
 import { User } from '@/types'
 
@@ -23,7 +23,7 @@ export interface UserStatistics {
   recentForm: number[]
 }
 
-const UserStats: React.FC<UserStatsProps> = ({ user }) => {
+const UserStats: FC<UserStatsProps> = ({ user }) => {
   const [stats, setStats] = useState<UserStatistics | null>(null)
   const [loading, setLoading] = useState(true)
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'year' | 'all'>(

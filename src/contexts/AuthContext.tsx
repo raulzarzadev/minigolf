@@ -8,7 +8,14 @@ import {
   signOut
 } from 'firebase/auth'
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore'
-import { createContext, useContext, useEffect, useState } from 'react'
+import {
+  createContext,
+  FC,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState
+} from 'react'
 import { generateUniqueUsername, updateUserUsername } from '@/lib/db'
 import { auth, db } from '@/lib/firebase'
 import { User } from '@/types'
@@ -34,9 +41,7 @@ export const useAuth = () => {
   return context
 }
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
-  children
-}) => {
+export const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null)
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null)
   const [loading, setLoading] = useState(true)

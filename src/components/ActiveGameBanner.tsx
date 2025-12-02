@@ -2,10 +2,10 @@
 
 import { Clock, Users } from 'lucide-react'
 import Link from 'next/link'
-import React from 'react'
+import { FC } from 'react'
 import { useActiveGame } from '@/hooks/useActiveGame'
 
-const ActiveGameBanner: React.FC = () => {
+const ActiveGameBanner: FC = () => {
   const { activeGame } = useActiveGame(60000)
 
   if (!activeGame) {

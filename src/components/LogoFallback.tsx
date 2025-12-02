@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { FC } from 'react'
 
 interface LogoFallbackProps {
   size?: 'sm' | 'md' | 'lg' | 'xl'
@@ -13,7 +13,7 @@ interface LogoFallbackProps {
  * Componente de logo inmediato que no depende de imágenes externas
  * Se usa como fallback instantáneo mientras se carga la imagen real
  */
-const LogoFallback: React.FC<LogoFallbackProps> = ({
+const LogoFallback: FC<LogoFallbackProps> = ({
   size = 'md',
   variant = 'dark',
   className = '',

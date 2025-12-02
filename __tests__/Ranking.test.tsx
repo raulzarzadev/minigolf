@@ -3,6 +3,7 @@ import '@testing-library/jest-dom'
 import RankingPage from '@/app/ranking/page'
 import { useAuth } from '@/contexts/AuthContext'
 import { getAllUsersRanking } from '@/lib/db'
+import { ReactNode } from 'react'
 
 // Mock de los módulos
 jest.mock('@/contexts/AuthContext')
@@ -12,7 +13,7 @@ jest.mock('next/link', () => {
     children,
     href
   }: {
-    children: React.ReactNode
+    children: ReactNode
     href: string
   }) => <a href={href}>{children}</a>
   MockLink.displayName = 'MockLink'

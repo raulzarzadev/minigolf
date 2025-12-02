@@ -1,10 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { FC, useEffect, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import Logo from './Logo'
 
-const AuthForm: React.FC = () => {
+const AuthForm: FC = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isSigningIn, setIsSigningIn] = useState(false)

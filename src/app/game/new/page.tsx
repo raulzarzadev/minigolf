@@ -9,12 +9,13 @@ import {
   X
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Navbar from '@/components/Navbar'
 import { useAuth } from '@/contexts/AuthContext'
 import { createGame, generateGuestId, searchUsers } from '@/lib/db'
 import { saveLocalGame } from '@/lib/localStorage'
 import { Game, Player } from '@/types'
+import { useForm } from 'react-hook-form'
 
 // Tipo para resultados de búsqueda de usuarios
 interface SearchUser {
@@ -61,7 +62,7 @@ export default function NewGamePage() {
 
   const isMultiplayer = form.watch('isMultiplayer') === 'true'
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (user && isMultiplayer) {
       // añade al creador
       const currentPlayer: Player = {
@@ -76,7 +77,7 @@ export default function NewGamePage() {
     }
   }, [user, isMultiplayer])
 
-  React.useEffect(() => {
+  onCliuseEffect(() => {
     if (isMultiplayer) {
       setGuestInputs((prev) =>
         prev.length > 0 ? prev : [createGuestInputField()]
@@ -307,10 +308,14 @@ export default function NewGamePage() {
 
               {/* Hole Count */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="holeCount"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Número de hoyos
                 </label>
                 <select
+                  id="holeCount"
                   {...form.register('holeCount', { valueAsNumber: true })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
                 >

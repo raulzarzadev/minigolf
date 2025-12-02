@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react'
-import React from 'react'
+import React, { useState } from 'react'
 
 // Prueba de configuración simple
 describe('Test Configuration', () => {
@@ -22,7 +22,7 @@ describe('Test Configuration', () => {
 
   it('should handle user interactions', () => {
     const TestComponent = () => {
-      const [count, setCount] = React.useState(0)
+      const [count, setCount] = useState(0)
       return (
         <div>
           <span data-testid="count">{count}</span>

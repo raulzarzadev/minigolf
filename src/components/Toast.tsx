@@ -1,7 +1,7 @@
 'use client'
 
 import { AlertTriangle, CheckCircle, Info, X } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { FC, useCallback, useEffect, useState } from 'react'
 
 export interface ToastMessage {
   id: string
@@ -20,7 +20,7 @@ interface ToastProps {
   onClose: (id: string) => void
 }
 
-const Toast: React.FC<ToastProps> = ({ toast, onClose }) => {
+const Toast: FC<ToastProps> = ({ toast, onClose }) => {
   const [isVisible, setIsVisible] = useState(true)
 
   const handleClose = useCallback(() => {
@@ -74,7 +74,7 @@ const Toast: React.FC<ToastProps> = ({ toast, onClose }) => {
     >
       <div className="p-4">
         <div className="flex items-start">
-          <div className="flex-shrink-0">{getIcon()}</div>
+          <div className="shrink-0">{getIcon()}</div>
           <div className="ml-3 flex-1">
             <p className="text-sm font-medium text-gray-900">{toast.title}</p>
             {toast.message && (
@@ -83,6 +83,7 @@ const Toast: React.FC<ToastProps> = ({ toast, onClose }) => {
             {toast.action && (
               <div className="mt-3">
                 <button
+                  type="button"
                   onClick={toast.action.onClick}
                   className="text-sm font-medium text-black hover:text-gray-700"
                 >
@@ -91,11 +92,10 @@ const Toast: React.FC<ToastProps> = ({ toast, onClose }) => {
               </div>
             )}
           </div>
-          <div className="ml-4 flex-shrink-0">
+          <div className="ml-4 shrink-0">
             <button
-              onCli
               type="button"
-              ck={handleClose}
+              onClick={handleClose}
               className="inline-flex text-gray-400 hover:text-gray-500 focus:outline-none"
             >
               <X className="h-4 w-4" />
@@ -112,7 +112,7 @@ interface ToastContainerProps {
   onClose: (id: string) => void
 }
 
-const ToastContainer: React.FC<ToastContainerProps> = ({ toasts, onClose }) => {
+const ToastContainer: FC<ToastContainerProps> = ({ toasts, onClose }) => {
   return (
     <div className="fixed top-4 right-4 z-50 space-y-2">
       {toasts.map((toast) => (

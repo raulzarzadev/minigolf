@@ -1,7 +1,7 @@
 'use client'
 
 import { CheckCircle, Clock, Minus, Plus, Target, Trophy } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { calculateGameStats, updateGame, updatePlayerScore } from '@/lib/db'
 import { isLocalGame, updateLocalGame } from '@/lib/localStorage'
 import { Game, Player } from '@/types'
@@ -14,7 +14,7 @@ interface ScorecardProps {
   onGameUpdate?: (game: Game) => void // Para actualizar partidas locales
 }
 
-const Scorecard: React.FC<ScorecardProps> = ({
+const Scorecard: FC<ScorecardProps> = ({
   game,
   currentPlayer,
   canEdit = false,

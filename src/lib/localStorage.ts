@@ -127,6 +127,8 @@ export const convertLocalGameToServerGame = (
   localGame: LocalGame
 ): Omit<Game, 'id' | 'createdAt'> => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
+  // biome-ignore lint/correctness/noUnusedVariables: por alguna razon con eslint tambien estaba desactivada
   const { id, createdAt, isLocal, ...gameData } = localGame
   return gameData
 }

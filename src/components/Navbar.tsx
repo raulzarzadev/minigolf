@@ -12,11 +12,11 @@ import {
   X
 } from 'lucide-react'
 import Link from 'next/link'
-import { useState } from 'react'
+import { FC, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import Logo from './Logo'
 
-const Navbar: React.FC = () => {
+const Navbar: FC = () => {
   const { user, logout, isAdmin } = useAuth()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 

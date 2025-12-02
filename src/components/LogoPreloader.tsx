@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { FC, useEffect, useState } from 'react'
 
 /**
  * Hook para precargar el logo y asegurar que esté disponible
@@ -34,7 +34,7 @@ export const useLogoPreloader = () => {
 /**
  * Componente para precargar recursos críticos
  */
-const LogoPreloader: React.FC = () => {
+const LogoPreloader: FC = () => {
   useEffect(() => {
     // Precargar la imagen del logo
     const preloadLink = document.createElement('link')

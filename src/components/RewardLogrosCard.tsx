@@ -1,7 +1,7 @@
 'use client'
 
 import { CheckCircle2, Gift, Loader2 } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { FC, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import {
   getAllRewardStates,
@@ -44,7 +44,7 @@ interface RewardLogrosCardProps {
   games: Game[]
 }
 
-const RewardLogrosCard: React.FC<RewardLogrosCardProps> = ({ games }) => {
+const RewardLogrosCard: FC<RewardLogrosCardProps> = ({ games }) => {
   const [rewardStates, setRewardStates] = useState<RewardState[]>([])
   const [selectedGameId, setSelectedGameId] = useState<string | null>(null)
   const [currentState, setCurrentState] = useState<RewardState | null>(null)
