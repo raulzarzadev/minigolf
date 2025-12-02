@@ -14,6 +14,7 @@ import {
   MainUserStats,
   UserStatistics
 } from '@/components/UserStats'
+import ActiveGameBanner from '@/components/ActiveGameBanner'
 
 export default function Home() {
   const { user, loading, firebaseError } = useAuth()
@@ -80,6 +81,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
+      <ActiveGameBanner />
       <div className="max-w-7xl mx-auto py-3 px-3 sm:py-8 sm:px-6 lg:px-8">
         {/* Welcome Header - Shows different content based on auth state */}
         <div className="mb-4">
