@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Game } from '@/types'
 import { useAuth } from '@/contexts/AuthContext'
 import {
@@ -9,13 +9,36 @@ import {
   persistRewardState,
   prizeCatalog,
   PrizeTier,
+  RewardPrize,
   RewardRoll,
   RewardState,
   grantAdminRolls,
   rollPrizeOutcome,
   markPrizeDelivered
 } from '@/lib/rewards'
-import { CheckCircle2, Dice5, Gift, Loader2 } from 'lucide-react'
+import { CheckCircle2, Gift, Loader2 } from 'lucide-react'
+
+const wheelSegments: Array<{
+  tier: RewardPrize
+  label: string
+  color: string
+}> = [
+  { tier: 'large', label: 'Gran premio', color: '#a855f7' },
+  { tier: 'medium', label: 'Premio mediano', color: '#3b82f6' },
+  { tier: 'small', label: 'Premio chico', color: '#22c55e' },
+  { tier: 'none', label: 'Sin premio', color: '#f97316' }
+]
+
+const wheelSegmentAngle = 360 / wheelSegments.length
+
+const wheelGradient = (() => {
+  const segments = wheelSegments.map((segment, index) => {
+    const start = index * wheelSegmentAngle
+    const end = start + wheelSegmentAngle
+    return `${segment.color} ${start}deg ${end}deg`
+  })
+  return `conic-gradient(${segments.join(', ')})`
+})()
 
 interface RewardLogrosCardProps {
   games: Game[]
@@ -28,6 +51,10 @@ const RewardLogrosCard: React.FC<RewardLogrosCardProps> = ({ games }) => {
   const [loading, setLoading] = useState(true)
   const [adminRollInput, setAdminRollInput] = useState('1')
   const [adminStatus, setAdminStatus] = useState<string | null>(null)
+  const [isSpinning, setIsSpinning] = useState(false)
+  const [wheelRotation, setWheelRotation] = useState(0)
+  const [lastResult, setLastResult] = useState<RewardPrize | null>(null)
+  const spinTimeoutRef = useRef<number | null>(null)
   const { user } = useAuth()
 
   const gameOptions = useMemo(() => {
@@ -58,11 +85,20 @@ const RewardLogrosCard: React.FC<RewardLogrosCardProps> = ({ games }) => {
   }, [])
 
   useEffect(() => {
+    return () => {
+      if (spinTimeoutRef.current) {
+        window.clearTimeout(spinTimeoutRef.current)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
     if (!selectedGameId) {
       setCurrentState(null)
       return
     }
     setCurrentState(loadRewardState(selectedGameId))
+    setLastResult(null)
   }, [selectedGameId])
 
   const rollHistory = currentState?.rollHistory ?? []
@@ -90,14 +126,28 @@ const RewardLogrosCard: React.FC<RewardLogrosCardProps> = ({ games }) => {
     : undefined
   const rollsAvailable = currentState?.availableRolls ?? 0
   const isFinishedGame = selectedGame?.status === 'finished'
-  const diceHelperMessage = isFinishedGame
+  const rouletteHelperMessage = isFinishedGame
     ? rollsAvailable > 0
       ? `${rollsAvailable} tiro(s) disponible(s)`
       : 'Completa acciones pendientes para ganar más dados'
     : 'Termina esta partida para desbloquear los dados'
+  const lastResultMeta =
+    lastResult && lastResult !== 'none' ? prizeCatalog[lastResult] : null
+  const rouletteStatusLabel = lastResult
+    ? lastResultMeta?.label ?? 'Sin premio esta vez'
+    : 'Listo para girar'
+  const rouletteStatusDescription = lastResult
+    ? lastResult !== 'none'
+      ? lastResultMeta?.description ?? 'Reclámalo con el staff.'
+      : 'Esta vez no tocó premio, vuelve a intentarlo.'
+    : 'Pulsa la ruleta cuando tengas dados disponibles.'
 
-  const handleRollFromLogros = () => {
-    if (!currentState || !isFinishedGame || rollsAvailable <= 0) return
+  const handleSpinRoulette = () => {
+    if (!currentState || !isFinishedGame || rollsAvailable <= 0 || isSpinning)
+      return
+
+    setIsSpinning(true)
+    setLastResult(null)
 
     const tier = rollPrizeOutcome()
     const newRoll: RewardRoll = {
@@ -107,17 +157,42 @@ const RewardLogrosCard: React.FC<RewardLogrosCardProps> = ({ games }) => {
       delivered: false
     }
 
-    const updatedState = persistRewardState(currentState.gameId, {
-      availableRolls: Math.max(0, rollsAvailable - 1),
-      rollHistory: [newRoll, ...currentState.rollHistory]
+    const segmentIndex = wheelSegments.findIndex(
+      (segment) => segment.tier === tier
+    )
+    const safeIndex = segmentIndex === -1 ? 0 : segmentIndex
+    const extraSpins = 4 + Math.floor(Math.random() * 3)
+    const rotationOffset = safeIndex * wheelSegmentAngle + wheelSegmentAngle / 2
+
+    setWheelRotation((prev) => {
+      const normalizedPrev = prev % 360
+      const alignmentOffset = rotationOffset - normalizedPrev
+      return prev + extraSpins * 360 + alignmentOffset
     })
 
-    setCurrentState(updatedState)
-    setRewardStates((prev) =>
-      prev.map((state) =>
-        state.gameId === updatedState.gameId ? updatedState : state
+    const activeGameId = currentState.gameId
+
+    if (spinTimeoutRef.current) {
+      window.clearTimeout(spinTimeoutRef.current)
+    }
+
+    spinTimeoutRef.current = window.setTimeout(() => {
+      const latestState = loadRewardState(activeGameId)
+      const updatedState = persistRewardState(activeGameId, {
+        availableRolls: Math.max(0, latestState.availableRolls - 1),
+        rollHistory: [newRoll, ...latestState.rollHistory]
+      })
+
+      setCurrentState(updatedState)
+      setRewardStates((prev) =>
+        prev.map((state) =>
+          state.gameId === updatedState.gameId ? updatedState : state
+        )
       )
-    )
+      setIsSpinning(false)
+      setLastResult(tier)
+      spinTimeoutRef.current = null
+    }, 1800)
   }
 
   const handleAdminGrant = () => {
@@ -190,7 +265,8 @@ const RewardLogrosCard: React.FC<RewardLogrosCardProps> = ({ games }) => {
           <select
             value={selectedGameId ?? ''}
             onChange={(event) => setSelectedGameId(event.target.value)}
-            className="text-xs border border-gray-300 rounded-lg px-2 py-1"
+            disabled={isSpinning}
+            className="text-xs border border-gray-300 rounded-lg px-2 py-1 disabled:opacity-50"
           >
             {gameOptions.map((option) => (
               <option key={option.value} value={option.value}>
@@ -225,20 +301,87 @@ const RewardLogrosCard: React.FC<RewardLogrosCardProps> = ({ games }) => {
       )}
 
       <div className="space-y-4">
-        <div className="rounded-2xl border border-gray-200 p-4 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="text-xs text-gray-500">Dados disponibles</p>
-            <p className="text-3xl font-bold text-gray-900">{rollsAvailable}</p>
-            <p className="text-[11px] text-gray-500">{diceHelperMessage}</p>
+        <div className="rounded-2xl border border-gray-200 p-4 space-y-4">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center">
+            <div className="flex flex-col items-center gap-2">
+              <button
+                type="button"
+                onClick={handleSpinRoulette}
+                disabled={!isFinishedGame || rollsAvailable === 0 || isSpinning}
+                className="relative h-44 w-44 rounded-full focus-visible:outline-none disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <div
+                  className="absolute inset-0 rounded-full border-4 border-white shadow-lg transition-transform duration-[1800ms] ease-out"
+                  style={{
+                    backgroundImage: wheelGradient,
+                    transform: `rotate(${wheelRotation}deg)`
+                  }}
+                />
+                <div className="absolute inset-0 rounded-full overflow-hidden">
+                  <div className="absolute inset-3 rounded-full bg-white/90 backdrop-blur flex flex-col items-center justify-center text-center px-4">
+                    <p className="text-[11px] uppercase tracking-wide text-gray-400">
+                      Ruleta
+                    </p>
+                    <p className="text-base font-semibold text-gray-900">
+                      {isSpinning ? 'Girando...' : 'Tocar para girar'}
+                    </p>
+                    <p className="text-[11px] text-gray-500">
+                      {rollsAvailable} dado(s)
+                    </p>
+                  </div>
+                </div>
+              </button>
+              <p className="text-[11px] text-gray-500 text-center">
+                {isFinishedGame
+                  ? 'Deja que el staff valide el premio al terminar el giro.'
+                  : 'Termina la partida para activar la ruleta.'}
+              </p>
+            </div>
+
+            <div className="flex-1 space-y-2">
+              <p className="text-xs text-gray-500">Tiros disponibles</p>
+              <p className="text-3xl font-bold text-gray-900">
+                {rollsAvailable}
+              </p>
+              <p className="text-[11px] text-gray-500">
+                {rouletteHelperMessage}
+              </p>
+              <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                <p className="text-xs text-gray-500">Último resultado</p>
+                <p className="text-sm font-semibold text-gray-900">
+                  {rouletteStatusLabel}
+                </p>
+                <p className="text-[11px] text-gray-500">
+                  {rouletteStatusDescription}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleSpinRoulette}
+                disabled={!isFinishedGame || rollsAvailable === 0 || isSpinning}
+                className="w-full inline-flex items-center justify-center px-4 py-2 rounded-2xl bg-green-500 text-black font-semibold text-xs hover:bg-green-400 disabled:opacity-40"
+              >
+                {isSpinning ? 'Girando...' : 'Girar ruleta'}
+              </button>
+            </div>
           </div>
-          <button
-            type="button"
-            onClick={handleRollFromLogros}
-            disabled={!isFinishedGame || rollsAvailable === 0}
-            className="inline-flex items-center px-4 py-2 rounded-2xl bg-green-500 text-black font-semibold text-xs hover:bg-green-400 disabled:opacity-40"
-          >
-            <Dice5 className="h-4 w-4 mr-2" /> Tirar dado
-          </button>
+
+          <div className="grid grid-cols-2 gap-2 text-[11px] text-gray-600">
+            {wheelSegments.map((segment) => (
+              <div
+                key={segment.tier}
+                className="flex items-center gap-2 rounded-lg border border-gray-100 bg-white px-2 py-1.5"
+              >
+                <span
+                  className="h-2 w-2 rounded-full"
+                  style={{ backgroundColor: segment.color }}
+                />
+                <span className="font-semibold text-gray-900">
+                  {segment.label}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="rounded-2xl border border-yellow-200 bg-yellow-50 p-4">
