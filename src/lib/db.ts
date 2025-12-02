@@ -211,7 +211,7 @@ export const searchUsers = async (searchTerm: string): Promise<User[]> => {
     const q = query(
       collection(db, 'users'),
       where('name', '>=', searchTerm),
-      where('name', '<=', searchTerm + '\uf8ff')
+      where('name', '<=', `${searchTerm}\uf8ff`)
     )
 
     const querySnapshot = await getDocs(q)

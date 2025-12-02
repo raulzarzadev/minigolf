@@ -262,9 +262,10 @@ function OverviewTab({ stats }: { stats: AdminStats | null }) {
     <div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         {statCards.map((card, index) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: false
           <div key={index} className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
-              <div className="flex-shrink-0">
+              <div className="shrink-0">
                 <div
                   className={`w-8 h-8 bg-${card.color}-500 rounded-md flex items-center justify-center`}
                 >

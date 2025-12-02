@@ -1,9 +1,10 @@
-import { render, screen, waitFor } from '@testing-library/react'
-import '@testing-library/jest-dom'
+// biome-ignore assist/source/organizeImports: just sort
 import RankingPage from '@/app/ranking/page'
+import { render, screen, waitFor } from '@testing-library/react'
 import { useAuth } from '@/contexts/AuthContext'
 import { getAllUsersRanking } from '@/lib/db'
 import { ReactNode } from 'react'
+import '@testing-library/jest-dom'
 
 // Mock de los módulos
 jest.mock('@/contexts/AuthContext')

@@ -154,7 +154,7 @@ export async function getAdminUsers(): Promise<AdminUser[]> {
           ? userData.lastLoginAt.toDate()
           : undefined,
         isActive: userData.lastLoginAt
-          ? new Date().getTime() - userData.lastLoginAt.toDate().getTime() <
+          ? Date.now() - userData.lastLoginAt.toDate().getTime() <
             30 * 24 * 60 * 60 * 1000 // Active if logged in within 30 days
           : false,
         gameHistory

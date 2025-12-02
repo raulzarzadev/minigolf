@@ -1,13 +1,6 @@
 'use client'
 
-import {
-  AlertCircle,
-  Plus,
-  Search,
-  User as UserIcon,
-  Users as UsersIcon,
-  X
-} from 'lucide-react'
+// biome-ignore assist/source/organizeImports: false
 import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
 import Navbar from '@/components/Navbar'
@@ -16,6 +9,14 @@ import { createGame, generateGuestId, searchUsers } from '@/lib/db'
 import { saveLocalGame } from '@/lib/localStorage'
 import { Game, Player } from '@/types'
 import { useForm } from 'react-hook-form'
+import {
+  AlertCircle,
+  Plus,
+  Search,
+  User as UserIcon,
+  Users as UsersIcon,
+  X
+} from 'lucide-react'
 
 // Tipo para resultados de búsqueda de usuarios
 interface SearchUser {
