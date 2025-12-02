@@ -24,6 +24,16 @@ interface SearchUser {
   email: string
 }
 
+interface GuestInput {
+  id: string
+  name: string
+}
+
+const createGuestInputField = (): GuestInput => ({
+  id: generateGuestId(),
+  name: ''
+})
+
 // Datos del formulario
 interface GameFormData {
   holeCount: number
@@ -37,7 +47,7 @@ export default function NewGamePage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [players, setPlayers] = useState<Player[]>([])
-  const [guestName, setGuestName] = useState('')
+  const [guestInputs, setGuestInputs] = useState<GuestInput[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [searchResults, setSearchResults] = useState<SearchUser[]>([])
   const [isSearching, setIsSearching] = useState(false)
@@ -66,6 +76,53 @@ export default function NewGamePage() {
       setPlayers([])
     }
   }, [user, isMultiplayer])
+
+  React.useEffect(() => {
+    if (isMultiplayer) {
+      setGuestInputs((prev) =>
+        prev.length > 0 ? prev : [createGuestInputField()]
+      )
+    } else {
+      setGuestInputs([])
+    }
+  }, [isMultiplayer])
+
+  const updateGuestInput = (id: string, value: string) => {
+    setGuestInputs((prev) =>
+      prev.map((input) => (input.id === id ? { ...input, name: value } : input))
+    )
+  }
+
+  const addGuestInputField = () => {
+    setGuestInputs((prev) => [...prev, createGuestInputField()])
+  }
+
+  const removeGuestInputField = (id: string) => {
+    setGuestInputs((prev) => {
+      if (prev.length === 1) {
+        return prev.map((input) =>
+          input.id === id ? { ...input, name: '' } : input
+        )
+      }
+      return prev.filter((input) => input.id !== id)
+    })
+  }
+
+  const guestPlayersFromInputs = React.useMemo(() => {
+    return guestInputs
+      .map((input) => ({
+        id: input.id,
+        name: input.name.trim(),
+        isGuest: true
+      }))
+      .filter((player) => player.name.length > 0)
+  }, [guestInputs])
+
+  const totalPlayersCount = isMultiplayer
+    ? (user ? Math.max(players.length, 1) : 1) + guestPlayersFromInputs.length
+    : 1
+
+  const hasMinimumPlayers = !isMultiplayer || totalPlayersCount >= 2
 
   const handleSearchUsers = async (term: string) => {
     if (term.length < 2) {
@@ -99,18 +156,6 @@ export default function NewGamePage() {
     setSearchResults([])
   }
 
-  // Añadir jugador invitado
-  const addGuestPlayer = () => {
-    if (!guestName.trim()) return
-    const guest: Player = {
-      id: generateGuestId(),
-      name: guestName.trim(),
-      isGuest: true
-    }
-    setPlayers((prev) => [...prev, guest])
-    setGuestName('')
-  }
-
   // Eliminar jugador
   const removePlayer = (playerId: string) => {
     if (!user) return
@@ -126,6 +171,19 @@ export default function NewGamePage() {
     try {
       // convertir a booleano
       const multi = data.isMultiplayer === 'true'
+      const guestPlayersList = guestInputs
+        .map((input) => ({
+          id: input.id,
+          name: input.name.trim(),
+          isGuest: true
+        }))
+        .filter((player) => player.name.length > 0)
+
+      if (multi && totalPlayersCount < 2) {
+        setError('Agrega al menos un jugador adicional')
+        setIsLoading(false)
+        return
+      }
 
       // For guest users, create a temporary player
       let creatorPlayer: Player
@@ -149,17 +207,29 @@ export default function NewGamePage() {
         }
       }
 
+      let finalPlayers: Player[]
+      if (multi) {
+        if (user) {
+          const basePlayers = players.length > 0 ? players : [creatorPlayer]
+          finalPlayers = [...basePlayers, ...guestPlayersList]
+        } else {
+          finalPlayers = [creatorPlayer, ...guestPlayersList]
+        }
+      } else {
+        finalPlayers = [creatorPlayer]
+      }
+
       const gameData: Omit<Game, 'id' | 'createdAt'> = {
         createdBy: user?.id || creatorPlayer.id,
         holeCount: data.holeCount,
-        players: multi ? [creatorPlayer, ...players] : [creatorPlayer],
+        players: finalPlayers,
         scores: {} as Record<string, number[]>,
         status: 'in_progress',
         tournamentId: data.tournamentId || null,
         isMultiplayer: multi,
         currentHole: 1
       }
-      gameData.players.forEach((p) => {
+      finalPlayers.forEach((p) => {
         gameData.scores[p.id] = Array(data.holeCount).fill(0)
       })
 
@@ -281,51 +351,40 @@ export default function NewGamePage() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Jugadores adicionales (invitados)
                   </label>
-                  <div className="space-y-2">
-                    <div className="flex space-x-2">
-                      <input
-                        type="text"
-                        value={guestName}
-                        onChange={(e) => setGuestName(e.target.value)}
-                        placeholder="Nombre del jugador"
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault()
-                            addGuestPlayer()
+                  <div className="space-y-3">
+                    {guestInputs.map((input, index) => (
+                      <div key={input.id} className="flex space-x-2">
+                        <input
+                          type="text"
+                          value={input.name}
+                          onChange={(e) =>
+                            updateGuestInput(input.id, e.target.value)
                           }
-                        }}
-                      />
-                      <button
-                        type="button"
-                        onClick={addGuestPlayer}
-                        className="px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
-                      >
-                        <Plus className="h-4 w-4" />
-                      </button>
-                    </div>
-
-                    {players.length > 0 && (
-                      <div className="space-y-2">
-                        {players.map((player) => (
-                          <div
-                            key={player.id}
-                            className="flex items-center justify-between p-2 bg-gray-50 rounded-md"
-                          >
-                            <span className="text-sm font-medium">
-                              {player.name}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => removePlayer(player.id)}
-                              className="text-red-600 hover:text-red-700"
-                            >
-                              <X className="h-4 w-4" />
-                            </button>
-                          </div>
-                        ))}
+                          placeholder={`Nombre del jugador ${index + 2}`}
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeGuestInputField(input.id)}
+                          className="px-3 py-2 border border-gray-300 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                          aria-label="Eliminar campo de jugador"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
                       </div>
-                    )}
+                    ))}
+
+                    <button
+                      type="button"
+                      onClick={addGuestInputField}
+                      className="w-full inline-flex items-center justify-center px-3 py-2 border border-dashed border-green-400 text-green-700 rounded-md hover:bg-green-50 text-sm"
+                    >
+                      <Plus className="h-4 w-4 mr-2" /> Agregar otro jugador
+                    </button>
+                    <p className="text-xs text-gray-500">
+                      Estos jugadores se agregarán automáticamente al guardar la
+                      partida.
+                    </p>
                   </div>
                 </div>
               )}
@@ -341,7 +400,7 @@ export default function NewGamePage() {
                 </button>
                 <button
                   type="submit"
-                  disabled={isLoading}
+                  disabled={isLoading || !hasMinimumPlayers}
                   className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
                 >
                   {isLoading ? (
@@ -356,6 +415,11 @@ export default function NewGamePage() {
                     </>
                   )}
                 </button>
+                {isMultiplayer && !hasMinimumPlayers && (
+                  <p className="text-xs text-red-600 text-right">
+                    Agrega al menos un jugador adicional
+                  </p>
+                )}
               </div>
             </form>
           </div>
@@ -420,7 +484,7 @@ export default function NewGamePage() {
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
                   >
-                    <div className="flex items-center space-x-3">
+                    <div className="flex justify-end space-x-3">
                       <UserIcon className="h-5 w-5 text-green-600" />
                       <div>
                         <div className="font-medium">Individual</div>
@@ -444,13 +508,12 @@ export default function NewGamePage() {
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
                   >
-                    <div className="flex items-center space-x-3">
-                      <Users className="h-5 w-5 text-green-600" />
-                      <div>
-                        <div className="font-medium">Multijugador</div>
-                        <div className="text-sm text-gray-500">Con amigos</div>
-                      </div>
-                    </div>
+                    <div className="flex items-center space-x-3"></div>
+                    {isMultiplayer && !hasMinimumPlayers && (
+                      <p className="text-xs text-red-600 text-right">
+                        Agrega al menos un jugador adicional
+                      </p>
+                    )}
                   </div>
                 </label>
               </div>
@@ -479,7 +542,7 @@ export default function NewGamePage() {
             {isMultiplayer && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Jugadores ({players.length})
+                  Jugadores ({totalPlayersCount})
                 </label>
 
                 {/* Current Players */}
@@ -524,32 +587,40 @@ export default function NewGamePage() {
                   ))}
                 </div>
 
-                {/* Add Guest Player */}
+                {/* Guest Inputs */}
                 <div className="border border-gray-200 rounded-lg p-3 mb-4">
                   <h4 className="font-medium text-gray-900 mb-2 text-sm">
-                    Añadir invitado
+                    Jugadores invitados (se agregarán al guardar)
                   </h4>
-                  <div className="flex space-x-2">
-                    <input
-                      type="text"
-                      value={guestName}
-                      onChange={(e) => setGuestName(e.target.value)}
-                      placeholder="Nombre del invitado"
-                      className="flex-1 px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 text-base"
-                      onKeyPress={(e) =>
-                        e.key === 'Enter' &&
-                        (e.preventDefault(), addGuestPlayer())
-                      }
-                    />
-                    <button
-                      type="button"
-                      onClick={addGuestPlayer}
-                      disabled={!guestName.trim()}
-                      className="px-4 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
-                    >
-                      <Plus className="h-4 w-4" />
-                    </button>
+                  <div className="space-y-2">
+                    {guestInputs.map((input, index) => (
+                      <div key={input.id} className="flex space-x-2">
+                        <input
+                          type="text"
+                          value={input.name}
+                          onChange={(e) =>
+                            updateGuestInput(input.id, e.target.value)
+                          }
+                          placeholder={`Nombre del invitado ${index + 1}`}
+                          className="flex-1 px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 text-base"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeGuestInputField(input.id)}
+                          className="px-3 py-3 border border-gray-300 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
                   </div>
+                  <button
+                    type="button"
+                    onClick={addGuestInputField}
+                    className="mt-3 w-full inline-flex items-center justify-center px-3 py-2 border border-dashed border-green-400 text-green-700 rounded-md hover:bg-green-50 text-sm"
+                  >
+                    <Plus className="h-4 w-4 mr-2" /> Agregar otro invitado
+                  </button>
                 </div>
 
                 {/* Search Users */}
@@ -614,7 +685,7 @@ export default function NewGamePage() {
             <div className="flex flex-col space-y-3 pt-4">
               <button
                 type="submit"
-                disabled={isLoading || (isMultiplayer && players.length < 2)}
+                disabled={isLoading || !hasMinimumPlayers}
                 className="w-full py-3 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium touch-manipulation"
               >
                 {isLoading ? 'Creando...' : 'Crear Partida'}
@@ -626,6 +697,11 @@ export default function NewGamePage() {
               >
                 Cancelar
               </button>
+              {isMultiplayer && !hasMinimumPlayers && (
+                <p className="text-center text-xs text-red-600">
+                  Agrega al menos un jugador adicional
+                </p>
+              )}
             </div>
           </form>
         </div>
