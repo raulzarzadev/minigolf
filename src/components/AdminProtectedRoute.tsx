@@ -10,7 +10,7 @@ interface AdminProtectedRouteProps {
 export default function AdminProtectedRoute({
   children
 }: AdminProtectedRouteProps) {
-  const { user, loading } = useAuth()
+  const { user, loading, isAdmin } = useAuth()
 
   if (loading) {
     return (
@@ -47,19 +47,20 @@ export default function AdminProtectedRoute({
           <p className="text-gray-600 mb-6">
             Debes estar autenticado para acceder a esta página.
           </p>
-          {/* <button
+          <button
             type="button"
+            // biome-ignore lint/suspicious/noAssignInExpressions: FIXME: revisar
             onClick={() => (window.location.href = '/')}
             className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition-colors"
           >
             Volver al Inicio
-          </button> */}
+          </button>
         </div>
       </div>
     )
   }
 
-  if (!user.isAdmin) {
+  if (!isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center max-w-md mx-auto p-8">
@@ -87,6 +88,8 @@ export default function AdminProtectedRoute({
             No tienes permisos de administrador para acceder a esta página.
           </p>
           <button
+            type="button"
+            // biome-ignore lint/suspicious/noAssignInExpressions: FIXME: revisar
             onClick={() => (window.location.href = '/')}
             className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition-colors"
           >

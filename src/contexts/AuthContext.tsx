@@ -8,7 +8,7 @@ import {
   signOut
 } from 'firebase/auth'
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore'
-import React, { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState } from 'react'
 import { generateUniqueUsername, updateUserUsername } from '@/lib/db'
 import { auth, db } from '@/lib/firebase'
 import { User } from '@/types'

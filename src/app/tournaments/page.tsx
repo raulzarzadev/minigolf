@@ -2,7 +2,6 @@
 
 import { Calendar, Clock, Plus, Trophy, Users } from 'lucide-react'
 import Link from 'next/link'
-import React from 'react'
 import Navbar from '@/components/Navbar'
 import { useAuth } from '@/contexts/AuthContext'
 

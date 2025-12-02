@@ -1,7 +1,7 @@
 'use client'
 
 import { AlertTriangle, CheckCircle, Info, X } from 'lucide-react'
-import React, { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 export interface ToastMessage {
   id: string
@@ -93,7 +93,9 @@ const Toast: React.FC<ToastProps> = ({ toast, onClose }) => {
           </div>
           <div className="ml-4 flex-shrink-0">
             <button
-              onClick={handleClose}
+              onCli
+              type="button"
+              ck={handleClose}
               className="inline-flex text-gray-400 hover:text-gray-500 focus:outline-none"
             >
               <X className="h-4 w-4" />

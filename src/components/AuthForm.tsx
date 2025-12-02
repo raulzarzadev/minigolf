@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import Logo from './Logo'
 
@@ -78,7 +78,9 @@ const AuthForm: React.FC = () => {
 
           <div className="space-y-6">
             <button
-              onClick={handleGoogleSignIn}
+              onCli
+              type="button"
+              ck={handleGoogleSignIn}
               disabled={isLoading}
               className="w-full flex justify-center items-center py-3 px-4 border-2 border-green-500 rounded-md shadow-sm bg-white text-sm font-medium text-black hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >

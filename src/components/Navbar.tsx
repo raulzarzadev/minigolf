@@ -12,7 +12,7 @@ import {
   X
 } from 'lucide-react'
 import Link from 'next/link'
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import Logo from './Logo'
 
@@ -108,6 +108,7 @@ const Navbar: React.FC = () => {
                   </Link>
 
                   <button
+                    type="button"
                     onClick={handleLogout}
                     className="flex items-center space-x-1 px-2 lg:px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-100 transition-colors"
                   >
@@ -135,6 +136,7 @@ const Navbar: React.FC = () => {
           {/* Botón menú móvil */}
           <div className="md:hidden flex items-center">
             <button
+              type="button"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="p-2 rounded-md hover:bg-gray-100 transition-colors touch-manipulation"
               aria-label="Abrir menú"
@@ -222,6 +224,7 @@ const Navbar: React.FC = () => {
                     </Link>
 
                     <button
+                      type="button"
                       onClick={() => {
                         handleLogout()
                         closeMobileMenu()

@@ -9,8 +9,7 @@ import {
   X
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import React, { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useMemo, useState } from 'react'
 import Navbar from '@/components/Navbar'
 import { useAuth } from '@/contexts/AuthContext'
 import { createGame, generateGuestId, searchUsers } from '@/lib/db'
@@ -108,7 +107,7 @@ export default function NewGamePage() {
     })
   }
 
-  const guestPlayersFromInputs = React.useMemo(() => {
+  const guestPlayersFromInputs = useMemo(() => {
     return guestInputs
       .map((input) => ({
         id: input.id,
@@ -289,7 +288,10 @@ export default function NewGamePage() {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               {/* Guest Player Name */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="guest-player-name"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Tu nombre
                 </label>
                 <input
@@ -299,6 +301,7 @@ export default function NewGamePage() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
                   placeholder="Ingresa tu nombre"
                   required
+                  id="guest-player-name"
                 />
               </div>
 
@@ -393,9 +396,9 @@ export default function NewGamePage() {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             {/* Game Type */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <h5 className="block text-sm font-medium text-gray-700 mb-2">
                 Tipo de partida
-              </label>
+              </h5>
               <div className="grid grid-cols-1 gap-3">
                 <label className="relative">
                   <input
@@ -476,9 +479,9 @@ export default function NewGamePage() {
             {/* Players Section - Only for Multiplayer */}
             {isMultiplayer && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
+                <h5 className="block text-sm font-medium text-gray-700 mb-3">
                   Jugadores ({totalPlayersCount})
-                </label>
+                </h5>
 
                 {/* Current Players */}
                 <div className="space-y-2 mb-4">

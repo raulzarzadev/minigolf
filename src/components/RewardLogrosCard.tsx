@@ -1,7 +1,7 @@
 'use client'
 
 import { CheckCircle2, Gift, Loader2 } from 'lucide-react'
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import {
   getAllRewardStates,
@@ -134,11 +134,11 @@ const RewardLogrosCard: React.FC<RewardLogrosCardProps> = ({ games }) => {
   const lastResultMeta =
     lastResult && lastResult !== 'none' ? prizeCatalog[lastResult] : null
   const rouletteStatusLabel = lastResult
-    ? (lastResultMeta?.label ?? 'Sin premio esta vez')
+    ? lastResultMeta?.label ?? 'Sin premio esta vez'
     : 'Listo para girar'
   const rouletteStatusDescription = lastResult
     ? lastResult !== 'none'
-      ? (lastResultMeta?.description ?? 'Reclámalo con el staff.')
+      ? lastResultMeta?.description ?? 'Reclámalo con el staff.'
       : 'Esta vez no tocó premio, vuelve a intentarlo.'
     : 'Pulsa la ruleta cuando tengas dados disponibles.'
 

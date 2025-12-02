@@ -26,7 +26,9 @@ describe('Test Configuration', () => {
       return (
         <div>
           <span data-testid="count">{count}</span>
-          <button onClick={() => setCount(count + 1)}>Increment</button>
+          <button type="button" onClick={() => setCount(count + 1)}>
+            Increment
+          </button>
         </div>
       )
     }

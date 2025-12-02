@@ -1,7 +1,7 @@
 'use client'
 
 import { Check, Edit3, X } from 'lucide-react'
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 
 interface DiscreteUsernameEditorProps {
@@ -75,6 +75,7 @@ export default function DiscreteUsernameEditor({
               maxLength={20}
             />
             <button
+              type="button"
               onClick={handleSave}
               disabled={loading}
               className="p-1 text-green-600 hover:bg-green-50 rounded transition-colors disabled:opacity-50"
@@ -83,6 +84,7 @@ export default function DiscreteUsernameEditor({
               <Check className="h-3 w-3" />
             </button>
             <button
+              type="button"
               onClick={handleCancel}
               disabled={loading}
               className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors disabled:opacity-50"
@@ -106,6 +108,7 @@ export default function DiscreteUsernameEditor({
             @{user.username}
           </span>
           <button
+            type="button"
             onClick={() => setIsEditing(true)}
             className="opacity-0 group-hover:opacity-100 p-0.5 text-gray-400 hover:text-gray-600 rounded transition-all"
             title="Editar username"

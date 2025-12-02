@@ -1,7 +1,7 @@
 'use client'
 
 import { Flag, Target, TrendingUp, Trophy } from 'lucide-react'
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { getUserGames } from '@/lib/db'
 import { User } from '@/types'
 
@@ -47,7 +47,7 @@ const UserStats: React.FC<UserStatsProps> = ({ user }) => {
     }
 
     loadUserStats()
-  }, [user.id, timeRange])
+  }, [user.id])
 
   if (loading) {
     return (
@@ -81,6 +81,7 @@ const UserStats: React.FC<UserStatsProps> = ({ user }) => {
         <div className="flex rounded-lg border border-gray-300 overflow-hidden">
           {(['week', 'month', 'year', 'all'] as const).map((range) => (
             <button
+              type="button"
               key={range}
               onClick={() => setTimeRange(range)}
               className={`px-2 py-1 text-xs touch-manipulation ${
@@ -148,8 +149,8 @@ const UserStats: React.FC<UserStatsProps> = ({ user }) => {
                   {stats.favoriteGameType === 'multiplayer'
                     ? 'Multi'
                     : stats.favoriteGameType === 'individual'
-                      ? 'Individual'
-                      : 'N/A'}
+                    ? 'Individual'
+                    : 'N/A'}
                 </span>
               </div>
             </div>
@@ -369,8 +370,8 @@ export const getUserStats = async ({
     multiplayerGames > individualGames
       ? 'multiplayer'
       : individualGames > multiplayerGames
-        ? 'individual'
-        : null
+      ? 'individual'
+      : null
 
   const winRate =
     finishedGames.length > 0 ? (gamesWon / finishedGames.length) * 100 : 0

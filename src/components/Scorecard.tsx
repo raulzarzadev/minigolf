@@ -1,7 +1,7 @@
 'use client'
 
 import { CheckCircle, Clock, Minus, Plus, Target, Trophy } from 'lucide-react'
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { calculateGameStats, updateGame, updatePlayerScore } from '@/lib/db'
 import { isLocalGame, updateLocalGame } from '@/lib/localStorage'
 import { Game, Player } from '@/types'
@@ -46,7 +46,7 @@ const Scorecard: React.FC<ScorecardProps> = ({
         const fallbackHole =
           typeof holeIndex === 'number'
             ? holeIndex
-            : (prev?.holeIndex ?? getDefaultHoleIndex())
+            : prev?.holeIndex ?? getDefaultHoleIndex()
 
         return {
           playerId,
@@ -318,10 +318,10 @@ const Scorecard: React.FC<ScorecardProps> = ({
                     isSelectedHole
                       ? 'bg-white ring-2 ring-green-500 shadow-lg'
                       : isCurrentHole
-                        ? 'bg-green-50 border-green-200'
-                        : isFutureHole
-                          ? 'bg-gray-50 border-dashed border-gray-200 opacity-70'
-                          : 'bg-gray-50 border-transparent'
+                      ? 'bg-green-50 border-green-200'
+                      : isFutureHole
+                      ? 'bg-gray-50 border-dashed border-gray-200 opacity-70'
+                      : 'bg-gray-50 border-transparent'
                   }`}
                 >
                   <button
@@ -510,8 +510,8 @@ const Scorecard: React.FC<ScorecardProps> = ({
                       isActive
                         ? 'bg-black text-white border-black'
                         : isEditable
-                          ? 'bg-white text-gray-800 border-gray-200'
-                          : 'bg-gray-100 text-gray-400 border-gray-100 cursor-not-allowed'
+                        ? 'bg-white text-gray-800 border-gray-200'
+                        : 'bg-gray-100 text-gray-400 border-gray-100 cursor-not-allowed'
                     }`}
                   >
                     <div className="truncate">{player.name}</div>
@@ -643,7 +643,9 @@ const Scorecard: React.FC<ScorecardProps> = ({
               Avanzar hoyo automáticamente
             </span>
             <button
-              onClick={() => setAutoAdvanceHole(!autoAdvanceHole)}
+              onCli
+              type="button"
+              ck={() => setAutoAdvanceHole(!autoAdvanceHole)}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                 autoAdvanceHole ? 'bg-green-500' : 'bg-gray-200'
               }`}
@@ -677,10 +679,10 @@ const Scorecard: React.FC<ScorecardProps> = ({
                       index === 0
                         ? 'bg-black text-white'
                         : index === 1
-                          ? 'bg-gray-300 text-black'
-                          : index === 2
-                            ? 'bg-gray-200 text-black'
-                            : 'bg-gray-100 text-black'
+                        ? 'bg-gray-300 text-black'
+                        : index === 2
+                        ? 'bg-gray-200 text-black'
+                        : 'bg-gray-100 text-black'
                     }`}
                   >
                     {index + 1}

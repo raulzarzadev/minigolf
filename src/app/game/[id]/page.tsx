@@ -2,7 +2,7 @@
 
 import { ArrowLeft, Flag, Trophy } from 'lucide-react'
 import { useParams, useRouter } from 'next/navigation'
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import Navbar from '@/components/Navbar'
 import Scorecard from '@/components/Scorecard'
 import { useAuth } from '@/contexts/AuthContext'
@@ -150,6 +150,7 @@ export default function GamePage() {
             La partida que buscas no existe o no tienes permisos para verla.
           </p>
           <button
+            type="button"
             onClick={() => router.push('/')}
             className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
           >
@@ -184,6 +185,7 @@ export default function GamePage() {
             <div className="flex items-center space-x-2">
               {canFinish && (
                 <button
+                  type="button"
                   onClick={handleFinishGame}
                   disabled={isFinishing}
                   className="inline-flex items-center px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm touch-manipulation"

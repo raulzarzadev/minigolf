@@ -2,7 +2,7 @@
 
 import { Clock, Flag, Play, User } from 'lucide-react'
 import Link from 'next/link'
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import DiscreteUsernameEditor from '@/components/DiscreteUsernameEditor'
 import Navbar from '@/components/Navbar'
 import RewardLogrosCard from '@/components/RewardLogrosCard'
