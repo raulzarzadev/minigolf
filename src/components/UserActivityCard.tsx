@@ -142,11 +142,13 @@ export default function UserActivityCard({ user }: UserActivityCardProps) {
         <div className="animate-pulse">
           <div className="grid grid-cols-2 gap-3 mb-4">
             {[...Array(4)].map((_, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: false
               <div key={i} className="bg-gray-200 rounded-lg h-16"></div>
             ))}
           </div>
           <div className="space-y-3">
             {[...Array(3)].map((_, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: false
               <div key={i} className="bg-gray-200 rounded h-4"></div>
             ))}
           </div>

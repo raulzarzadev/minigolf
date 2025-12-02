@@ -77,7 +77,7 @@ export default function NewGamePage() {
     }
   }, [user, isMultiplayer])
 
-  onCliuseEffect(() => {
+  useEffect(() => {
     if (isMultiplayer) {
       setGuestInputs((prev) =>
         prev.length > 0 ? prev : [createGuestInputField()]

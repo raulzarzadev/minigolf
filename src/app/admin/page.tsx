@@ -76,6 +76,7 @@ export default function AdminPanel() {
     }
   }
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: solo se quiere ejecutar una vez
   useEffect(() => {
     refreshRewardCenter()
   }, [])
@@ -142,6 +143,7 @@ export default function AdminPanel() {
                 </p>
               </div>
               <button
+                type="button"
                 onClick={async () => {
                   try {
                     await createSampleData()
@@ -170,6 +172,7 @@ export default function AdminPanel() {
                 { id: 'migration', label: 'Migración' }
               ].map((tab) => (
                 <button
+                  type="button"
                   key={tab.id}
                   onClick={() =>
                     setActiveTab(
@@ -358,7 +361,7 @@ function RewardsTab({
   rewardConfig,
   deliveryStats,
   rewardStates,
-  games,
+  games = [],
   users,
   prices,
   loading,
@@ -405,13 +408,17 @@ function RewardsTab({
 
   const gameMap = useMemo(() => {
     const map = new Map<string, AdminGame>()
-    games.forEach((game) => map.set(game.id, game))
+    games?.forEach((game) => {
+      map.set(game.id, game)
+    })
     return map
   }, [games])
 
   const userMap = useMemo(() => {
     const map = new Map<string, AdminUser>()
-    users.forEach((u) => map.set(u.id, u))
+    users.forEach((u) => {
+      map.set(u.id, u)
+    })
     return map
   }, [users])
 
@@ -1502,6 +1509,7 @@ function MigrationTab() {
     skippedCount: number
   } | null>(null)
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: false
   useEffect(() => {
     loadMigrationStatus()
   }, [])
@@ -1600,6 +1608,7 @@ function MigrationTab() {
 
         <div className="space-y-3">
           <button
+            type="button"
             onClick={loadMigrationStatus}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
@@ -1608,9 +1617,8 @@ function MigrationTab() {
 
           {migrationStatus?.needsMigration && (
             <button
-              onCli
               type="button"
-              ck={runMigration}
+              onClick={runMigration}
               disabled={migrating}
               className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >

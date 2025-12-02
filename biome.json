@@ -51,7 +51,8 @@
 			"beforeEach",
 			"afterEach",
 			"beforeAll",
-			"afterAll"
+			"afterAll",
+			"toBeInTheDocument"
 		],
 		"formatter": {
 			"quoteStyle": "single",
