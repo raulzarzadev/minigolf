@@ -8,16 +8,25 @@ import {
   loadRewardState,
   persistRewardState,
   prizeCatalog,
+  PrizeTier,
+  RewardPrize,
   RewardState,
   RewardStepId,
   rewardStepMeta,
   triggerRewardStepAction,
   setLastInstruction,
-  rewardPerks,
   grantAdminRolls,
-  rollPrizeOutcome
+  rollPrizeOutcome,
+  getRewardConfig,
+  RewardConfig,
+  getRewardPerks,
+  updateRewardOdds,
+  addRewardPerk,
+  removeRewardPerk,
+  getPrizeDeliveryStats,
+  markPrizeDelivered
 } from '@/lib/rewards'
-import { CheckCircle2, Dice5, Gift, Loader2, X } from 'lucide-react'
+import { CheckCircle2, Dice5, Gift, Loader2, Trash2, X } from 'lucide-react'
 
 interface RewardLogrosCardProps {
   games: Game[]
@@ -31,6 +40,18 @@ const RewardLogrosCard: React.FC<RewardLogrosCardProps> = ({ games }) => {
   const [activeStep, setActiveStep] = useState<RewardStepId | null>(null)
   const [adminRollInput, setAdminRollInput] = useState('1')
   const [adminStatus, setAdminStatus] = useState<string | null>(null)
+  const [rewardConfig, setRewardConfig] = useState<RewardConfig | null>(null)
+  const [oddsDraft, setOddsDraft] = useState({
+    small: '10',
+    medium: '5',
+    large: '2'
+  })
+  const [newPerk, setNewPerk] = useState({
+    title: '',
+    description: '',
+    tier: 'small' as PrizeTier | 'bonus'
+  })
+  const [configStatus, setConfigStatus] = useState<string | null>(null)
   const { user } = useAuth()
 
   const gameOptions = useMemo(() => {
@@ -50,6 +71,16 @@ const RewardLogrosCard: React.FC<RewardLogrosCardProps> = ({ games }) => {
     })
   }, [games, rewardStates])
 
+  const refreshConfig = () => {
+    const cfg = getRewardConfig()
+    setRewardConfig(cfg)
+    setOddsDraft({
+      small: Math.round((cfg.odds.small || 0) * 100).toString(),
+      medium: Math.round((cfg.odds.medium || 0) * 100).toString(),
+      large: Math.round((cfg.odds.large || 0) * 100).toString()
+    })
+  }
+
   const hydrate = () => {
     const states = getAllRewardStates()
     setRewardStates(states)
@@ -64,6 +95,7 @@ const RewardLogrosCard: React.FC<RewardLogrosCardProps> = ({ games }) => {
         : null
     )
     setLoading(false)
+    refreshConfig()
   }
 
   useEffect(() => {
@@ -162,7 +194,7 @@ const RewardLogrosCard: React.FC<RewardLogrosCardProps> = ({ games }) => {
     setTimeout(() => setAdminStatus(null), 2500)
   }
 
-  if (loading) {
+  if (loading || !rewardConfig) {
     return (
       <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
         <Loader2 className="h-6 w-6 animate-spin text-green-600 mx-auto" />
@@ -186,6 +218,9 @@ const RewardLogrosCard: React.FC<RewardLogrosCardProps> = ({ games }) => {
       ? `${rollsAvailable} tiro(s) disponible(s)`
       : 'Completa acciones pendientes para ganar más dados'
     : 'Termina esta partida para desbloquear los dados'
+
+  const perks = getRewardPerks()
+  const deliveryStats = getPrizeDeliveryStats()
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
@@ -237,6 +272,183 @@ const RewardLogrosCard: React.FC<RewardLogrosCardProps> = ({ games }) => {
           </button>
           {adminStatus && (
             <span className="text-green-600 font-medium">{adminStatus}</span>
+          )}
+        </div>
+      )}
+
+      {user?.isAdmin && rewardConfig && (
+        <div className="space-y-3 border border-gray-200 rounded-lg p-3">
+          <div>
+            <p className="text-xs font-semibold text-gray-600">
+              Probabilidades actuales
+            </p>
+            <div className="grid grid-cols-3 gap-2 mt-2 text-xs">
+              {(['small', 'medium', 'large'] as PrizeTier[]).map((tier) => (
+                <label key={`odds-${tier}`} className="flex flex-col gap-1">
+                  <span className="text-gray-600 capitalize">
+                    {tier === 'small'
+                      ? 'Premio chico'
+                      : tier === 'medium'
+                      ? 'Premio mediano'
+                      : 'Premio grande'}
+                  </span>
+                  <input
+                    type="number"
+                    min={0}
+                    step={0.5}
+                    value={oddsDraft[tier]}
+                    onChange={(event) =>
+                      setOddsDraft((prev) => ({
+                        ...prev,
+                        [tier]: event.target.value
+                      }))
+                    }
+                    className="border border-gray-300 rounded px-2 py-1"
+                  />
+                </label>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                updateRewardOdds({
+                  small: Number(oddsDraft.small) / 100,
+                  medium: Number(oddsDraft.medium) / 100,
+                  large: Number(oddsDraft.large) / 100
+                })
+                refreshConfig()
+                setConfigStatus('Probabilidades actualizadas')
+                setTimeout(() => setConfigStatus(null), 2500)
+              }}
+              className="mt-2 inline-flex items-center px-3 py-1.5 rounded bg-green-600 text-white text-xs font-semibold"
+            >
+              Guardar probabilidades
+            </button>
+          </div>
+
+          <div>
+            <p className="text-xs font-semibold text-gray-600 mb-2">
+              Entregas registradas
+            </p>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              {Object.entries(deliveryStats).map(([key, value]) => {
+                const typedKey = key as RewardPrize
+                return (
+                  <div
+                    key={`stat-${key}`}
+                    className="flex items-center justify-between border border-gray-100 rounded px-2 py-1"
+                  >
+                    <span className="text-gray-600 capitalize">
+                      {typedKey === 'none'
+                        ? 'Intentos sin premio'
+                        : `Premio ${typedKey}`}
+                    </span>
+                    <span className="font-semibold text-gray-900">
+                      {value || 0}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          <div>
+            <p className="text-xs font-semibold text-gray-600 mb-2">
+              Catálogo de premios
+            </p>
+            <div className="space-y-2">
+              {perks.map((perk) => (
+                <div
+                  key={`config-perk-${perk.id}`}
+                  className="border border-gray-200 rounded-lg px-2 py-1 flex items-center justify-between text-xs"
+                >
+                  <div>
+                    <p className="font-semibold text-gray-900">{perk.title}</p>
+                    <p className="text-gray-500">{perk.description}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] uppercase font-semibold text-gray-500">
+                      {perk.tier === 'bonus' ? 'Bonus' : `Premio ${perk.tier}`}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        removeRewardPerk(perk.id)
+                        refreshConfig()
+                      }}
+                      className="text-gray-400 hover:text-red-500"
+                      aria-label="Eliminar premio"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-3 space-y-2 text-xs">
+              <input
+                type="text"
+                placeholder="Nombre del premio"
+                value={newPerk.title}
+                onChange={(event) =>
+                  setNewPerk((prev) => ({ ...prev, title: event.target.value }))
+                }
+                className="w-full border border-gray-300 rounded px-2 py-1"
+              />
+              <textarea
+                placeholder="Descripción"
+                value={newPerk.description}
+                onChange={(event) =>
+                  setNewPerk((prev) => ({
+                    ...prev,
+                    description: event.target.value
+                  }))
+                }
+                className="w-full border border-gray-300 rounded px-2 py-1"
+              />
+              <select
+                value={newPerk.tier}
+                onChange={(event) =>
+                  setNewPerk((prev) => ({
+                    ...prev,
+                    tier: event.target.value as PrizeTier | 'bonus'
+                  }))
+                }
+                className="border border-gray-300 rounded px-2 py-1"
+              >
+                <option value="small">Premio chico</option>
+                <option value="medium">Premio mediano</option>
+                <option value="large">Premio grande</option>
+                <option value="bonus">Bonus</option>
+              </select>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!newPerk.title.trim()) return
+                  addRewardPerk({
+                    ...newPerk,
+                    id: `perk-${Date.now()}`
+                  })
+                  setNewPerk({
+                    title: '',
+                    description: '',
+                    tier: 'small'
+                  })
+                  refreshConfig()
+                  setConfigStatus('Premio agregado')
+                  setTimeout(() => setConfigStatus(null), 2500)
+                }}
+                className="inline-flex items-center px-3 py-1.5 rounded bg-black text-white font-semibold"
+              >
+                Agregar premio
+              </button>
+            </div>
+          </div>
+
+          {configStatus && (
+            <p className="text-[11px] text-green-600 font-semibold">
+              {configStatus}
+            </p>
           )}
         </div>
       )}
@@ -388,7 +600,7 @@ const RewardLogrosCard: React.FC<RewardLogrosCardProps> = ({ games }) => {
               return (
                 <div
                   key={roll.id}
-                  className="flex items-center justify-between border border-gray-200 rounded-xl px-3 py-2"
+                  className="flex items-center justify-between border border-gray-200 rounded-xl px-3 py-2 gap-3"
                 >
                   <div>
                     <p className="text-sm font-semibold text-gray-900">
@@ -397,15 +609,50 @@ const RewardLogrosCard: React.FC<RewardLogrosCardProps> = ({ games }) => {
                     <p className="text-xs text-gray-500">
                       {reward.description}
                     </p>
+                    {roll.delivered && (
+                      <span className="mt-1 inline-flex text-[10px] font-semibold text-green-600">
+                        Entregado
+                      </span>
+                    )}
                   </div>
-                  <span
-                    className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${reward.accent}`}
-                  >
-                    {new Date(roll.timestamp).toLocaleDateString('es-MX', {
-                      month: 'short',
-                      day: 'numeric'
-                    })}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${reward.accent}`}
+                    >
+                      {new Date(roll.timestamp).toLocaleDateString('es-MX', {
+                        month: 'short',
+                        day: 'numeric'
+                      })}
+                    </span>
+                    {user?.isAdmin &&
+                      roll.tier !== 'none' &&
+                      !roll.delivered && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updatedState = markPrizeDelivered({
+                              admin: user,
+                              gameId: currentState.gameId,
+                              rollId: roll.id
+                            })
+                            if (updatedState) {
+                              setCurrentState(updatedState)
+                              setRewardStates((prev) =>
+                                prev.map((state) =>
+                                  state.gameId === updatedState.gameId
+                                    ? updatedState
+                                    : state
+                                )
+                              )
+                              refreshConfig()
+                            }
+                          }}
+                          className="text-[11px] font-semibold text-green-700 border border-green-500 rounded px-2 py-0.5 hover:bg-green-50"
+                        >
+                          Marcar entregado
+                        </button>
+                      )}
+                  </div>
                 </div>
               )
             })}
@@ -422,7 +669,7 @@ const RewardLogrosCard: React.FC<RewardLogrosCardProps> = ({ games }) => {
           Premios que puedes ganar
         </p>
         <div className="space-y-2">
-          {rewardPerks.map((perk) => (
+          {perks.map((perk) => (
             <div
               key={perk.id}
               className="border border-gray-200 rounded-xl px-3 py-2 flex items-center justify-between"

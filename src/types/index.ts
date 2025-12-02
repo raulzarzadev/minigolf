@@ -7,7 +7,11 @@ export interface User {
   createdAt: Date
   gamesPlayed: number
   averageScore: number
+  /**
+   * @deprecated Use roles instead
+   */
   isAdmin?: boolean
+  roles?: ('admin' | 'superadmin')[]
 }
 
 // Player in a game (can be registered user or guest)

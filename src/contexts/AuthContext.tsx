@@ -21,6 +21,7 @@ interface AuthContextType {
   signInWithGoogle: () => Promise<void>
   logout: () => Promise<void>
   updateUsername: (newUsername: string) => Promise<void>
+  isAdmin: boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -80,7 +81,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
                 createdAt: userData.createdAt.toDate(),
                 gamesPlayed: userData.gamesPlayed || 0,
                 averageScore: userData.averageScore || 0,
-                isAdmin: userData.isAdmin || false
+                ...userData
               })
             }
           } else if (mounted) {
@@ -142,8 +143,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           email: result.user.email || '',
           createdAt: new Date(),
           gamesPlayed: 0,
-          averageScore: 0,
-          isAdmin: false
+          averageScore: 0
         }
         await setDoc(doc(db, 'users', result.user.uid), userData)
       }
@@ -160,7 +160,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           createdAt: userData.createdAt.toDate(),
           gamesPlayed: userData.gamesPlayed || 0,
           averageScore: userData.averageScore || 0,
-          isAdmin: userData.isAdmin || false
+          ...userData
         })
       }
 
@@ -198,6 +198,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }
 
+  console.log({ user })
+
   const value = {
     user,
     firebaseUser,
@@ -205,7 +207,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     firebaseError,
     signInWithGoogle,
     logout,
-    updateUsername
+    updateUsername,
+    isAdmin: user?.roles?.includes('admin') || user?.isAdmin || false
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

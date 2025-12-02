@@ -17,7 +17,7 @@ import {
 import Logo from './Logo'
 
 const Navbar: React.FC = () => {
-  const { user, logout } = useAuth()
+  const { user, logout, isAdmin } = useAuth()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   const handleLogout = async () => {
@@ -81,13 +81,13 @@ const Navbar: React.FC = () => {
                   <span className="hidden lg:inline">Torneos</span>
                 </Link>
 
-                {user.isAdmin && (
+                {isAdmin && (
                   <Link
-                    href="/admin"
+                    href="/admin/console"
                     className="flex items-center space-x-1 px-2 lg:px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-100 hover:text-blue-700 transition-colors"
                   >
                     <Settings size={18} />
-                    <span className="hidden lg:inline">Admin</span>
+                    <span className="hidden lg:inline">Consola Admin</span>
                   </Link>
                 )}
 
@@ -195,14 +195,14 @@ const Navbar: React.FC = () => {
                     <span>Mis Partidas</span>
                   </Link>
 
-                  {user.isAdmin && (
+                  {isAdmin && (
                     <Link
-                      href="/admin"
+                      href="/admin/console"
                       onClick={closeMobileMenu}
                       className="flex items-center space-x-3 px-3 py-3 rounded-md text-base font-medium hover:bg-blue-100 transition-colors active:bg-blue-100 touch-manipulation"
                     >
                       <Settings size={20} />
-                      <span>Panel de Admin</span>
+                      <span>Consola de Admin</span>
                     </Link>
                   )}
 

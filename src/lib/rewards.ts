@@ -1,6 +1,7 @@
 import { User } from '@/types'
 
 const STORAGE_KEY = 'baja-reward-center'
+const CONFIG_KEY = 'baja-reward-config'
 
 export type PrizeTier = 'small' | 'medium' | 'large'
 export type RewardPrize = PrizeTier | 'none'
@@ -29,6 +30,9 @@ export interface RewardRoll {
   id: string
   tier: RewardPrize
   timestamp: number
+  delivered?: boolean
+  deliveredAt?: number
+  deliveredBy?: string
 }
 
 export interface RewardState {
@@ -38,6 +42,19 @@ export interface RewardState {
   rollHistory: RewardRoll[]
   updatedAt: number
   lastInstruction?: RewardStepId | null
+}
+
+export interface RewardPerk {
+  id: string
+  title: string
+  description: string
+  tier: PrizeTier | 'bonus'
+}
+
+export interface RewardConfig {
+  odds: Record<PrizeTier, number>
+  perks: RewardPerk[]
+  deliveredCounts: Record<RewardPrize, number>
 }
 
 type RewardStorage = Record<string, RewardState>
@@ -69,6 +86,135 @@ const writeStorage = (payload: RewardStorage) => {
     // ignore quota errors
   }
 }
+
+const defaultConfig = (): RewardConfig => ({
+  odds: {
+    large: 0.02,
+    medium: 0.05,
+    small: 0.1
+  },
+  perks: [
+    {
+      id: 'free-round',
+      title: 'Ronda gratis',
+      description: '1 partida de minigolf sin costo para tu próxima visita.',
+      tier: 'small'
+    },
+    {
+      id: 'wall-photo',
+      title: 'Mural de campeones',
+      description:
+        'Foto Polaroid en el mural + acceso al muro de escalar durante tu visita.',
+      tier: 'medium'
+    },
+    {
+      id: 'surprise-challenge',
+      title: 'Challenge sorpresa',
+      description:
+        'Experiencia guiada en otra atracción del parque con retos especiales.',
+      tier: 'large'
+    }
+  ],
+  deliveredCounts: {
+    large: 0,
+    medium: 0,
+    small: 0,
+    none: 0
+  }
+})
+
+const readConfig = (): RewardConfig => {
+  if (typeof window === 'undefined') return defaultConfig()
+  try {
+    const raw = window.localStorage.getItem(CONFIG_KEY)
+    if (!raw) return defaultConfig()
+    const parsed = JSON.parse(raw) as RewardConfig
+    return {
+      ...defaultConfig(),
+      ...parsed,
+      odds: { ...defaultConfig().odds, ...(parsed.odds || {}) },
+      deliveredCounts: {
+        ...defaultConfig().deliveredCounts,
+        ...(parsed.deliveredCounts || {})
+      }
+    }
+  } catch {
+    return defaultConfig()
+  }
+}
+
+const writeConfig = (config: RewardConfig) => {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage.setItem(CONFIG_KEY, JSON.stringify(config))
+  } catch {
+    // ignore errors
+  }
+}
+
+const sanitizeOdds = (
+  odds: Partial<Record<PrizeTier, number>>,
+  base: Record<PrizeTier, number>
+) => {
+  const next: Record<PrizeTier, number> = { ...base }
+  ;(['small', 'medium', 'large'] as PrizeTier[]).forEach((tier) => {
+    if (typeof odds[tier] === 'number' && Number.isFinite(odds[tier])) {
+      next[tier] = Math.max(0, odds[tier] as number)
+    }
+  })
+  return next
+}
+
+export const getRewardConfig = (): RewardConfig => readConfig()
+
+export const getRewardOdds = () => readConfig().odds
+
+export const updateRewardOdds = (odds: Partial<Record<PrizeTier, number>>) => {
+  const config = readConfig()
+  const updated: RewardConfig = {
+    ...config,
+    odds: sanitizeOdds(odds, config.odds)
+  }
+  writeConfig(updated)
+  return updated
+}
+
+export const getRewardPerks = () => readConfig().perks
+
+export const addRewardPerk = (perk: RewardPerk) => {
+  const config = readConfig()
+  const updated: RewardConfig = {
+    ...config,
+    perks: [perk, ...config.perks]
+  }
+  writeConfig(updated)
+  return updated
+}
+
+export const removeRewardPerk = (perkId: string) => {
+  const config = readConfig()
+  const updated: RewardConfig = {
+    ...config,
+    perks: config.perks.filter((perk) => perk.id !== perkId)
+  }
+  writeConfig(updated)
+  return updated
+}
+
+const incrementDeliveredCount = (tier: RewardPrize) => {
+  const config = readConfig()
+  const updated: RewardConfig = {
+    ...config,
+    deliveredCounts: {
+      ...config.deliveredCounts,
+      [tier]: (config.deliveredCounts[tier] || 0) + 1
+    }
+  }
+  writeConfig(updated)
+  return updated.deliveredCounts
+}
+
+export const getPrizeDeliveryStats = () => readConfig().deliveredCounts
 
 export const loadRewardState = (gameId: string): RewardState => {
   const storage = readStorage()
@@ -217,41 +363,13 @@ export interface RewardPerk {
   tier: PrizeTier | 'bonus'
 }
 
-export const rewardPerks: RewardPerk[] = [
-  {
-    id: 'free-round',
-    title: 'Ronda gratis',
-    description: '1 partida de minigolf sin costo para tu próxima visita.',
-    tier: 'small'
-  },
-  {
-    id: 'wall-photo',
-    title: 'Mural de campeones',
-    description:
-      'Foto Polaroid en el mural + acceso al muro de escalar durante tu visita.',
-    tier: 'medium'
-  },
-  {
-    id: 'surprise-challenge',
-    title: 'Challenge sorpresa',
-    description:
-      'Experiencia guiada en otra atracción del parque con retos especiales.',
-    tier: 'large'
-  }
-]
-
-export const rewardOdds: Record<PrizeTier, number> = {
-  large: 0.02,
-  medium: 0.05,
-  small: 0.1
-}
-
 export const rollPrizeOutcome = (randomValue = Math.random()): RewardPrize => {
+  const odds = getRewardOdds()
   const ordered: PrizeTier[] = ['large', 'medium', 'small']
   let cumulative = 0
 
   for (const tier of ordered) {
-    cumulative += Math.max(0, rewardOdds[tier] ?? 0)
+    cumulative += Math.max(0, odds[tier] ?? 0)
     if (randomValue < cumulative) {
       return tier
     }
@@ -280,4 +398,41 @@ export const grantAdminRolls = ({
     availableRolls: state.availableRolls + rolls
   })
   return updated
+}
+
+export const markPrizeDelivered = ({
+  admin,
+  gameId,
+  rollId
+}: {
+  admin?: User | null
+  gameId: string
+  rollId: string
+}) => {
+  if (!admin?.isAdmin) {
+    console.warn('markPrizeDelivered: admin privileges required')
+    return null
+  }
+
+  const state = loadRewardState(gameId)
+  const updatedHistory = state.rollHistory.map((roll) => {
+    if (roll.id !== rollId || roll.delivered) return roll
+    const updatedRoll: RewardRoll = {
+      ...roll,
+      delivered: true,
+      deliveredAt: Date.now(),
+      deliveredBy: admin.id
+    }
+    if (updatedRoll.tier !== 'none') {
+      incrementDeliveredCount(updatedRoll.tier)
+    } else {
+      incrementDeliveredCount('none')
+    }
+    return updatedRoll
+  })
+
+  const updatedState = persistRewardState(gameId, {
+    rollHistory: updatedHistory
+  })
+  return updatedState
 }

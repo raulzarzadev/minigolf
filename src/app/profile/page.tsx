@@ -111,6 +111,13 @@ export default function ProfilePage() {
               </h1>
 
               <DiscreteUsernameEditor />
+
+              <div className="mt-1 space-y-0.5 text-xs text-gray-500">
+                <p className="truncate">
+                  {user.email || 'Sin correo registrado'}
+                </p>
+                <p className="font-mono break-all">ID: {user.id}</p>
+              </div>
             </div>
             <div className="text-center">
               <div className="text-xl font-bold text-green-600">
