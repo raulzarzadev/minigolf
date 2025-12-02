@@ -645,9 +645,8 @@ const Scorecard: FC<ScorecardProps> = ({
               Avanzar hoyo automáticamente
             </span>
             <button
-              onCli
               type="button"
-              ck={() => setAutoAdvanceHole(!autoAdvanceHole)}
+              onClick={() => setAutoAdvanceHole(!autoAdvanceHole)}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                 autoAdvanceHole ? 'bg-green-500' : 'bg-gray-200'
               }`}
