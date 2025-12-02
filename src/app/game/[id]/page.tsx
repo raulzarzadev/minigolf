@@ -8,7 +8,7 @@ import { getLocalGame, updateLocalGame, isLocalGame } from '@/lib/localStorage'
 import { Game, Player } from '@/types'
 import Navbar from '@/components/Navbar'
 import Scorecard from '@/components/Scorecard'
-import { ArrowLeft, Flag, Share2, Trophy } from 'lucide-react'
+import { ArrowLeft, Flag, Trophy } from 'lucide-react'
 
 export default function GamePage() {
   const params = useParams()
@@ -65,50 +65,28 @@ export default function GamePage() {
     return () => unsubscribe()
   }, [gameId, user])
 
+  const navigateToCelebration = () => {
+    if (!game) return
+    router.push(`/game/${game.id}/celebration`)
+  }
+
   const handleFinishGame = async () => {
     if (!game) return
 
     setIsFinishing(true)
     try {
       if (isLocalGameState) {
-        // Local game: update locally
         updateLocalGame(game.id, { status: 'finished' })
         setGame((prev) => (prev ? { ...prev, status: 'finished' } : null))
+        navigateToCelebration()
       } else {
-        // Server game: update on server
         await finishGame(game.id)
-        // The real-time listener will update the game state
+        navigateToCelebration()
       }
-    } catch {
-      console.error('Error finishing game:')
+    } catch (error) {
+      console.error('Error finishing game:', error)
     } finally {
       setIsFinishing(false)
-    }
-  }
-
-  const handleShareGame = async () => {
-    if (!game) return
-
-    const gameUrl = `${window.location.origin}/game/${game.id}`
-
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: 'Partida de Minigolf',
-          text: `¡Únete a mi partida de minigolf!`,
-          url: gameUrl
-        })
-      } catch {
-        // User cancelled sharing
-      }
-    } else {
-      // Fallback: copy to clipboard
-      try {
-        await navigator.clipboard.writeText(gameUrl)
-        alert('¡Link copiado al portapapeles!')
-      } catch (error) {
-        console.error('Error copying to clipboard:', error)
-      }
     }
   }
 
@@ -203,16 +181,6 @@ export default function GamePage() {
             </button>
 
             <div className="flex items-center space-x-2">
-              {game.isMultiplayer && (
-                <button
-                  onClick={handleShareGame}
-                  className="inline-flex items-center px-2 py-1 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 text-sm touch-manipulation"
-                >
-                  <Share2 className="h-4 w-4 mr-1" />
-                  Compartir
-                </button>
-              )}
-
               {canFinish && (
                 <button
                   onClick={handleFinishGame}
