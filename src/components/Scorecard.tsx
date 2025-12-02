@@ -46,7 +46,7 @@ const Scorecard: FC<ScorecardProps> = ({
         const fallbackHole =
           typeof holeIndex === 'number'
             ? holeIndex
-            : prev?.holeIndex ?? getDefaultHoleIndex()
+            : (prev?.holeIndex ?? getDefaultHoleIndex())
 
         return {
           playerId,
@@ -320,10 +320,10 @@ const Scorecard: FC<ScorecardProps> = ({
                     isSelectedHole
                       ? 'bg-white ring-2 ring-green-500 shadow-lg'
                       : isCurrentHole
-                      ? 'bg-green-50 border-green-200'
-                      : isFutureHole
-                      ? 'bg-gray-50 border-dashed border-gray-200 opacity-70'
-                      : 'bg-gray-50 border-transparent'
+                        ? 'bg-green-50 border-green-200'
+                        : isFutureHole
+                          ? 'bg-gray-50 border-dashed border-gray-200 opacity-70'
+                          : 'bg-gray-50 border-transparent'
                   }`}
                 >
                   <button
@@ -512,8 +512,8 @@ const Scorecard: FC<ScorecardProps> = ({
                       isActive
                         ? 'bg-black text-white border-black'
                         : isEditable
-                        ? 'bg-white text-gray-800 border-gray-200'
-                        : 'bg-gray-100 text-gray-400 border-gray-100 cursor-not-allowed'
+                          ? 'bg-white text-gray-800 border-gray-200'
+                          : 'bg-gray-100 text-gray-400 border-gray-100 cursor-not-allowed'
                     }`}
                   >
                     <div className="truncate">{player.name}</div>
@@ -681,10 +681,10 @@ const Scorecard: FC<ScorecardProps> = ({
                       index === 0
                         ? 'bg-black text-white'
                         : index === 1
-                        ? 'bg-gray-300 text-black'
-                        : index === 2
-                        ? 'bg-gray-200 text-black'
-                        : 'bg-gray-100 text-black'
+                          ? 'bg-gray-300 text-black'
+                          : index === 2
+                            ? 'bg-gray-200 text-black'
+                            : 'bg-gray-100 text-black'
                     }`}
                   >
                     {index + 1}

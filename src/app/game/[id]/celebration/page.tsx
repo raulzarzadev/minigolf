@@ -295,8 +295,8 @@ export default function CelebrationPage() {
                       completed
                         ? 'border-green-200 text-green-700 bg-white'
                         : isFinished
-                        ? 'border-black text-black hover:bg-black hover:text-white'
-                        : 'border-gray-200 text-gray-400'
+                          ? 'border-black text-black hover:bg-black hover:text-white'
+                          : 'border-gray-200 text-gray-400'
                     }`}
                   >
                     {completed ? '¡Dado ganado!' : 'Quiero mi dado'}

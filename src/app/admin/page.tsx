@@ -625,10 +625,10 @@ function RewardsTab({
                 tier === 'large'
                   ? 'text-purple-700'
                   : tier === 'medium'
-                  ? 'text-blue-600'
-                  : tier === 'small'
-                  ? 'text-green-600'
-                  : 'text-gray-500'
+                    ? 'text-blue-600'
+                    : tier === 'small'
+                      ? 'text-green-600'
+                      : 'text-gray-500'
 
               return (
                 <div
@@ -662,8 +662,8 @@ function RewardsTab({
                       {tier === 'small'
                         ? 'Premio chico'
                         : tier === 'medium'
-                        ? 'Premio mediano'
-                        : 'Premio grande'}
+                          ? 'Premio mediano'
+                          : 'Premio grande'}
                     </span>
                     <input
                       type="number"

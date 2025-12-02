@@ -149,8 +149,8 @@ const UserStats: FC<UserStatsProps> = ({ user }) => {
                   {stats.favoriteGameType === 'multiplayer'
                     ? 'Multi'
                     : stats.favoriteGameType === 'individual'
-                    ? 'Individual'
-                    : 'N/A'}
+                      ? 'Individual'
+                      : 'N/A'}
                 </span>
               </div>
             </div>
@@ -370,8 +370,8 @@ export const getUserStats = async ({
     multiplayerGames > individualGames
       ? 'multiplayer'
       : individualGames > multiplayerGames
-      ? 'individual'
-      : null
+        ? 'individual'
+        : null
 
   const winRate =
     finishedGames.length > 0 ? (gamesWon / finishedGames.length) * 100 : 0
