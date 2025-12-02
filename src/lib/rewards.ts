@@ -133,27 +133,24 @@ export const rewardStepMeta: Record<
   register: {
     label: 'Registro',
     instructions: [
-      'Inicia sesión o crea tu cuenta en Baja Mini Golf.',
-      'Desde el Centro de Recompensas, abre la partida que acabas de jugar.',
-      'Confirma que se sincronizó tu marcador para activar el sorteo oficial.'
+      'Inicia sesión o crea tu cuenta.',
+      'Abre la partida en Celebración y confirma tu score con el staff.'
     ],
     ctaLabel: 'Ir a mi cuenta'
   },
   follow: {
     label: 'Instagram',
     instructions: [
-      'Entra al perfil oficial @bajaminigolf en Instagram.',
-      'Presiona Follow y activa las notificaciones si quieres enterarte de nuevos retos.',
-      'Muestra al staff que estás siguiendo la cuenta para validar tu tiro.'
+      'Entra al perfil @bajaminigolf y da follow.',
+      'Muestra tu perfil siguiendo la cuenta al staff.'
     ],
     ctaLabel: 'Abrir Instagram'
   },
   share: {
     label: 'Compartido',
     instructions: [
-      'Copia el texto oficial con los hashtags del reto.',
-      'Publica una foto o reel de tu partida en Instagram etiquetándonos.',
-      'Muestra la publicación al staff para obtener tu dado extra.'
+      'Copia el texto oficial del reto y publícalo con tu foto o reel.',
+      'Enséñale la publicación al staff para validar tu dado.'
     ],
     ctaLabel: 'Copiar copy'
   }
@@ -241,3 +238,25 @@ export const rewardPerks: RewardPerk[] = [
     tier: 'large'
   }
 ]
+
+export const grantAdminRolls = ({
+  admin,
+  gameId,
+  rolls
+}: {
+  admin?: User | null
+  gameId: string
+  rolls: number
+}) => {
+  if (!admin?.isAdmin) {
+    console.warn('grantAdminRolls: admin privileges required')
+    return null
+  }
+  if (rolls <= 0) return loadRewardState(gameId)
+
+  const state = loadRewardState(gameId)
+  const updated = persistRewardState(gameId, {
+    availableRolls: state.availableRolls + rolls
+  })
+  return updated
+}

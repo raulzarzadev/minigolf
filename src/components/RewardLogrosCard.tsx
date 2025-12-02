@@ -14,7 +14,8 @@ import {
   rewardStepMeta,
   triggerRewardStepAction,
   setLastInstruction,
-  rewardPerks
+  rewardPerks,
+  grantAdminRolls
 } from '@/lib/rewards'
 import { CheckCircle2, Dice5, Gift, Loader2, X } from 'lucide-react'
 
@@ -28,6 +29,8 @@ const RewardLogrosCard: React.FC<RewardLogrosCardProps> = ({ games }) => {
   const [currentState, setCurrentState] = useState<RewardState | null>(null)
   const [loading, setLoading] = useState(true)
   const [activeStep, setActiveStep] = useState<RewardStepId | null>(null)
+  const [adminRollInput, setAdminRollInput] = useState('1')
+  const [adminStatus, setAdminStatus] = useState<string | null>(null)
   const { user } = useAuth()
 
   const gameOptions = useMemo(() => {
@@ -94,7 +97,10 @@ const RewardLogrosCard: React.FC<RewardLogrosCardProps> = ({ games }) => {
   }, [currentState])
 
   const handleRollFromLogros = () => {
-    if (!currentState || currentState.availableRolls <= 0) return
+    if (!currentState) return
+    const selectedGame = games.find((g) => g.id === currentState.gameId)
+    if (!selectedGame || selectedGame.status !== 'finished') return
+    if (currentState.availableRolls <= 0) return
 
     const random = Math.random()
     let tier: PrizeTier
@@ -141,6 +147,26 @@ const RewardLogrosCard: React.FC<RewardLogrosCardProps> = ({ games }) => {
     })
   }
 
+  const handleAdminGrant = () => {
+    if (!currentState || !user?.isAdmin) return
+    const quantity = Math.max(1, Math.floor(Number(adminRollInput) || 0))
+    const updatedState = grantAdminRolls({
+      admin: user,
+      gameId: currentState.gameId,
+      rolls: quantity
+    })
+    if (!updatedState) return
+    setCurrentState(updatedState)
+    setRewardStates((prev) =>
+      prev.map((state) =>
+        state.gameId === updatedState.gameId ? updatedState : state
+      )
+    )
+    setAdminStatus(`+${quantity} dado(s) asignado(s)`)
+    setAdminRollInput('1')
+    setTimeout(() => setAdminStatus(null), 2500)
+  }
+
   if (loading) {
     return (
       <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
@@ -159,6 +185,12 @@ const RewardLogrosCard: React.FC<RewardLogrosCardProps> = ({ games }) => {
 
   const selectedGame = games.find((g) => g.id === currentState.gameId)
   const rollsAvailable = currentState.availableRolls
+  const isFinishedGame = selectedGame?.status === 'finished'
+  const diceHelperMessage = isFinishedGame
+    ? rollsAvailable > 0
+      ? `${rollsAvailable} tiro(s) disponible(s)`
+      : 'Completa acciones pendientes para ganar más dados'
+    : 'Termina esta partida para desbloquear los dados'
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
@@ -170,6 +202,11 @@ const RewardLogrosCard: React.FC<RewardLogrosCardProps> = ({ games }) => {
           <h4 className="text-sm font-semibold text-gray-900">
             Tus dados y premios
           </h4>
+          {!isFinishedGame && (
+            <p className="text-[11px] text-gray-500 mt-1">
+              Termina la partida antes de usar los dados.
+            </p>
+          )}
         </div>
         {rewardStates.length > 1 && (
           <select
@@ -185,6 +222,29 @@ const RewardLogrosCard: React.FC<RewardLogrosCardProps> = ({ games }) => {
           </select>
         )}
       </div>
+
+      {user?.isAdmin && currentState && (
+        <div className="flex flex-wrap items-center gap-2 border border-dashed border-gray-200 rounded-lg p-2 text-xs">
+          <span className="font-semibold text-gray-700">Modo staff</span>
+          <input
+            type="number"
+            min={1}
+            value={adminRollInput}
+            onChange={(event) => setAdminRollInput(event.target.value)}
+            className="w-16 border border-gray-300 rounded px-2 py-1"
+          />
+          <button
+            type="button"
+            onClick={handleAdminGrant}
+            className="px-3 py-1 rounded bg-black text-white font-semibold"
+          >
+            Dar dados
+          </button>
+          {adminStatus && (
+            <span className="text-green-600 font-medium">{adminStatus}</span>
+          )}
+        </div>
+      )}
 
       <div className="flex items-center justify-between">
         <div>
@@ -306,16 +366,12 @@ const RewardLogrosCard: React.FC<RewardLogrosCardProps> = ({ games }) => {
         <button
           type="button"
           onClick={handleRollFromLogros}
-          disabled={rollsAvailable === 0}
+          disabled={!isFinishedGame || rollsAvailable === 0}
           className="inline-flex items-center px-4 py-2 rounded-2xl bg-green-500 text-black font-semibold text-xs hover:bg-green-400 disabled:opacity-40"
         >
           <Dice5 className="h-4 w-4 mr-2" /> Tirar dado
         </button>
-        <p className="text-[11px] text-gray-300 mt-2">
-          {rollsAvailable > 0
-            ? `${rollsAvailable} tiro(s) disponible(s)`
-            : 'Completa acciones pendientes para ganar más dados'}
-        </p>
+        <p className="text-[11px] text-gray-300 mt-2">{diceHelperMessage}</p>
       </div>
 
       <div>
