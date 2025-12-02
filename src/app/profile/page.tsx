@@ -132,7 +132,7 @@ export default function ProfilePage() {
 
         <UserStats user={user} />
 
-        <div className="mt-4">
+        <div className="my-4">
           <RewardLogrosCard games={userGames} />
         </div>
 

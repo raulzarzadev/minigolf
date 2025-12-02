@@ -187,14 +187,10 @@ const RewardLogrosCard: React.FC<RewardLogrosCardProps> = ({ games }) => {
     setAdminRollInput('1')
     setTimeout(() => setAdminStatus(null), 2500)
   }
-
-  if (loading) {
-    return (
-      <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
-        <Loader2 className="h-6 w-6 animate-spin text-green-600 mx-auto" />
-      </div>
-    )
-  }
+  const activePrices = useMemo(
+    () => prices.filter((price) => price.isActive),
+    [prices]
+  )
 
   if (rewardStates.length === 0 || !currentState) {
     return (
@@ -213,24 +209,22 @@ const RewardLogrosCard: React.FC<RewardLogrosCardProps> = ({ games }) => {
       : 'Completa acciones pendientes para ganar más dados'
     : 'Termina esta partida para desbloquear los dados'
 
-  const activePrices = useMemo(
-    () => prices.filter((price) => price.isActive),
-    [prices]
-  )
-
+  if (loading) {
+    return (
+      <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
+        <Loader2 className="h-6 w-6 animate-spin text-green-600 mx-auto" />
+      </div>
+    )
+  }
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-xs text-green-600 font-semibold uppercase">
-            Logros
-          </p>
-          <h4 className="text-sm font-semibold text-gray-900">
-            Tus dados y premios
-          </h4>
+          <h4 className="text-sm font-semibold text-gray-900">Logros</h4>
           {!isFinishedGame && (
             <p className="text-[11px] text-gray-500 mt-1">
-              Termina la partida antes de usar los dados.
+              Termina la partida y completa acciones para ganar tiros de dado y
+              premios.
             </p>
           )}
         </div>
@@ -274,7 +268,7 @@ const RewardLogrosCard: React.FC<RewardLogrosCardProps> = ({ games }) => {
 
       {/* Catálogo se gestiona en consola admin; aquí solo mostramos precios activos */}
 
-      <div className="flex items-center justify-between">
+      {/* <div className="flex items-center justify-between">
         <div>
           <p className="text-xs text-gray-500">Partida</p>
           <p className="text-sm font-medium text-gray-900">
@@ -291,9 +285,11 @@ const RewardLogrosCard: React.FC<RewardLogrosCardProps> = ({ games }) => {
             {rollsAvailable}
           </span>
         </div>
-      </div>
+      </div> */}
 
-      <div className="bg-gray-50 rounded-xl p-3 space-y-2">
+      {/* TODO:  */}
+
+      {/* <div className="bg-gray-50 rounded-xl p-3 space-y-2">
         <p className="text-xs font-semibold text-gray-600">
           Acciones desbloqueadas
         </p>
@@ -351,36 +347,9 @@ const RewardLogrosCard: React.FC<RewardLogrosCardProps> = ({ games }) => {
             </div>
           </div>
         )}
-      </div>
+      </div> */}
 
-      <div className="bg-white border border-gray-100 rounded-xl p-3">
-        <p className="text-xs font-semibold text-gray-600 mb-2">
-          Logros del reto
-        </p>
-        <ul className="space-y-1 text-xs">
-          {(Object.keys(rewardStepMeta) as RewardStepId[]).map((stepId) => (
-            <li
-              key={`summary-${stepId}`}
-              className="flex items-center justify-between"
-            >
-              <span className="text-gray-600">
-                {rewardStepMeta[stepId].label}
-              </span>
-              <span
-                className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
-                  currentState.completedSteps[stepId]
-                    ? 'bg-green-100 text-green-700'
-                    : 'bg-gray-100 text-gray-500'
-                }`}
-              >
-                {currentState.completedSteps[stepId] ? 'Listo' : 'Pendiente'}
-              </span>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      <div className="rounded-2xl border border-black bg-gradient-to-r from-gray-900 via-gray-800 to-black p-4 text-white">
+      {/* <div className="rounded-2xl border border-black bg-gradient-to-r from-gray-900 via-gray-800 to-black p-4 text-white">
         <div className="flex items-center justify-between mb-3">
           <div>
             <p className="text-xs uppercase text-gray-400">Zona de dados</p>
@@ -400,9 +369,9 @@ const RewardLogrosCard: React.FC<RewardLogrosCardProps> = ({ games }) => {
           <Dice5 className="h-4 w-4 mr-2" /> Tirar dado
         </button>
         <p className="text-[11px] text-gray-300 mt-2">{diceHelperMessage}</p>
-      </div>
+      </div> */}
 
-      <div>
+      {/* <div>
         <p className="text-xs font-semibold text-gray-600 mb-2">
           Premios obtenidos
         </p>
@@ -482,9 +451,9 @@ const RewardLogrosCard: React.FC<RewardLogrosCardProps> = ({ games }) => {
             Aún no has tirado dados en esta partida.
           </div>
         )}
-      </div>
+      </div> */}
 
-      <div>
+      {/* <div>
         <p className="text-xs font-semibold text-gray-600 mb-2">
           Premios que puedes ganar
         </p>
@@ -526,7 +495,7 @@ const RewardLogrosCard: React.FC<RewardLogrosCardProps> = ({ games }) => {
             Estamos preparando nuevos premios.
           </div>
         )}
-      </div>
+      </div> */}
     </div>
   )
 }

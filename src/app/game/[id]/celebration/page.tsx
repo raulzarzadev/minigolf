@@ -41,21 +41,21 @@ const stepConfigs: StepConfig[] = [
     id: 'register',
     title: 'Registrar mi partida',
     description:
-      'Sincroniza tu score con tu cuenta para participar en sorteos oficiales.',
+      'Haz pública tu partida para que pueda mostrarse en el ranking global.',
     icon: Save
   },
   {
     id: 'follow',
     title: 'Seguirnos en Instagram',
     description:
-      'Dale follow a @bajaminigolf y entérate de los próximos retos.',
+      'Marca el paso y muestra en taquilla que ya nos sigues; el staff valida y te libera el tiro extra.',
     icon: Instagram
   },
   {
     id: 'share',
     title: 'Publicar tu foto',
     description:
-      'Sube una foto o reel etiquetándonos con #BajaMiniGolf para sumar otro tiro.',
+      'Publica una foto o reel con #BajaMiniGolf y valida en caja para recibir el dado adicional.',
     icon: Camera
   }
 ]
