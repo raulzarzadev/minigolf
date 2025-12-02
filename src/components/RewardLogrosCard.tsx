@@ -8,14 +8,14 @@ import {
   loadRewardState,
   persistRewardState,
   prizeCatalog,
-  PrizeTier,
   RewardState,
   RewardStepId,
   rewardStepMeta,
   triggerRewardStepAction,
   setLastInstruction,
   rewardPerks,
-  grantAdminRolls
+  grantAdminRolls,
+  rollPrizeOutcome
 } from '@/lib/rewards'
 import { CheckCircle2, Dice5, Gift, Loader2, X } from 'lucide-react'
 
@@ -102,12 +102,7 @@ const RewardLogrosCard: React.FC<RewardLogrosCardProps> = ({ games }) => {
     if (!selectedGame || selectedGame.status !== 'finished') return
     if (currentState.availableRolls <= 0) return
 
-    const random = Math.random()
-    let tier: PrizeTier
-    if (random < 0.55) tier = 'small'
-    else if (random < 0.85) tier = 'medium'
-    else tier = 'large'
-
+    const tier = rollPrizeOutcome()
     const newRoll = {
       id: `${tier}-${Date.now()}`,
       tier,
@@ -381,7 +376,15 @@ const RewardLogrosCard: React.FC<RewardLogrosCardProps> = ({ games }) => {
         {currentState.rollHistory.length > 0 ? (
           <div className="space-y-2">
             {currentState.rollHistory.map((roll) => {
-              const reward = prizeCatalog[roll.tier]
+              const reward =
+                roll.tier === 'none'
+                  ? {
+                      label: 'Sin premio',
+                      description:
+                        'No apareció premio en este tiro, intenta nuevamente.',
+                      accent: 'bg-gray-100 text-gray-600'
+                    }
+                  : prizeCatalog[roll.tier]
               return (
                 <div
                   key={roll.id}

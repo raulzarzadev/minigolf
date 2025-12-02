@@ -3,6 +3,7 @@ import { User } from '@/types'
 const STORAGE_KEY = 'baja-reward-center'
 
 export type PrizeTier = 'small' | 'medium' | 'large'
+export type RewardPrize = PrizeTier | 'none'
 
 export type RewardStepId = 'register' | 'follow' | 'share'
 
@@ -26,7 +27,7 @@ export const prizeCatalog = {
 
 export interface RewardRoll {
   id: string
-  tier: PrizeTier
+  tier: RewardPrize
   timestamp: number
 }
 
@@ -238,6 +239,26 @@ export const rewardPerks: RewardPerk[] = [
     tier: 'large'
   }
 ]
+
+export const rewardOdds: Record<PrizeTier, number> = {
+  large: 0.02,
+  medium: 0.05,
+  small: 0.1
+}
+
+export const rollPrizeOutcome = (randomValue = Math.random()): RewardPrize => {
+  const ordered: PrizeTier[] = ['large', 'medium', 'small']
+  let cumulative = 0
+
+  for (const tier of ordered) {
+    cumulative += Math.max(0, rewardOdds[tier] ?? 0)
+    if (randomValue < cumulative) {
+      return tier
+    }
+  }
+
+  return 'none'
+}
 
 export const grantAdminRolls = ({
   admin,

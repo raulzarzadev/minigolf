@@ -14,7 +14,8 @@ import {
   PrizeTier,
   RewardStepId,
   triggerRewardStepAction,
-  setLastInstruction
+  setLastInstruction,
+  rollPrizeOutcome
 } from '@/lib/rewards'
 import {
   ArrowLeft,
@@ -59,9 +60,9 @@ const stepConfigs: StepConfig[] = [
   }
 ]
 
-interface RollResult {
+type RollResult = {
   id: string
-  tier: PrizeTier
+  tier: PrizeTier | 'none'
   timestamp: number
 }
 
@@ -139,12 +140,7 @@ export default function CelebrationPage() {
   const handleRollDice = () => {
     if (!rewardInitialized || availableRolls <= 0) return
 
-    const random = Math.random()
-    let tier: PrizeTier
-    if (random < 0.55) tier = 'small'
-    else if (random < 0.85) tier = 'medium'
-    else tier = 'large'
-
+    const tier = rollPrizeOutcome()
     const newRoll: RollResult = {
       id: `${tier}-${Date.now()}`,
       tier,
@@ -341,7 +337,15 @@ export default function CelebrationPage() {
           {rollHistory.length > 0 ? (
             <div className="mt-4 space-y-2">
               {rollHistory.map((roll) => {
-                const prize = prizeCatalog[roll.tier]
+                const prize =
+                  roll.tier === 'none'
+                    ? {
+                        label: 'Sin premio',
+                        description:
+                          'Esta vez no salió premio, vuelve a intentarlo.',
+                        accent: 'bg-gray-100 text-gray-600'
+                      }
+                    : prizeCatalog[roll.tier]
                 return (
                   <div
                     key={roll.id}
