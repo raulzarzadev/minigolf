@@ -1,9 +1,9 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
-import { User } from '@/types'
+import { Flag, Target, TrendingUp, Trophy } from 'lucide-react'
+import React, { useEffect, useState } from 'react'
 import { getUserGames } from '@/lib/db'
-import { Trophy, Target, TrendingUp, Flag } from 'lucide-react'
+import { User } from '@/types'
 
 interface UserStatsProps {
   user: User
@@ -148,8 +148,8 @@ const UserStats: React.FC<UserStatsProps> = ({ user }) => {
                   {stats.favoriteGameType === 'multiplayer'
                     ? 'Multi'
                     : stats.favoriteGameType === 'individual'
-                    ? 'Individual'
-                    : 'N/A'}
+                      ? 'Individual'
+                      : 'N/A'}
                 </span>
               </div>
             </div>
@@ -369,8 +369,8 @@ export const getUserStats = async ({
     multiplayerGames > individualGames
       ? 'multiplayer'
       : individualGames > multiplayerGames
-      ? 'individual'
-      : null
+        ? 'individual'
+        : null
 
   const winRate =
     finishedGames.length > 0 ? (gamesWon / finishedGames.length) * 100 : 0

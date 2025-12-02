@@ -1,18 +1,18 @@
 import {
+  addDoc,
   collection,
   doc,
-  addDoc,
-  updateDoc,
   getDoc,
   getDocs,
-  query,
-  where,
+  onSnapshot,
   orderBy,
+  query,
   serverTimestamp,
-  onSnapshot
+  updateDoc,
+  where
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
-import { Game, User, Tournament, TournamentStanding } from '@/types'
+import { Game, Tournament, TournamentStanding, User } from '@/types'
 
 // Games Collection Functions
 export const createGame = async (

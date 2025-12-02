@@ -1,19 +1,19 @@
 'use client'
 
-import React, { useState } from 'react'
-import Link from 'next/link'
-import { useAuth } from '@/contexts/AuthContext'
 import {
-  LogOut,
-  User,
   Home,
-  Trophy,
-  Plus,
+  LogOut,
+  Medal,
   Menu,
-  X,
+  Plus,
   Settings,
-  Medal
+  Trophy,
+  User,
+  X
 } from 'lucide-react'
+import Link from 'next/link'
+import React, { useState } from 'react'
+import { useAuth } from '@/contexts/AuthContext'
 import Logo from './Logo'
 
 const Navbar: React.FC = () => {

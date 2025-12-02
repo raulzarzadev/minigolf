@@ -1,8 +1,8 @@
 'use client'
 
+import { Check, Edit3, X } from 'lucide-react'
 import React, { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { Edit3, Check, X } from 'lucide-react'
 
 interface DiscreteUsernameEditorProps {
   onUpdate?: () => void

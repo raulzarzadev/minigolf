@@ -1,14 +1,14 @@
 import {
   collection,
   getDocs,
-  query,
-  where,
-  orderBy,
   limit,
-  Timestamp
+  orderBy,
+  query,
+  Timestamp,
+  where
 } from 'firebase/firestore'
+import { AdminGame, AdminStats, AdminUser } from '@/types'
 import { db } from './firebase'
-import { AdminStats, AdminUser, AdminGame } from '@/types'
 
 export async function getAdminStats(): Promise<AdminStats> {
   try {

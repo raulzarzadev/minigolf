@@ -1,8 +1,8 @@
 'use client'
 
-import React from 'react'
+import { AlertCircle, CheckCircle, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
-import { ExternalLink, CheckCircle, AlertCircle } from 'lucide-react'
+import React from 'react'
 
 const FirebaseSetupGuide: React.FC = () => {
   return (

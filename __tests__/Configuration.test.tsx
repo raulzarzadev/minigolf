@@ -1,5 +1,5 @@
-import React from 'react'
 import { render, screen } from '@testing-library/react'
+import React from 'react'
 
 // Prueba de configuración simple
 describe('Test Configuration', () => {

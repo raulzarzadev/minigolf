@@ -1,33 +1,33 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import {
+  ArrowLeft,
+  Camera,
+  CheckCircle2,
+  Dice5,
+  Gift,
+  Instagram,
+  Loader2,
+  Save,
+  Trophy
+} from 'lucide-react'
 import { useParams, useRouter } from 'next/navigation'
+import React, { useEffect, useState } from 'react'
 import Navbar from '@/components/Navbar'
 import { useAuth } from '@/contexts/AuthContext'
-import { Game } from '@/types'
 import { subscribeToGame } from '@/lib/db'
 import { getLocalGame, isLocalGame } from '@/lib/localStorage'
 import {
   loadRewardState,
+  PrizeTier,
   persistRewardState,
   prizeCatalog,
-  PrizeTier,
   RewardStepId,
-  triggerRewardStepAction,
+  rollPrizeOutcome,
   setLastInstruction,
-  rollPrizeOutcome
+  triggerRewardStepAction
 } from '@/lib/rewards'
-import {
-  ArrowLeft,
-  Dice5,
-  Gift,
-  Instagram,
-  Camera,
-  Save,
-  Trophy,
-  CheckCircle2,
-  Loader2
-} from 'lucide-react'
+import { Game } from '@/types'
 
 type StepConfig = {
   id: RewardStepId
@@ -294,8 +294,8 @@ export default function CelebrationPage() {
                       completed
                         ? 'border-green-200 text-green-700 bg-white'
                         : isFinished
-                        ? 'border-black text-black hover:bg-black hover:text-white'
-                        : 'border-gray-200 text-gray-400'
+                          ? 'border-black text-black hover:bg-black hover:text-white'
+                          : 'border-gray-200 text-gray-400'
                     }`}
                   >
                     {completed ? '¡Dado ganado!' : 'Quiero mi dado'}

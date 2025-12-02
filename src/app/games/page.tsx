@@ -1,12 +1,12 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
-import { useAuth } from '@/contexts/AuthContext'
-import Navbar from '@/components/Navbar'
-import { Clock, Trophy, Users, User, Calendar } from 'lucide-react'
+import { Calendar, Clock, Trophy, User, Users } from 'lucide-react'
 import Link from 'next/link'
-import { Game } from '@/types'
+import React, { useEffect, useState } from 'react'
+import Navbar from '@/components/Navbar'
+import { useAuth } from '@/contexts/AuthContext'
 import { getAllUserGames } from '@/lib/db'
+import { Game } from '@/types'
 
 export default function GamesPage() {
   const { user } = useAuth()

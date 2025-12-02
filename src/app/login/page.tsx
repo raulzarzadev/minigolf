@@ -1,13 +1,13 @@
 'use client'
 
-import React, { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useAuth } from '@/contexts/AuthContext'
+import React, { Suspense, useEffect, useState } from 'react'
 import AuthForm from '@/components/AuthForm'
 import Navbar from '@/components/Navbar'
+import { useAuth } from '@/contexts/AuthContext'
 import {
-  migrateLocalGamesToServer,
-  getLocalGamesCount
+  getLocalGamesCount,
+  migrateLocalGamesToServer
 } from '@/lib/localStorage'
 
 function LoginContent() {

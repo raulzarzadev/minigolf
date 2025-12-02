@@ -1,10 +1,10 @@
 'use client'
 
-import React from 'react'
-import { useAuth } from '@/contexts/AuthContext'
+import { Calendar, Clock, Plus, Trophy, Users } from 'lucide-react'
 import Link from 'next/link'
-import { Trophy, Calendar, Users, Plus, Clock } from 'lucide-react'
+import React from 'react'
 import Navbar from '@/components/Navbar'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function TournamentsPage() {
   const { user, loading } = useAuth()

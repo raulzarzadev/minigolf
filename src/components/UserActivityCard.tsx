@@ -1,8 +1,8 @@
 'use client'
+import { Calendar, Target, TrendingUp, Trophy, Users } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
-import { Calendar, Target, Trophy, TrendingUp, Users } from 'lucide-react'
-import { User } from '@/types'
 import { getAllUserGames } from '@/lib/db'
+import { User } from '@/types'
 
 interface ActivityStats {
   gamesThisWeek: number

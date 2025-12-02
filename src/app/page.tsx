@@ -1,20 +1,20 @@
 'use client'
+import { BarChart3, Clock, Plus, Trophy, User, Users } from 'lucide-react'
+import Link from 'next/link'
 import React, { useEffect, useState } from 'react'
-import { useAuth } from '@/contexts/AuthContext'
+import ActiveGameBanner from '@/components/ActiveGameBanner'
 import AuthForm from '@/components/AuthForm'
 import FirebaseSetupGuide from '@/components/FirebaseSetupGuide'
 import Navbar from '@/components/Navbar'
-import Link from 'next/link'
-import { Plus, Trophy, BarChart3, Clock, Users, User } from 'lucide-react'
-import { Game } from '@/types'
-import { getAllUserGames } from '@/lib/db'
-import { getLocalGames, LocalGame } from '@/lib/localStorage'
 import {
   getUserStats,
   MainUserStats,
   UserStatistics
 } from '@/components/UserStats'
-import ActiveGameBanner from '@/components/ActiveGameBanner'
+import { useAuth } from '@/contexts/AuthContext'
+import { getAllUserGames } from '@/lib/db'
+import { getLocalGames, LocalGame } from '@/lib/localStorage'
+import { Game } from '@/types'
 
 export default function Home() {
   const { user, loading, firebaseError } = useAuth()

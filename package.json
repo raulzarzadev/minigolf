@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "test": "jest --watch",
-    "lint": "next lint"
+    "lint": "biome check .",
+    "format-and-fix": "biome format --write ."
   },
   "dependencies": {
     "@hookform/resolvers": "^5.1.1",
@@ -21,7 +22,7 @@
     "zod": "^3.25.64"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3",
+    "@biomejs/biome": "2.3.8",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^14.0.0",
@@ -30,8 +31,6 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "15.3.3",
     "jest": "^30.0.0",
     "jest-environment-jsdom": "^30.0.0",
     "tailwindcss": "^4",

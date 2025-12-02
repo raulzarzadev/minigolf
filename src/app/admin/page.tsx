@@ -1,43 +1,43 @@
 'use client'
 
+import {
+  CheckCircle2,
+  Dice5,
+  Edit3,
+  Gift,
+  Loader2,
+  RefreshCw,
+  Save,
+  Trash2
+} from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import { useAuth } from '@/contexts/AuthContext'
-import { AdminStats, AdminUser, AdminGame, User } from '@/types'
-import { getAdminStats, getAdminUsers, getAdminGames } from '@/lib/admin'
-import { createSampleData } from '@/lib/sampleData'
-import { migrateExistingUsers, checkMigrationStatus } from '@/lib/migration'
 import AdminProtectedRoute from '@/components/AdminProtectedRoute'
+import { useAuth } from '@/contexts/AuthContext'
+import { getAdminGames, getAdminStats, getAdminUsers } from '@/lib/admin'
+import { checkMigrationStatus, migrateExistingUsers } from '@/lib/migration'
 import {
-  getRewardConfig,
-  getPrizeDeliveryStats,
-  getAllRewardStates,
-  RewardConfig,
-  RewardPrize,
-  RewardState,
-  RewardRoll,
-  PrizeTier,
-  updateRewardOdds,
-  grantAdminRolls,
-  markPrizeDelivered,
-  prizeCatalog
-} from '@/lib/rewards'
-import {
-  listPrices,
   createPrice,
-  updatePrice,
   deletePrice,
-  PriceRecord
+  listPrices,
+  PriceRecord,
+  updatePrice
 } from '@/lib/prices'
 import {
-  Dice5,
-  Gift,
-  RefreshCw,
-  Loader2,
-  CheckCircle2,
-  Edit3,
-  Trash2,
-  Save
-} from 'lucide-react'
+  getAllRewardStates,
+  getPrizeDeliveryStats,
+  getRewardConfig,
+  grantAdminRolls,
+  markPrizeDelivered,
+  PrizeTier,
+  prizeCatalog,
+  RewardConfig,
+  RewardPrize,
+  RewardRoll,
+  RewardState,
+  updateRewardOdds
+} from '@/lib/rewards'
+import { createSampleData } from '@/lib/sampleData'
+import { AdminGame, AdminStats, AdminUser, User } from '@/types'
 
 export default function AdminPanel() {
   const { user } = useAuth()
@@ -618,10 +618,10 @@ function RewardsTab({
                 tier === 'large'
                   ? 'text-purple-700'
                   : tier === 'medium'
-                  ? 'text-blue-600'
-                  : tier === 'small'
-                  ? 'text-green-600'
-                  : 'text-gray-500'
+                    ? 'text-blue-600'
+                    : tier === 'small'
+                      ? 'text-green-600'
+                      : 'text-gray-500'
 
               return (
                 <div
@@ -655,8 +655,8 @@ function RewardsTab({
                       {tier === 'small'
                         ? 'Premio chico'
                         : tier === 'medium'
-                        ? 'Premio mediano'
-                        : 'Premio grande'}
+                          ? 'Premio mediano'
+                          : 'Premio grande'}
                     </span>
                     <input
                       type="number"

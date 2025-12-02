@@ -1,5 +1,5 @@
-import React from 'react'
 import { render, screen } from '@testing-library/react'
+import React from 'react'
 import Navbar from '@/components/Navbar'
 
 // Mock del hook useAuth
@@ -10,6 +10,7 @@ jest.mock('@/contexts/AuthContext', () => ({
 // Importar el mock
 import { useAuth } from '@/contexts/AuthContext'
 import { User } from '@/types'
+
 const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>
 
 // Mock user object

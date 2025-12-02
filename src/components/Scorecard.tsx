@@ -1,10 +1,10 @@
 'use client'
 
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { CheckCircle, Clock, Minus, Plus, Target, Trophy } from 'lucide-react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { calculateGameStats, updateGame, updatePlayerScore } from '@/lib/db'
+import { isLocalGame, updateLocalGame } from '@/lib/localStorage'
 import { Game, Player } from '@/types'
-import { updatePlayerScore, calculateGameStats, updateGame } from '@/lib/db'
-import { updateLocalGame, isLocalGame } from '@/lib/localStorage'
-import { Minus, Plus, Trophy, Target, Clock, CheckCircle } from 'lucide-react'
 
 interface ScorecardProps {
   game: Game
@@ -46,7 +46,7 @@ const Scorecard: React.FC<ScorecardProps> = ({
         const fallbackHole =
           typeof holeIndex === 'number'
             ? holeIndex
-            : prev?.holeIndex ?? getDefaultHoleIndex()
+            : (prev?.holeIndex ?? getDefaultHoleIndex())
 
         return {
           playerId,
@@ -318,10 +318,10 @@ const Scorecard: React.FC<ScorecardProps> = ({
                     isSelectedHole
                       ? 'bg-white ring-2 ring-green-500 shadow-lg'
                       : isCurrentHole
-                      ? 'bg-green-50 border-green-200'
-                      : isFutureHole
-                      ? 'bg-gray-50 border-dashed border-gray-200 opacity-70'
-                      : 'bg-gray-50 border-transparent'
+                        ? 'bg-green-50 border-green-200'
+                        : isFutureHole
+                          ? 'bg-gray-50 border-dashed border-gray-200 opacity-70'
+                          : 'bg-gray-50 border-transparent'
                   }`}
                 >
                   <button
@@ -510,8 +510,8 @@ const Scorecard: React.FC<ScorecardProps> = ({
                       isActive
                         ? 'bg-black text-white border-black'
                         : isEditable
-                        ? 'bg-white text-gray-800 border-gray-200'
-                        : 'bg-gray-100 text-gray-400 border-gray-100 cursor-not-allowed'
+                          ? 'bg-white text-gray-800 border-gray-200'
+                          : 'bg-gray-100 text-gray-400 border-gray-100 cursor-not-allowed'
                     }`}
                   >
                     <div className="truncate">{player.name}</div>
@@ -677,10 +677,10 @@ const Scorecard: React.FC<ScorecardProps> = ({
                       index === 0
                         ? 'bg-black text-white'
                         : index === 1
-                        ? 'bg-gray-300 text-black'
-                        : index === 2
-                        ? 'bg-gray-200 text-black'
-                        : 'bg-gray-100 text-black'
+                          ? 'bg-gray-300 text-black'
+                          : index === 2
+                            ? 'bg-gray-200 text-black'
+                            : 'bg-gray-100 text-black'
                     }`}
                   >
                     {index + 1}

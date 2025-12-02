@@ -1,17 +1,17 @@
 'use client'
 
-import React, { createContext, useContext, useEffect, useState } from 'react'
 import {
   User as FirebaseUser,
+  GoogleAuthProvider,
   onAuthStateChanged,
   signInWithPopup,
-  GoogleAuthProvider,
   signOut
 } from 'firebase/auth'
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore'
+import React, { createContext, useContext, useEffect, useState } from 'react'
+import { generateUniqueUsername, updateUserUsername } from '@/lib/db'
 import { auth, db } from '@/lib/firebase'
 import { User } from '@/types'
-import { generateUniqueUsername, updateUserUsername } from '@/lib/db'
 
 interface AuthContextType {
   user: User | null

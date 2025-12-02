@@ -8,15 +8,21 @@ import { getAllUsersRanking } from '@/lib/db'
 jest.mock('@/contexts/AuthContext')
 jest.mock('@/lib/db')
 jest.mock('next/link', () => {
-  const MockLink = ({ children, href }: { children: React.ReactNode; href: string }) => (
-    <a href={href}>{children}</a>
-  )
+  const MockLink = ({
+    children,
+    href
+  }: {
+    children: React.ReactNode
+    href: string
+  }) => <a href={href}>{children}</a>
   MockLink.displayName = 'MockLink'
   return MockLink
 })
 
 const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>
-const mockGetAllUsersRanking = getAllUsersRanking as jest.MockedFunction<typeof getAllUsersRanking>
+const mockGetAllUsersRanking = getAllUsersRanking as jest.MockedFunction<
+  typeof getAllUsersRanking
+>
 
 const mockUser = {
   id: 'user1',
@@ -65,7 +71,7 @@ describe('RankingPage', () => {
       logout: jest.fn(),
       updateUsername: jest.fn()
     })
-    
+
     mockGetAllUsersRanking.mockResolvedValue(mockRankingData)
   })
 
@@ -75,14 +81,18 @@ describe('RankingPage', () => {
 
   it('muestra el título de la página', async () => {
     render(<RankingPage />)
-    
+
     expect(screen.getByText('Ranking de Jugadores')).toBeInTheDocument()
-    expect(screen.getByText('Descubre quiénes son los mejores jugadores de mini golf')).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        'Descubre quiénes son los mejores jugadores de mini golf'
+      )
+    ).toBeInTheDocument()
   })
 
   it('muestra las opciones de ordenamiento', async () => {
     render(<RankingPage />)
-    
+
     expect(screen.getByText('Ordenar por:')).toBeInTheDocument()
     expect(screen.getByText('Promedio de golpes')).toBeInTheDocument()
     expect(screen.getByText('Partidas jugadas')).toBeInTheDocument()
@@ -91,19 +101,19 @@ describe('RankingPage', () => {
 
   it('muestra la lista de jugadores cuando se cargan los datos', async () => {
     render(<RankingPage />)
-    
+
     await waitFor(() => {
       expect(screen.getByText('Juan Pérez')).toBeInTheDocument()
       expect(screen.getByText('María García')).toBeInTheDocument()
     })
-    
+
     expect(screen.getByText('@juan_perez')).toBeInTheDocument()
     expect(screen.getByText('@maria_garcia')).toBeInTheDocument()
   })
 
   it('resalta al usuario actual', async () => {
     render(<RankingPage />)
-    
+
     await waitFor(() => {
       expect(screen.getByText('Tú')).toBeInTheDocument()
     })
@@ -111,7 +121,7 @@ describe('RankingPage', () => {
 
   it('muestra estadísticas de cada jugador', async () => {
     render(<RankingPage />)
-    
+
     await waitFor(() => {
       expect(screen.getByText('2.5 golpes/hoyo')).toBeInTheDocument()
       expect(screen.getByText('5 partidas • 60% victorias')).toBeInTheDocument()
@@ -121,19 +131,21 @@ describe('RankingPage', () => {
 
   it('muestra mensaje de carga mientras obtiene los datos', () => {
     mockGetAllUsersRanking.mockImplementation(() => new Promise(() => {}))
-    
+
     render(<RankingPage />)
-    
+
     expect(screen.getByText('Cargando ranking...')).toBeInTheDocument()
   })
 
   it('muestra mensaje cuando no hay jugadores', async () => {
     mockGetAllUsersRanking.mockResolvedValue([])
-    
+
     render(<RankingPage />)
-    
+
     await waitFor(() => {
-      expect(screen.getByText('No hay jugadores registrados aún')).toBeInTheDocument()
+      expect(
+        screen.getByText('No hay jugadores registrados aún')
+      ).toBeInTheDocument()
     })
   })
 
@@ -147,10 +159,10 @@ describe('RankingPage', () => {
       logout: jest.fn(),
       updateUsername: jest.fn()
     })
-    
+
     // Como AuthForm es un mock, simplemente verificamos que se renderiza algo
     render(<RankingPage />)
-    
+
     // En este caso el componente AuthForm será renderizado
     expect(screen.queryByText('Ranking de Jugadores')).not.toBeInTheDocument()
   })
@@ -165,9 +177,9 @@ describe('RankingPage', () => {
       logout: jest.fn(),
       updateUsername: jest.fn()
     })
-    
+
     render(<RankingPage />)
-    
+
     expect(screen.getByText('Cargando...')).toBeInTheDocument()
   })
 })

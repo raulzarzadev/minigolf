@@ -1,5 +1,5 @@
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import React from 'react'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import AuthForm from '@/components/AuthForm'
 
 // Mock del hook useAuth
@@ -8,6 +8,7 @@ jest.mock('@/contexts/AuthContext', () => ({
 }))
 
 import { useAuth } from '@/contexts/AuthContext'
+
 const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>
 
 describe('AuthForm component', () => {

@@ -1,14 +1,14 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import { ArrowLeft, Flag, Trophy } from 'lucide-react'
 import { useParams, useRouter } from 'next/navigation'
-import { useAuth } from '@/contexts/AuthContext'
-import { subscribeToGame, finishGame } from '@/lib/db'
-import { getLocalGame, updateLocalGame, isLocalGame } from '@/lib/localStorage'
-import { Game, Player } from '@/types'
+import React, { useEffect, useState } from 'react'
 import Navbar from '@/components/Navbar'
 import Scorecard from '@/components/Scorecard'
-import { ArrowLeft, Flag, Trophy } from 'lucide-react'
+import { useAuth } from '@/contexts/AuthContext'
+import { finishGame, subscribeToGame } from '@/lib/db'
+import { getLocalGame, isLocalGame, updateLocalGame } from '@/lib/localStorage'
+import { Game, Player } from '@/types'
 
 export default function GamePage() {
   const params = useParams()

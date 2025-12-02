@@ -1,16 +1,16 @@
 import {
   addDoc,
   collection,
+  DocumentSnapshot,
   deleteDoc,
   doc,
   getDoc,
   getDocs,
   orderBy,
+  QueryDocumentSnapshot,
   query,
   serverTimestamp,
-  updateDoc,
-  DocumentSnapshot,
-  QueryDocumentSnapshot
+  updateDoc
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { PrizeTier } from '@/lib/rewards'

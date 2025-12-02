@@ -1,22 +1,22 @@
 'use client'
 
+import { CheckCircle2, Gift, Loader2 } from 'lucide-react'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { Game } from '@/types'
 import { useAuth } from '@/contexts/AuthContext'
 import {
   getAllRewardStates,
+  grantAdminRolls,
   loadRewardState,
+  markPrizeDelivered,
+  PrizeTier,
   persistRewardState,
   prizeCatalog,
-  PrizeTier,
   RewardPrize,
   RewardRoll,
   RewardState,
-  grantAdminRolls,
-  rollPrizeOutcome,
-  markPrizeDelivered
+  rollPrizeOutcome
 } from '@/lib/rewards'
-import { CheckCircle2, Gift, Loader2 } from 'lucide-react'
+import { Game } from '@/types'
 
 const wheelSegments: Array<{
   tier: RewardPrize
@@ -134,11 +134,11 @@ const RewardLogrosCard: React.FC<RewardLogrosCardProps> = ({ games }) => {
   const lastResultMeta =
     lastResult && lastResult !== 'none' ? prizeCatalog[lastResult] : null
   const rouletteStatusLabel = lastResult
-    ? lastResultMeta?.label ?? 'Sin premio esta vez'
+    ? (lastResultMeta?.label ?? 'Sin premio esta vez')
     : 'Listo para girar'
   const rouletteStatusDescription = lastResult
     ? lastResult !== 'none'
-      ? lastResultMeta?.description ?? 'Reclámalo con el staff.'
+      ? (lastResultMeta?.description ?? 'Reclámalo con el staff.')
       : 'Esta vez no tocó premio, vuelve a intentarlo.'
     : 'Pulsa la ruleta cuando tengas dados disponibles.'
 

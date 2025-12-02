@@ -1,21 +1,21 @@
 'use client'
 
-import React, { useState } from 'react'
-import { useAuth } from '@/contexts/AuthContext'
+import {
+  AlertCircle,
+  Plus,
+  Search,
+  User as UserIcon,
+  Users as UsersIcon,
+  X
+} from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import React, { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { generateGuestId, createGame, searchUsers } from '@/lib/db'
+import Navbar from '@/components/Navbar'
+import { useAuth } from '@/contexts/AuthContext'
+import { createGame, generateGuestId, searchUsers } from '@/lib/db'
 import { saveLocalGame } from '@/lib/localStorage'
 import { Game, Player } from '@/types'
-import Navbar from '@/components/Navbar'
-import {
-  Plus,
-  X,
-  Search,
-  Users as UsersIcon,
-  AlertCircle,
-  User as UserIcon
-} from 'lucide-react'
 
 // Tipo para resultados de búsqueda de usuarios
 interface SearchUser {

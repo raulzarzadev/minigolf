@@ -2,6 +2,7 @@
 
 import Image from 'next/image'
 import React from 'react'
+
 interface LogoProps {
   size?: 'sm' | 'md' | 'lg' | 'xl'
   variant?: 'dark' | 'light'

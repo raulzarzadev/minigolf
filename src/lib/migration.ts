@@ -1,9 +1,9 @@
 // Migration script to add usernames to existing users
 // This should be run once to update existing users
 
-import { collection, getDocs, updateDoc, doc } from 'firebase/firestore'
-import { db } from './firebase'
+import { collection, doc, getDocs, updateDoc } from 'firebase/firestore'
 import { generateUniqueUsername } from './db'
+import { db } from './firebase'
 
 export async function migrateExistingUsers() {
   try {

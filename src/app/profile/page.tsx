@@ -1,15 +1,15 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import { Clock, Flag, Play, User } from 'lucide-react'
+import Link from 'next/link'
+import React, { useEffect, useState } from 'react'
+import DiscreteUsernameEditor from '@/components/DiscreteUsernameEditor'
+import Navbar from '@/components/Navbar'
+import RewardLogrosCard from '@/components/RewardLogrosCard'
+import UserStats from '@/components/UserStats'
 import { useAuth } from '@/contexts/AuthContext'
 import { getUserGames } from '@/lib/db'
 import { Game } from '@/types'
-import Navbar from '@/components/Navbar'
-import UserStats from '@/components/UserStats'
-import DiscreteUsernameEditor from '@/components/DiscreteUsernameEditor'
-import RewardLogrosCard from '@/components/RewardLogrosCard'
-import Link from 'next/link'
-import { User, Clock, Play, Flag } from 'lucide-react'
 
 export default function ProfilePage() {
   const { user, loading } = useAuth()
