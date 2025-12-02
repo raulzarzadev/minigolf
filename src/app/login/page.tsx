@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Suspense, useEffect, useState } from 'react'
 import AuthForm from '@/components/AuthForm'
-import Navbar from '@/components/Navbar'
+
 import { useAuth } from '@/contexts/AuthContext'
 import {
   getLocalGamesCount,
@@ -56,7 +56,6 @@ function LoginContent() {
     if (isMigrating) {
       return (
         <div className="min-h-screen bg-gray-50">
-          <Navbar />
           <div className="flex items-center justify-center py-16">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto mb-4"></div>
@@ -76,30 +75,9 @@ function LoginContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
+    <div className=" bg-gray-50 min-h-screen">
       <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-900">Inicia Sesión</h2>
-            <p className="mt-2 text-sm text-gray-600">
-              Accede a tu cuenta para guardar tus partidas y estadísticas
-            </p>
-            {localGamesCount > 0 && (
-              <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-sm text-blue-700">
-                  🎮 Tienes {localGamesCount} partida
-                  {localGamesCount > 1 ? 's' : ''} guardada
-                  {localGamesCount > 1 ? 's' : ''} localmente
-                </p>
-                <p className="text-xs text-blue-600 mt-1">
-                  Se guardarán automáticamente en tu cuenta al iniciar sesión
-                </p>
-              </div>
-            )}
-          </div>
-          <AuthForm />
-        </div>
+        <AuthForm />
       </div>
     </div>
   )
@@ -110,7 +88,6 @@ export default function LoginPage() {
     <Suspense
       fallback={
         <div className="min-h-screen bg-gray-50">
-          <Navbar />
           <div className="flex items-center justify-center py-16">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
           </div>

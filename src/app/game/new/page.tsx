@@ -3,11 +3,12 @@
 // biome-ignore assist/source/organizeImports: false
 import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
-import Navbar from '@/components/Navbar'
+
 import ErrorBanner from '@/components/new-game/ErrorBanner'
 import GameTypeSelector from '@/components/new-game/GameTypeSelector'
 import GuestNewGameForm from '@/components/new-game/GuestNewGameForm'
 import HoleCountSelect from '@/components/new-game/HoleCountSelect'
+import PrimaryPlayerInput from '@/components/new-game/PrimaryPlayerInput'
 import PlayersSection from '@/components/new-game/PlayersSection'
 import { GameFormData, GuestInput, SearchUser } from '@/app/game/new/types'
 import { useAuth } from '@/contexts/AuthContext'
@@ -44,7 +45,6 @@ export default function NewGamePage() {
 
   useEffect(() => {
     if (user && isMultiplayer) {
-      // añade al creador
       const currentPlayer: Player = {
         id: user.id,
         name: user.name,
@@ -136,10 +136,8 @@ export default function NewGamePage() {
     setSearchResults([])
   }
 
-  // Eliminar jugador
   const removePlayer = (playerId: string) => {
     if (!user) return
-    // No permitir eliminar al creador
     const userId = user.id
     if (players[0]?.userId === userId && playerId === userId) return
     setPlayers((prev) => prev.filter((p) => p.id !== playerId))
@@ -149,7 +147,6 @@ export default function NewGamePage() {
     setIsLoading(true)
     setError(null)
     try {
-      // convertir a booleano
       const multi = data.isMultiplayer === 'true'
       const guestPlayersList = guestInputs
         .map((input) => ({
@@ -165,7 +162,6 @@ export default function NewGamePage() {
         return
       }
 
-      // For guest users, create a temporary player
       let creatorPlayer: Player
       if (user) {
         creatorPlayer = {
@@ -175,7 +171,6 @@ export default function NewGamePage() {
           isGuest: false
         }
       } else {
-        // Guest user - create a temporary player
         if (!guestPlayerName.trim()) {
           setError('Por favor ingresa tu nombre')
           return
@@ -215,10 +210,8 @@ export default function NewGamePage() {
 
       let gameId: string
       if (user) {
-        // Usuario autenticado: guardar en el servidor
         gameId = await createGame(gameData)
       } else {
-        // Usuario invitado: guardar localmente
         gameId = saveLocalGame(gameData)
       }
 
@@ -240,10 +233,53 @@ export default function NewGamePage() {
   )
 
   if (!user) {
+    const guestPlayersSectionRenderer = !isMultiplayer
+      ? undefined
+      : () => (
+          <div className="space-y-4 border border-gray-200 rounded-lg p-4">
+            <div>
+              <p className="text-sm font-medium text-gray-900">
+                Jugadores invitados
+              </p>
+              <p className="text-xs text-gray-500">
+                Agrega al menos un jugador adicional para jugar en modo
+                multijugador.
+              </p>
+            </div>
+            <div className="space-y-3">
+              {guestInputs.map((input, index) => (
+                <div key={input.id} className="flex space-x-2">
+                  <input
+                    type="text"
+                    value={input.name}
+                    onChange={(event) =>
+                      updateGuestInput(input.id, event.target.value)
+                    }
+                    placeholder={`Nombre del invitado ${index + 1}`}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeGuestInputField(input.id)}
+                    className="px-3 py-2 border border-gray-300 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                  >
+                    Quitar
+                  </button>
+                </div>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={addGuestInputField}
+              className="w-full px-3 py-2 border border-dashed border-green-400 text-green-700 rounded-md hover:bg-green-50 text-sm"
+            >
+              + Agregar invitado
+            </button>
+          </div>
+        )
+
     return (
       <GuestNewGameForm
-        guestPlayerName={guestPlayerName}
-        onGuestNameChange={setGuestPlayerName}
         isLoading={isLoading}
         hasMinimumPlayers={hasMinimumPlayers}
         onSubmit={form.handleSubmit(onSubmit)}
@@ -257,13 +293,24 @@ export default function NewGamePage() {
             onSelectMode={handleModeSelect}
           />
         )}
+        renderPrimaryPlayerInput={() => (
+          <PrimaryPlayerInput
+            value={guestPlayerName}
+            onChange={setGuestPlayerName}
+            helperText={
+              isMultiplayer
+                ? 'Serás el jugador 1 dentro de la tarjeta.'
+                : 'Usaremos este nombre para crear tu partida.'
+            }
+          />
+        )}
+        renderPlayersSection={guestPlayersSectionRenderer}
         renderHoleCountSelect={() => (
           <HoleCountSelect
             register={form.register}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+            disabled
             options={[
-              { value: 9, label: '9 hoyos' },
-              { value: 18, label: '18 hoyos' }
+              { value: 9, label: '9 hoyos (próximamente más opciones)' }
             ]}
           />
         )}
@@ -274,8 +321,6 @@ export default function NewGamePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
-
       <div className="max-w-3xl mx-auto py-4 px-3 sm:px-6 lg:px-8">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <h1 className="text-xl font-bold text-gray-900 mb-4">
@@ -307,7 +352,6 @@ export default function NewGamePage() {
               />
             )}
 
-            {/* Submit Button */}
             <div className="flex flex-col space-y-3 pt-4">
               <button
                 type="submit"

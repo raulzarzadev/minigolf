@@ -4,7 +4,7 @@ import { Clock, Flag, Play, User } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import DiscreteUsernameEditor from '@/components/DiscreteUsernameEditor'
-import Navbar from '@/components/Navbar'
+
 import RewardLogrosCard from '@/components/RewardLogrosCard'
 import UserStats from '@/components/UserStats'
 import { useAuth } from '@/contexts/AuthContext'
@@ -84,7 +84,6 @@ export default function ProfilePage() {
   if (loading || !user) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <Navbar />
         <div className="flex items-center justify-center py-16">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-green-500"></div>
         </div>
@@ -96,8 +95,6 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
-
       <div className="max-w-7xl mx-auto py-3 px-3 sm:px-6 lg:px-8">
         {/* Profile Header */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">

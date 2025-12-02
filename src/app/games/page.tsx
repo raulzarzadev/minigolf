@@ -3,7 +3,7 @@
 import { Calendar, Clock, Trophy, User, Users } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import Navbar from '@/components/Navbar'
+
 import { useAuth } from '@/contexts/AuthContext'
 import { getAllUserGames } from '@/lib/db'
 import { Game } from '@/types'
@@ -79,7 +79,6 @@ export default function GamesPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
       <div className="max-w-7xl mx-auto py-3 px-3 sm:py-8 sm:px-6 lg:px-8">
         <div className="mb-4">
           <h1 className="text-xl font-bold text-gray-900">Mis Partidas</h1>

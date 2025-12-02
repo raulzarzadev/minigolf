@@ -12,7 +12,7 @@ import {
 } from 'lucide-react'
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
-import Navbar from '@/components/Navbar'
+
 import { useAuth } from '@/contexts/AuthContext'
 import { subscribeToGame } from '@/lib/db'
 import { getLocalGame, isLocalGame } from '@/lib/localStorage'
@@ -213,7 +213,6 @@ export default function CelebrationPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <Navbar />
         <div className="flex items-center justify-center py-16">
           <Loader2 className="h-10 w-10 animate-spin text-green-600" />
         </div>
@@ -224,7 +223,6 @@ export default function CelebrationPage() {
   if (!game) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <Navbar />
         <div className="max-w-2xl mx-auto py-16 px-4 text-center">
           <p className="text-gray-700">
             No encontramos la partida. Vuelve a la lista de juegos.
@@ -253,7 +251,6 @@ export default function CelebrationPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
       <div className="max-w-4xl mx-auto py-4 px-3 sm:px-6 lg:px-8 space-y-4">
         <div className="flex items-center justify-between">
           <button

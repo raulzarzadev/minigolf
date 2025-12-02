@@ -1,9 +1,12 @@
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import LogoPreloader from '@/components/LogoPreloader'
-import { AuthProvider } from '@/contexts/AuthContext'
 import './globals.css'
 import { ReactNode } from 'react'
+
+import Providers from './providers'
+import Navbar from '@/components/Navbar'
+import ActiveGameBanner from '@/components/ActiveGameBanner'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -75,8 +78,12 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <LogoPreloader />
-        <AuthProvider>{children}</AuthProvider>
+        <Providers>
+          <Navbar />
+          <ActiveGameBanner />
+          {children}
+          <LogoPreloader />
+        </Providers>
       </body>
     </html>
   )

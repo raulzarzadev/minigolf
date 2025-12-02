@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react'
-import Navbar from '@/components/Navbar'
 
 // Mock del hook useAuth
 jest.mock('@/contexts/AuthContext', () => ({

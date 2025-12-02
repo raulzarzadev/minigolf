@@ -2,12 +2,10 @@
 
 import { Plus } from 'lucide-react'
 import { FC, ReactNode } from 'react'
-import Navbar from '@/components/Navbar'
+
 import ErrorBanner from '@/components/new-game/ErrorBanner'
 
 interface GuestNewGameFormProps {
-  guestPlayerName: string
-  onGuestNameChange: (value: string) => void
   isLoading: boolean
   hasMinimumPlayers: boolean
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => void
@@ -15,13 +13,13 @@ interface GuestNewGameFormProps {
   onDismissError: () => void
   onCancel: () => void
   renderGameTypeSelector?: () => ReactNode
+  renderPrimaryPlayerInput: () => ReactNode
+  renderPlayersSection?: () => ReactNode
   renderHoleCountSelect: () => ReactNode
   renderHiddenFields?: () => ReactNode
 }
 
 const GuestNewGameForm: FC<GuestNewGameFormProps> = ({
-  guestPlayerName,
-  onGuestNameChange,
   isLoading,
   hasMinimumPlayers,
   onSubmit,
@@ -29,12 +27,14 @@ const GuestNewGameForm: FC<GuestNewGameFormProps> = ({
   onDismissError,
   onCancel,
   renderGameTypeSelector,
+  renderPrimaryPlayerInput,
+  renderPlayersSection,
   renderHoleCountSelect,
   renderHiddenFields
 }) => {
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
+      {/* <Navbar /> */}
       <div className="max-w-3xl mx-auto py-4 px-3 sm:px-6 lg:px-8">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <h1 className="text-xl font-bold text-gray-900 mb-4">
@@ -45,25 +45,13 @@ const GuestNewGameForm: FC<GuestNewGameFormProps> = ({
 
           <form onSubmit={onSubmit} className="space-y-6">
             {renderHiddenFields?.()}
-            <div>
-              <label
-                htmlFor="guest-player-name"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Tu nombre
-              </label>
-              <input
-                type="text"
-                value={guestPlayerName}
-                onChange={(event) => onGuestNameChange(event.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-                placeholder="Ingresa tu nombre"
-                required
-                id="guest-player-name"
-              />
-            </div>
 
             {renderGameTypeSelector?.()}
+
+            {renderPrimaryPlayerInput()}
+
+            {renderPlayersSection?.()}
+
             {renderHoleCountSelect()}
 
             <div className="flex justify-end space-x-3">
