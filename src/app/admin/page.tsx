@@ -16,14 +16,28 @@ import {
   RewardState,
   RewardRoll,
   PrizeTier,
-  addRewardPerk,
-  removeRewardPerk,
   updateRewardOdds,
   grantAdminRolls,
   markPrizeDelivered,
   prizeCatalog
 } from '@/lib/rewards'
-import { Dice5, Gift, RefreshCw, Loader2, CheckCircle2 } from 'lucide-react'
+import {
+  listPrices,
+  createPrice,
+  updatePrice,
+  deletePrice,
+  PriceRecord
+} from '@/lib/prices'
+import {
+  Dice5,
+  Gift,
+  RefreshCw,
+  Loader2,
+  CheckCircle2,
+  Edit3,
+  Trash2,
+  Save
+} from 'lucide-react'
 
 export default function AdminPanel() {
   const { user } = useAuth()
@@ -44,14 +58,17 @@ export default function AdminPanel() {
     small: 0,
     none: 0
   })
+  const [prices, setPrices] = useState<PriceRecord[]>([])
   const [rewardsLoading, setRewardsLoading] = useState(true)
-  const refreshRewardCenter = () => {
+  const refreshRewardCenter = async () => {
+    setRewardsLoading(true)
     try {
-      setRewardsLoading(true)
       const states = getAllRewardStates()
       setRewardStates(states)
       setRewardConfig(getRewardConfig())
       setDeliveryStats(getPrizeDeliveryStats())
+      const remotePrices = await listPrices()
+      setPrices(remotePrices)
     } catch (error) {
       console.error('Error loading reward data:', error)
     } finally {
@@ -205,6 +222,7 @@ export default function AdminPanel() {
               rewardStates={rewardStates}
               games={games}
               users={users}
+              prices={prices}
               loading={rewardsLoading}
               onRefreshRewards={refreshRewardCenter}
               adminUser={user}
@@ -300,12 +318,49 @@ interface UserRewardSummary {
 
 type RecentRoll = RewardRoll & { gameId: string }
 
+type PriceFormState = {
+  title: string
+  description: string
+  tier: PrizeTier | 'bonus'
+  odds: string
+  stock: string
+  isActive: boolean
+}
+
+const emptyPriceForm = (): PriceFormState => ({
+  title: '',
+  description: '',
+  tier: 'small',
+  odds: '',
+  stock: '',
+  isActive: true
+})
+
+const toPriceFormState = (record: PriceRecord): PriceFormState => ({
+  title: record.title,
+  description: record.description,
+  tier: record.tier,
+  odds: record.odds != null ? String(record.odds) : '',
+  stock: record.stock != null ? String(record.stock) : '',
+  isActive: record.isActive ?? true
+})
+
+const formToPayload = (form: PriceFormState) => ({
+  title: form.title.trim(),
+  description: form.description.trim(),
+  tier: form.tier,
+  odds: form.odds ? Number(form.odds) : undefined,
+  stock: form.stock ? Number(form.stock) : undefined,
+  isActive: form.isActive
+})
+
 function RewardsTab({
   rewardConfig,
   deliveryStats,
   rewardStates,
   games,
   users,
+  prices,
   loading,
   onRefreshRewards,
   adminUser
@@ -315,6 +370,7 @@ function RewardsTab({
   rewardStates: RewardState[]
   games: AdminGame[]
   users: AdminUser[]
+  prices: PriceRecord[]
   loading: boolean
   onRefreshRewards: () => void
   adminUser: User | null
@@ -324,12 +380,16 @@ function RewardsTab({
     medium: '5',
     large: '2'
   })
-  const [newPerk, setNewPerk] = useState({
-    title: '',
-    description: '',
-    tier: 'small' as PrizeTier | 'bonus'
-  })
   const [statusMessage, setStatusMessage] = useState<string | null>(null)
+  const [priceDraft, setPriceDraft] = useState<PriceFormState>(() =>
+    emptyPriceForm()
+  )
+  const [editBuffers, setEditBuffers] = useState<
+    Record<string, PriceFormState>
+  >({})
+  const [creatingPrice, setCreatingPrice] = useState(false)
+  const [savingPriceId, setSavingPriceId] = useState<string | null>(null)
+  const [deletingPriceId, setDeletingPriceId] = useState<string | null>(null)
 
   const hasAccess = !!adminUser?.isAdmin
 
@@ -365,11 +425,11 @@ function RewardsTab({
     return entries.sort((a, b) => b.timestamp - a.timestamp).slice(0, 20)
   }, [rewardStates])
 
-  const perks = rewardConfig?.perks ?? []
+  const priceList = prices
 
-  const handleSaveOdds = () => {
+  const handleSaveOdds = async () => {
     if (!hasAccess) {
-      setStatusMessage('Solo los administradores pueden editar premios')
+      setStatusMessage('Solo los administradores pueden editar probabilidades')
       return
     }
     updateRewardOdds({
@@ -378,43 +438,12 @@ function RewardsTab({
       large: Number(oddsDraft.large) / 100
     })
     setStatusMessage('Probabilidades actualizadas')
-    onRefreshRewards()
+    await onRefreshRewards()
     setTimeout(() => setStatusMessage(null), 2500)
   }
 
-  const handleAddPerk = () => {
-    if (!hasAccess) {
-      setStatusMessage('No tienes permisos para agregar premios')
-      return
-    }
-    if (!newPerk.title.trim()) {
-      setStatusMessage('Ingresa un nombre de premio')
-      return
-    }
-    addRewardPerk({
-      ...newPerk,
-      id: `perk-${Date.now()}`
-    })
-    setNewPerk({ title: '', description: '', tier: 'small' })
-    setStatusMessage('Premio agregado')
-    onRefreshRewards()
-    setTimeout(() => setStatusMessage(null), 2500)
-  }
-
-  const handleRemovePerk = (perkId: string) => {
-    if (!hasAccess) {
-      setStatusMessage('No tienes permisos para eliminar premios')
-      return
-    }
-    removeRewardPerk(perkId)
-    onRefreshRewards()
-    setStatusMessage('Premio eliminado')
-    setTimeout(() => setStatusMessage(null), 2500)
-  }
-
-  const handleDeliver = (roll: RecentRoll) => {
-    if (!hasAccess) return
-    if (roll.tier === 'none') return
+  const handleDeliver = async (roll: RecentRoll) => {
+    if (!hasAccess || roll.tier === 'none') return
     const result = markPrizeDelivered({
       admin: adminUser,
       gameId: roll.gameId,
@@ -422,7 +451,128 @@ function RewardsTab({
     })
     if (result) {
       setStatusMessage('Premio marcado como entregado')
-      onRefreshRewards()
+      await onRefreshRewards()
+      setTimeout(() => setStatusMessage(null), 2500)
+    }
+  }
+
+  const handleDraftChange = (
+    field: keyof PriceFormState,
+    value: string | boolean
+  ) => {
+    setPriceDraft((prev) => {
+      const next = { ...prev }
+      if (field === 'isActive') {
+        next.isActive = Boolean(value)
+      } else if (field === 'tier') {
+        next.tier = value as PrizeTier | 'bonus'
+      } else {
+        next[field] = value as string
+      }
+      return next
+    })
+  }
+
+  const handleCreatePrice = async () => {
+    if (!hasAccess) {
+      setStatusMessage('No tienes permisos para agregar premios')
+      return
+    }
+    if (!priceDraft.title.trim()) {
+      setStatusMessage('Ingresa un nombre de premio')
+      return
+    }
+    setCreatingPrice(true)
+    try {
+      await createPrice(formToPayload(priceDraft))
+      setPriceDraft(emptyPriceForm())
+      setStatusMessage('Premio agregado correctamente')
+      await onRefreshRewards()
+    } catch (error) {
+      console.error('Error creando premio:', error)
+      setStatusMessage('Error al crear el premio')
+    } finally {
+      setCreatingPrice(false)
+      setTimeout(() => setStatusMessage(null), 2500)
+    }
+  }
+
+  const handleStartEdit = (record: PriceRecord) => {
+    if (!hasAccess) return
+    setEditBuffers((prev) => ({
+      ...prev,
+      [record.id]: toPriceFormState(record)
+    }))
+  }
+
+  const handleCancelEdit = (priceId: string) => {
+    setEditBuffers((prev) => {
+      const next = { ...prev }
+      delete next[priceId]
+      return next
+    })
+  }
+
+  const handleEditChange = (
+    priceId: string,
+    field: keyof PriceFormState,
+    value: string | boolean
+  ) => {
+    setEditBuffers((prev) => {
+      const draft = prev[priceId] ?? emptyPriceForm()
+      const nextDraft: PriceFormState = { ...draft }
+      if (field === 'isActive') {
+        nextDraft.isActive = Boolean(value)
+      } else if (field === 'tier') {
+        nextDraft.tier = value as PrizeTier | 'bonus'
+      } else if (field === 'title') {
+        nextDraft.title = value as string
+      } else if (field === 'description') {
+        nextDraft.description = value as string
+      } else if (field === 'odds') {
+        nextDraft.odds = value as string
+      } else if (field === 'stock') {
+        nextDraft.stock = value as string
+      }
+      return { ...prev, [priceId]: nextDraft }
+    })
+  }
+
+  const handleUpdatePrice = async (priceId: string) => {
+    if (!hasAccess) return
+    const draft = editBuffers[priceId]
+    if (!draft) return
+    if (!draft.title.trim()) {
+      setStatusMessage('El premio necesita un nombre')
+      return
+    }
+    setSavingPriceId(priceId)
+    try {
+      await updatePrice(priceId, formToPayload(draft))
+      setStatusMessage('Premio actualizado')
+      await onRefreshRewards()
+      handleCancelEdit(priceId)
+    } catch (error) {
+      console.error('Error actualizando premio:', error)
+      setStatusMessage('No se pudo actualizar el premio')
+    } finally {
+      setSavingPriceId(null)
+      setTimeout(() => setStatusMessage(null), 2500)
+    }
+  }
+
+  const handleDeletePrice = async (priceId: string) => {
+    if (!hasAccess) return
+    setDeletingPriceId(priceId)
+    try {
+      await deletePrice(priceId)
+      setStatusMessage('Premio eliminado')
+      await onRefreshRewards()
+    } catch (error) {
+      console.error('Error eliminando premio:', error)
+      setStatusMessage('No se pudo eliminar el premio')
+    } finally {
+      setDeletingPriceId(null)
       setTimeout(() => setStatusMessage(null), 2500)
     }
   }
@@ -537,84 +687,276 @@ function RewardsTab({
             </div>
 
             <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
-              <h4 className="text-sm font-semibold text-gray-900">
-                Catálogo de premios
-              </h4>
-              <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                {perks.map((perk) => (
-                  <div
-                    key={perk.id}
-                    className="flex items-center justify-between border border-gray-200 rounded px-3 py-2 text-xs"
-                  >
-                    <div>
-                      <p className="font-semibold text-gray-900">
-                        {perk.title}
-                      </p>
-                      <p className="text-gray-500">{perk.description}</p>
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-semibold text-gray-900">
+                  Catálogo de premios
+                </h4>
+                <span className="text-xs text-gray-500">
+                  {priceList.length} registrados
+                </span>
+              </div>
+              <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                {priceList.map((price) => {
+                  const draft = editBuffers[price.id]
+                  return (
+                    <div
+                      key={price.id}
+                      className="border border-gray-200 rounded px-3 py-2 text-xs space-y-2"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="font-semibold text-gray-900">
+                            {price.title}
+                          </p>
+                          <p className="text-gray-500 whitespace-pre-line">
+                            {price.description}
+                          </p>
+                          <div className="flex flex-wrap gap-2 mt-1 text-[11px] text-gray-500">
+                            <span className="font-semibold uppercase">
+                              {price.tier === 'bonus'
+                                ? 'Bonus'
+                                : `Premio ${price.tier}`}
+                            </span>
+                            {typeof price.odds === 'number' && (
+                              <span>{price.odds}%</span>
+                            )}
+                            {typeof price.stock === 'number' && (
+                              <span>Stock {price.stock}</span>
+                            )}
+                            <span
+                              className={
+                                price.isActive
+                                  ? 'text-green-600 font-semibold'
+                                  : 'text-gray-400'
+                              }
+                            >
+                              {price.isActive ? 'Activo' : 'Pausado'}
+                            </span>
+                          </div>
+                        </div>
+                        {hasAccess && !draft && (
+                          <div className="flex flex-col gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleStartEdit(price)}
+                              className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600"
+                            >
+                              <Edit3 className="h-3.5 w-3.5" /> Editar
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeletePrice(price.id)}
+                              className="inline-flex items-center gap-1 text-[11px] font-semibold text-red-600"
+                              disabled={deletingPriceId === price.id}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                              {deletingPriceId === price.id
+                                ? 'Eliminando...'
+                                : 'Eliminar'}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      {draft && (
+                        <div className="space-y-2 text-[11px]">
+                          <input
+                            type="text"
+                            value={draft.title}
+                            onChange={(event) =>
+                              handleEditChange(
+                                price.id,
+                                'title',
+                                event.target.value
+                              )
+                            }
+                            className="w-full border border-gray-300 rounded px-2 py-1"
+                            placeholder="Nombre"
+                          />
+                          <textarea
+                            value={draft.description}
+                            onChange={(event) =>
+                              handleEditChange(
+                                price.id,
+                                'description',
+                                event.target.value
+                              )
+                            }
+                            className="w-full border border-gray-300 rounded px-2 py-1"
+                            placeholder="Descripción"
+                          />
+                          <div className="grid grid-cols-2 gap-2">
+                            <select
+                              value={draft.tier}
+                              onChange={(event) =>
+                                handleEditChange(
+                                  price.id,
+                                  'tier',
+                                  event.target.value as PrizeTier | 'bonus'
+                                )
+                              }
+                              className="border border-gray-300 rounded px-2 py-1"
+                            >
+                              <option value="small">Premio chico</option>
+                              <option value="medium">Premio mediano</option>
+                              <option value="large">Premio grande</option>
+                              <option value="bonus">Bonus</option>
+                            </select>
+                            <input
+                              type="number"
+                              value={draft.odds}
+                              onChange={(event) =>
+                                handleEditChange(
+                                  price.id,
+                                  'odds',
+                                  event.target.value
+                                )
+                              }
+                              placeholder="Probabilidad (%)"
+                              className="border border-gray-300 rounded px-2 py-1"
+                              min={0}
+                              step={0.5}
+                            />
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <input
+                              type="number"
+                              value={draft.stock}
+                              onChange={(event) =>
+                                handleEditChange(
+                                  price.id,
+                                  'stock',
+                                  event.target.value
+                                )
+                              }
+                              placeholder="Stock"
+                              className="border border-gray-300 rounded px-2 py-1"
+                              min={0}
+                            />
+                            <label className="flex items-center gap-1 text-gray-600">
+                              <input
+                                type="checkbox"
+                                checked={draft.isActive}
+                                onChange={(event) =>
+                                  handleEditChange(
+                                    price.id,
+                                    'isActive',
+                                    event.target.checked
+                                  )
+                                }
+                              />
+                              Activo
+                            </label>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleUpdatePrice(price.id)}
+                              className="inline-flex items-center gap-1 px-3 py-1 rounded bg-green-600 text-white font-semibold"
+                              disabled={savingPriceId === price.id}
+                            >
+                              <Save className="h-3.5 w-3.5" />
+                              {savingPriceId === price.id
+                                ? 'Guardando...'
+                                : 'Guardar'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleCancelEdit(price.id)}
+                              className="text-gray-500 font-semibold"
+                            >
+                              Cancelar
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    {hasAccess && (
-                      <button
-                        type="button"
-                        onClick={() => handleRemovePerk(perk.id)}
-                        className="text-red-600 text-[11px] font-semibold"
-                      >
-                        Quitar
-                      </button>
-                    )}
-                  </div>
-                ))}
-                {perks.length === 0 && (
+                  )
+                })}
+                {priceList.length === 0 && (
                   <p className="text-xs text-gray-500">
-                    Aún no hay premios configurados.
+                    Aún no hay premios en Firebase.
                   </p>
                 )}
               </div>
               {hasAccess && (
-                <div className="space-y-2 text-xs">
+                <div className="space-y-2 text-xs border-t border-dashed border-gray-200 pt-3 mt-3">
+                  <p className="font-semibold text-gray-900">
+                    Agregar nuevo premio
+                  </p>
                   <input
                     type="text"
                     placeholder="Nombre del premio"
-                    value={newPerk.title}
+                    value={priceDraft.title}
                     onChange={(event) =>
-                      setNewPerk((prev) => ({
-                        ...prev,
-                        title: event.target.value
-                      }))
+                      handleDraftChange('title', event.target.value)
                     }
                     className="w-full border border-gray-300 rounded px-2 py-1"
                   />
                   <textarea
                     placeholder="Descripción"
-                    value={newPerk.description}
+                    value={priceDraft.description}
                     onChange={(event) =>
-                      setNewPerk((prev) => ({
-                        ...prev,
-                        description: event.target.value
-                      }))
+                      handleDraftChange('description', event.target.value)
                     }
                     className="w-full border border-gray-300 rounded px-2 py-1"
                   />
-                  <select
-                    value={newPerk.tier}
-                    onChange={(event) =>
-                      setNewPerk((prev) => ({
-                        ...prev,
-                        tier: event.target.value as PrizeTier | 'bonus'
-                      }))
-                    }
-                    className="w-full border border-gray-300 rounded px-2 py-1"
-                  >
-                    <option value="small">Premio chico</option>
-                    <option value="medium">Premio mediano</option>
-                    <option value="large">Premio grande</option>
-                    <option value="bonus">Bonus</option>
-                  </select>
+                  <div className="grid grid-cols-2 gap-2">
+                    <select
+                      value={priceDraft.tier}
+                      onChange={(event) =>
+                        handleDraftChange(
+                          'tier',
+                          event.target.value as PrizeTier | 'bonus'
+                        )
+                      }
+                      className="border border-gray-300 rounded px-2 py-1"
+                    >
+                      <option value="small">Premio chico</option>
+                      <option value="medium">Premio mediano</option>
+                      <option value="large">Premio grande</option>
+                      <option value="bonus">Bonus</option>
+                    </select>
+                    <input
+                      type="number"
+                      placeholder="Probabilidad (%)"
+                      value={priceDraft.odds}
+                      onChange={(event) =>
+                        handleDraftChange('odds', event.target.value)
+                      }
+                      className="border border-gray-300 rounded px-2 py-1"
+                      min={0}
+                      step={0.5}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      type="number"
+                      placeholder="Stock"
+                      value={priceDraft.stock}
+                      onChange={(event) =>
+                        handleDraftChange('stock', event.target.value)
+                      }
+                      className="border border-gray-300 rounded px-2 py-1"
+                      min={0}
+                    />
+                    <label className="flex items-center gap-2 text-gray-600">
+                      <input
+                        type="checkbox"
+                        checked={priceDraft.isActive}
+                        onChange={(event) =>
+                          handleDraftChange('isActive', event.target.checked)
+                        }
+                      />
+                      Activo
+                    </label>
+                  </div>
                   <button
                     type="button"
-                    onClick={handleAddPerk}
-                    className="inline-flex items-center px-3 py-1.5 rounded bg-black text-white font-semibold"
+                    onClick={handleCreatePrice}
+                    className="inline-flex items-center justify-center gap-2 px-3 py-1.5 rounded bg-black text-white font-semibold"
+                    disabled={creatingPrice}
                   >
-                    Agregar premio
+                    {creatingPrice ? 'Guardando...' : 'Agregar premio'}
                   </button>
                 </div>
               )}

@@ -198,8 +198,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }
 
-  console.log({ user })
-
   const value = {
     user,
     firebaseUser,

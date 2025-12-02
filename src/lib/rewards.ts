@@ -93,28 +93,7 @@ const defaultConfig = (): RewardConfig => ({
     medium: 0.05,
     small: 0.1
   },
-  perks: [
-    {
-      id: 'free-round',
-      title: 'Ronda gratis',
-      description: '1 partida de minigolf sin costo para tu próxima visita.',
-      tier: 'small'
-    },
-    {
-      id: 'wall-photo',
-      title: 'Mural de campeones',
-      description:
-        'Foto Polaroid en el mural + acceso al muro de escalar durante tu visita.',
-      tier: 'medium'
-    },
-    {
-      id: 'surprise-challenge',
-      title: 'Challenge sorpresa',
-      description:
-        'Experiencia guiada en otra atracción del parque con retos especiales.',
-      tier: 'large'
-    }
-  ],
+  perks: [],
   deliveredCounts: {
     large: 0,
     medium: 0,
