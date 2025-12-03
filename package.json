@@ -8,7 +8,7 @@
     "start": "next start",
     "test": "jest --watch",
     "lint": "biome check .",
-    "format-and-fix": "biome format --write ."
+    "format-and-fix": "biome check --write . && biome format --write . "
   },
   "dependencies": {
     "@hookform/resolvers": "^5.1.1",
