@@ -16,7 +16,12 @@ import {
   useEffect,
   useState
 } from 'react'
-import { generateUniqueUsername, updateUserUsername } from '@/lib/db'
+import {
+  createDefaultUserShots,
+  generateUniqueUsername,
+  normalizeUserShots,
+  updateUserUsername
+} from '@/lib/db'
 import { auth, db } from '@/lib/firebase'
 import { User } from '@/types'
 
@@ -29,6 +34,22 @@ interface AuthContextType {
   logout: () => Promise<void>
   updateUsername: (newUsername: string) => Promise<void>
   isAdmin: boolean
+  refreshUser: () => Promise<void>
+}
+
+const mapUserDocument = (uid: string, data: Record<string, any>): User => {
+  const normalizedShots = normalizeUserShots(data.shots)
+  return {
+    ...data,
+    id: uid,
+    name: data.name || 'Usuario',
+    username: data.username || '',
+    email: data.email || '',
+    createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
+    gamesPlayed: data.gamesPlayed || 0,
+    averageScore: data.averageScore || 0,
+    shots: normalizedShots
+  } as User
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -78,16 +99,7 @@ export const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
                 userData.username = username
               }
 
-              setUser({
-                id: firebaseUser.uid,
-                name: userData.name,
-                username: userData.username,
-                email: userData.email,
-                createdAt: userData.createdAt.toDate(),
-                gamesPlayed: userData.gamesPlayed || 0,
-                averageScore: userData.averageScore || 0,
-                ...userData
-              })
+              setUser(mapUserDocument(firebaseUser.uid, userData))
             }
           } else if (mounted) {
             setFirebaseUser(null)
@@ -148,7 +160,8 @@ export const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
           email: result.user.email || '',
           createdAt: new Date(),
           gamesPlayed: 0,
-          averageScore: 0
+          averageScore: 0,
+          shots: createDefaultUserShots()
         }
         await setDoc(doc(db, 'users', result.user.uid), userData)
       }
@@ -157,16 +170,7 @@ export const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
       const updatedUserDoc = await getDoc(doc(db, 'users', result.user.uid))
       if (updatedUserDoc.exists()) {
         const userData = updatedUserDoc.data()
-        setUser({
-          id: result.user.uid,
-          name: userData.name,
-          username: userData.username,
-          email: userData.email,
-          createdAt: userData.createdAt.toDate(),
-          gamesPlayed: userData.gamesPlayed || 0,
-          averageScore: userData.averageScore || 0,
-          ...userData
-        })
+        setUser(mapUserDocument(result.user.uid, userData))
       }
 
       setFirebaseUser(result.user)
@@ -203,6 +207,21 @@ export const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
     }
   }
 
+  const refreshUser = async () => {
+    try {
+      if (!firebaseUser) {
+        return
+      }
+
+      const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid))
+      if (userDoc.exists()) {
+        setUser(mapUserDocument(firebaseUser.uid, userDoc.data()))
+      }
+    } catch (error) {
+      console.error('Error refreshing user data:', error)
+    }
+  }
+
   const value = {
     user,
     firebaseUser,
@@ -211,7 +230,8 @@ export const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
     signInWithGoogle,
     logout,
     updateUsername,
-    isAdmin: user?.roles?.includes('admin') || user?.isAdmin || false
+    isAdmin: user?.roles?.includes('admin') || user?.isAdmin || false,
+    refreshUser
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

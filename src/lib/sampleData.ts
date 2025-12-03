@@ -14,7 +14,8 @@ export async function createSampleData() {
         gamesPlayed: 5,
         averageScore: 32.4,
         isAdmin: false,
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(),
+        shots: { pendings: 0 }
       },
       {
         name: 'María García',
@@ -22,7 +23,8 @@ export async function createSampleData() {
         gamesPlayed: 12,
         averageScore: 28.7,
         isAdmin: false,
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(),
+        shots: { pendings: 0 }
       },
       {
         name: 'Carlos López',
@@ -30,7 +32,8 @@ export async function createSampleData() {
         gamesPlayed: 8,
         averageScore: 35.1,
         isAdmin: false,
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(),
+        shots: { pendings: 0 }
       }
     ]
 

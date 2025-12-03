@@ -32,7 +32,9 @@ describe('GamesPage', () => {
       firebaseError: null,
       signInWithGoogle: jest.fn(),
       logout: jest.fn(),
-      updateUsername: jest.fn()
+      isAdmin: false,
+      updateUsername: jest.fn(),
+      refreshUser: jest.fn()
     })
 
     render(<GamesPage />)
@@ -52,14 +54,17 @@ describe('GamesPage', () => {
         createdAt: new Date(),
         gamesPlayed: 0,
         averageScore: 0,
-        username: 'testuser'
+        username: 'testuser',
+        shots: { pendings: 0 }
       },
       firebaseUser: null,
       loading: false,
       firebaseError: null,
       signInWithGoogle: jest.fn(),
       logout: jest.fn(),
-      updateUsername: jest.fn()
+      isAdmin: false,
+      updateUsername: jest.fn(),
+      refreshUser: jest.fn()
     })
 
     mockGetUserGames.mockResolvedValue([])
@@ -81,14 +86,17 @@ describe('GamesPage', () => {
         createdAt: new Date(),
         gamesPlayed: 0,
         averageScore: 0,
-        username: 'testuser'
+        username: 'testuser',
+        shots: { pendings: 0 }
       },
       firebaseUser: null,
       loading: false,
       firebaseError: null,
       signInWithGoogle: jest.fn(),
       logout: jest.fn(),
-      updateUsername: jest.fn()
+      isAdmin: false,
+      updateUsername: jest.fn(),
+      refreshUser: jest.fn()
     })
 
     mockGetUserGames.mockResolvedValue([])

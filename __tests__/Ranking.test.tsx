@@ -34,6 +34,7 @@ const mockUser = {
   createdAt: new Date(),
   gamesPlayed: 5,
   averageScore: 2.5,
+  shots: { pendings: 0 },
   isAdmin: false
 }
 
@@ -71,7 +72,9 @@ describe('RankingPage', () => {
       firebaseError: null,
       signInWithGoogle: jest.fn(),
       logout: jest.fn(),
-      updateUsername: jest.fn()
+      isAdmin: false,
+      updateUsername: jest.fn(),
+      refreshUser: jest.fn()
     })
 
     mockGetAllUsersRanking.mockResolvedValue(mockRankingData)
@@ -159,7 +162,9 @@ describe('RankingPage', () => {
       firebaseError: null,
       signInWithGoogle: jest.fn(),
       logout: jest.fn(),
-      updateUsername: jest.fn()
+      isAdmin: false,
+      updateUsername: jest.fn(),
+      refreshUser: jest.fn()
     })
 
     // Como AuthForm es un mock, simplemente verificamos que se renderiza algo
@@ -177,7 +182,9 @@ describe('RankingPage', () => {
       firebaseError: null,
       signInWithGoogle: jest.fn(),
       logout: jest.fn(),
-      updateUsername: jest.fn()
+      isAdmin: false,
+      updateUsername: jest.fn(),
+      refreshUser: jest.fn()
     })
 
     render(<RankingPage />)

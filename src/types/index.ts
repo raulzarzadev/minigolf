@@ -1,3 +1,7 @@
+export interface UserShots {
+  pendings: number
+}
+
 // User model
 export interface User {
   id: string
@@ -7,6 +11,7 @@ export interface User {
   createdAt: Date
   gamesPlayed: number
   averageScore: number
+  shots: UserShots
   /**
    * @deprecated Use roles instead
    */

@@ -23,7 +23,9 @@ describe('AuthForm component', () => {
       firebaseError: null,
       signInWithGoogle: jest.fn(),
       logout: jest.fn(),
-      updateUsername: jest.fn()
+      isAdmin: false,
+      updateUsername: jest.fn(),
+      refreshUser: jest.fn()
     })
 
     render(<AuthForm />)
@@ -46,7 +48,9 @@ describe('AuthForm component', () => {
       firebaseError: null,
       signInWithGoogle: jest.fn(),
       logout: jest.fn(),
-      updateUsername: jest.fn()
+      isAdmin: false,
+      updateUsername: jest.fn(),
+      refreshUser: jest.fn()
     })
 
     render(<AuthForm />)
@@ -69,7 +73,9 @@ describe('AuthForm component', () => {
       firebaseError: null,
       signInWithGoogle: mockSignInWithGoogle,
       logout: jest.fn(),
-      updateUsername: jest.fn()
+      isAdmin: false,
+      updateUsername: jest.fn(),
+      refreshUser: jest.fn()
     })
 
     render(<AuthForm />)
@@ -94,7 +100,9 @@ describe('AuthForm component', () => {
       firebaseError: null,
       signInWithGoogle: mockSignInWithGoogle,
       logout: jest.fn(),
-      updateUsername: jest.fn()
+      isAdmin: false,
+      updateUsername: jest.fn(),
+      refreshUser: jest.fn()
     })
 
     render(<AuthForm />)
@@ -119,7 +127,9 @@ describe('AuthForm component', () => {
       firebaseError: null,
       signInWithGoogle: jest.fn(),
       logout: jest.fn(),
-      updateUsername: jest.fn()
+      isAdmin: false,
+      updateUsername: jest.fn(),
+      refreshUser: jest.fn()
     })
 
     render(<AuthForm />)
@@ -141,7 +151,9 @@ describe('AuthForm component', () => {
       firebaseError: null,
       signInWithGoogle: jest.fn(),
       logout: jest.fn(),
-      updateUsername: jest.fn()
+      isAdmin: false,
+      updateUsername: jest.fn(),
+      refreshUser: jest.fn()
     })
 
     render(<AuthForm />)

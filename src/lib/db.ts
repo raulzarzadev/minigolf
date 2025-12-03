@@ -8,11 +8,12 @@ import {
   orderBy,
   query,
   serverTimestamp,
+  setDoc,
   updateDoc,
   where
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
-import { Game, Tournament, TournamentStanding, User } from '@/types'
+import { Game, Tournament, TournamentStanding, User, UserShots } from '@/types'
 
 // Games Collection Functions
 export const createGame = async (
@@ -466,6 +467,100 @@ const calculateTournamentPoints = (
   return Math.round(basePoints + bonusPoints)
 }
 
+export const createDefaultUserShots = (): UserShots => ({ pendings: 0 })
+
+export const normalizeUserShots = (raw?: unknown): UserShots => {
+  if (!raw || typeof raw !== 'object') {
+    return createDefaultUserShots()
+  }
+
+  const { pendings } = raw as { pendings?: unknown }
+  const pendingsValue = Number(pendings)
+
+  return {
+    pendings: Number.isFinite(pendingsValue)
+      ? Math.max(0, Math.floor(pendingsValue))
+      : 0
+  }
+}
+
+export const getUserShots = async (userId: string): Promise<UserShots> => {
+  try {
+    const userRef = doc(db, 'users', userId)
+    const userDoc = await getDoc(userRef)
+    if (!userDoc.exists()) {
+      return createDefaultUserShots()
+    }
+
+    return normalizeUserShots(userDoc.data().shots)
+  } catch (error) {
+    console.error('Error getting user shots:', error)
+    return createDefaultUserShots()
+  }
+}
+
+export const setUserShots = async (
+  userId: string,
+  shots: UserShots
+): Promise<void> => {
+  try {
+    const userRef = doc(db, 'users', userId)
+    await setDoc(
+      userRef,
+      {
+        shots: normalizeUserShots(shots)
+      },
+      { merge: true }
+    )
+  } catch (error) {
+    console.error('Error setting user shots:', error)
+    throw error
+  }
+}
+
+export const incrementUserShotPendings = async (
+  userId: string,
+  delta = 1
+): Promise<UserShots> => {
+  try {
+    const current = await getUserShots(userId)
+    const nextPendings = current.pendings + delta
+    const normalized = normalizeUserShots({ pendings: nextPendings })
+    await setUserShots(userId, normalized)
+    return normalized
+  } catch (error) {
+    console.error('Error incrementing user shots:', error)
+    throw error
+  }
+}
+
+export const clearUserShots = async (userId: string): Promise<UserShots> => {
+  const reset = createDefaultUserShots()
+  await setUserShots(userId, reset)
+  return reset
+}
+
+export const consumeUserShot = async (
+  userId: string,
+  amount = 1
+): Promise<UserShots> => {
+  try {
+    const current = await getUserShots(userId)
+    if (current.pendings <= 0) {
+      return current
+    }
+
+    const normalized = normalizeUserShots({
+      pendings: current.pendings - Math.max(1, Math.floor(amount))
+    })
+    await setUserShots(userId, normalized)
+    return normalized
+  } catch (error) {
+    console.error('Error consuming user shot:', error)
+    throw error
+  }
+}
+
 // User management functions
 export const createOrUpdateUser = async (userData: {
   id: string
@@ -484,11 +579,12 @@ export const createOrUpdateUser = async (userData: {
       })
     } else {
       // Create new user
-      await updateDoc(userRef, {
+      await setDoc(userRef, {
         ...userData,
         createdAt: serverTimestamp(),
         gamesPlayed: 0,
-        averageScore: 0
+        averageScore: 0,
+        shots: createDefaultUserShots()
       })
     }
   } catch (error) {
@@ -505,7 +601,8 @@ export const getUserById = async (userId: string): Promise<User | null> => {
       return {
         id: userDoc.id,
         ...data,
-        createdAt: data.createdAt.toDate()
+        createdAt: data.createdAt.toDate(),
+        shots: normalizeUserShots(data.shots)
       } as User
     }
     return null
@@ -656,7 +753,8 @@ export const getUserByUsername = async (
       createdAt: userData.createdAt.toDate(),
       gamesPlayed: userData.gamesPlayed || 0,
       averageScore: userData.averageScore || 0,
-      isAdmin: userData.isAdmin || false
+      isAdmin: userData.isAdmin || false,
+      shots: normalizeUserShots(userData.shots)
     }
   } catch (error) {
     console.error('Error getting user by username:', error)

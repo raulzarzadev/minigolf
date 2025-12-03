@@ -8,12 +8,14 @@ import {
   Loader2,
   RefreshCw,
   Save,
+  Search,
   Trash2
 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import AdminProtectedRoute from '@/components/AdminProtectedRoute'
 import { useAuth } from '@/contexts/AuthContext'
 import { getAdminGames, getAdminStats, getAdminUsers } from '@/lib/admin'
+import { incrementUserShotPendings } from '@/lib/db'
 import { checkMigrationStatus, migrateExistingUsers } from '@/lib/migration'
 import {
   createPrice,
@@ -1092,6 +1094,9 @@ function UsersTab({
 }) {
   const [grantInputs, setGrantInputs] = useState<Record<string, string>>({})
   const [rowStatus, setRowStatus] = useState<Record<string, string | null>>({})
+  const [shotInputs, setShotInputs] = useState<Record<string, string>>({})
+  const [shotBalances, setShotBalances] = useState<Record<string, number>>({})
+  const [searchTerm, setSearchTerm] = useState('')
 
   const gameMap = useMemo(() => {
     const map = new Map<string, AdminGame>()
@@ -1137,6 +1142,21 @@ function UsersTab({
 
     return summary
   }, [rewardStates, gameMap])
+
+  const filteredUsers = useMemo(() => {
+    if (!searchTerm.trim()) {
+      return users
+    }
+
+    const normalizedTerm = searchTerm.trim().toLowerCase()
+    return users.filter((candidate) =>
+      [candidate.name, candidate.email, candidate.username, candidate.id]
+        .filter(Boolean)
+        .some((value) =>
+          (value as string).toLowerCase().includes(normalizedTerm)
+        )
+    )
+  }, [users, searchTerm])
 
   const handleGrantRolls = (userId: string) => {
     const entry = rewardSummary[userId]
@@ -1209,27 +1229,80 @@ function UsersTab({
     }
   }
 
+  const handleGrantShots = async (userId: string) => {
+    if (!adminUser?.isAdmin) {
+      setRowStatus((prev) => ({
+        ...prev,
+        [userId]: 'Permisos insuficientes'
+      }))
+      return
+    }
+
+    const amount = Number(shotInputs[userId] ?? '1')
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setRowStatus((prev) => ({
+        ...prev,
+        [userId]: 'Ingresa una cantidad válida'
+      }))
+      return
+    }
+
+    try {
+      const updatedShots = await incrementUserShotPendings(userId, amount)
+      setShotBalances((prev) => ({
+        ...prev,
+        [userId]: updatedShots.pendings
+      }))
+      setShotInputs((prev) => ({ ...prev, [userId]: '1' }))
+      setRowStatus((prev) => ({
+        ...prev,
+        [userId]: `+${amount} tiro(s) agregado(s)`
+      }))
+      setTimeout(() => {
+        setRowStatus((prev) => ({ ...prev, [userId]: null }))
+      }, 2500)
+    } catch (error) {
+      console.error('Error agregando tiros:', error)
+      setRowStatus((prev) => ({
+        ...prev,
+        [userId]: 'Error al agregar tiros'
+      }))
+    }
+  }
+
   return (
     <div className="bg-white shadow rounded-lg">
       <div className="px-4 py-5 sm:p-6">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-4">
           <div>
             <h3 className="text-lg leading-6 font-medium text-gray-900">
-              Usuarios Registrados ({users.length})
+              Usuarios Registrados ({filteredUsers.length} de {users.length})
             </h3>
             <p className="text-sm text-gray-500">
-              Visualiza tiradas utilizadas, pendientes y valida premios desde
+              Visualiza tiradas de ruleta, tiros globales y valida premios desde
               aquí.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={onRefreshRewards}
-            className="inline-flex items-center gap-1 text-sm font-semibold text-green-600 hover:text-green-700"
-          >
-            <RefreshCw className="h-4 w-4" />
-            Actualizar
-          </button>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+            <div className="relative w-full sm:w-64">
+              <Search className="h-4 w-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                placeholder="Buscar usuario"
+                className="w-full border border-gray-300 rounded-md py-2 pl-9 pr-3 text-sm focus:outline-none focus:ring-1 focus:ring-green-500"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={onRefreshRewards}
+              className="inline-flex items-center justify-center gap-1 text-sm font-semibold text-green-600 hover:text-green-700"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Actualizar
+            </button>
+          </div>
         </div>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 text-sm">
@@ -1253,7 +1326,17 @@ function UsersTab({
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {users.map((user) => {
+              {filteredUsers.length === 0 && (
+                <tr>
+                  <td
+                    className="px-4 py-6 text-center text-sm text-gray-500"
+                    colSpan={5}
+                  >
+                    No se encontraron usuarios con ese criterio.
+                  </td>
+                </tr>
+              )}
+              {filteredUsers.map((user) => {
                 const entry =
                   rewardSummary[user.id] ||
                   ({
@@ -1264,6 +1347,9 @@ function UsersTab({
                     states: []
                   } as UserRewardSummary)
                 const grantValue = grantInputs[user.id] ?? '1'
+                const shotValue = shotInputs[user.id] ?? '1'
+                const currentShots =
+                  shotBalances[user.id] ?? user.shots?.pendings ?? 0
 
                 return (
                   <tr key={user.id}>
@@ -1323,6 +1409,10 @@ function UsersTab({
                         <span className="font-semibold text-gray-900">
                           {entry.availableRolls}
                         </span>
+                      </p>
+                      <p className="flex items-center gap-1 mt-1 text-green-700">
+                        <Aperture className="h-4 w-4" /> Shots:{' '}
+                        <span className="font-semibold">{currentShots}</span>
                       </p>
                     </td>
                     <td className="px-4 py-4 align-top text-xs text-gray-600">
@@ -1390,6 +1480,27 @@ function UsersTab({
                             disabled={entry.states.length === 0}
                           >
                             Dar tiradas
+                          </button>
+                        </div>
+                        <div className="flex items-center gap-2 pt-2 border-t border-dashed border-gray-200">
+                          <input
+                            type="number"
+                            min={1}
+                            value={shotValue}
+                            onChange={(event) =>
+                              setShotInputs((prev) => ({
+                                ...prev,
+                                [user.id]: event.target.value
+                              }))
+                            }
+                            className="w-16 border border-gray-300 rounded px-1 py-1 text-xs"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleGrantShots(user.id)}
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded bg-emerald-600 text-white font-semibold text-xs"
+                          >
+                            Agregar tiros
                           </button>
                         </div>
                         {rowStatus[user.id] && (

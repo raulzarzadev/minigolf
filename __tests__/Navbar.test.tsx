@@ -20,6 +20,7 @@ const mockUser: User = {
   gamesPlayed: 0,
   averageScore: 0,
   username: 'testuser',
+  shots: { pendings: 0 },
   isAdmin: false
 }
 
@@ -37,7 +38,8 @@ describe('Navbar component', () => {
       signInWithGoogle: jest.fn(),
       logout: jest.fn(),
       updateUsername: jest.fn(),
-      isAdmin: false
+      isAdmin: false,
+      refreshUser: jest.fn()
     })
 
     const { container } = render(<Navbar />)
@@ -53,7 +55,8 @@ describe('Navbar component', () => {
       signInWithGoogle: jest.fn(),
       logout: jest.fn(),
       updateUsername: jest.fn(),
-      isAdmin: false
+      isAdmin: false,
+      refreshUser: jest.fn()
     })
 
     render(<Navbar />)
@@ -76,7 +79,8 @@ describe('Navbar component', () => {
       signInWithGoogle: jest.fn(),
       logout: jest.fn(),
       updateUsername: jest.fn(),
-      isAdmin: false
+      isAdmin: false,
+      refreshUser: jest.fn()
     })
 
     render(<Navbar />)
@@ -94,7 +98,8 @@ describe('Navbar component', () => {
       signInWithGoogle: jest.fn(),
       logout: jest.fn(),
       updateUsername: jest.fn(),
-      isAdmin: false
+      isAdmin: false,
+      refreshUser: jest.fn()
     })
 
     render(<Navbar />)
@@ -122,7 +127,8 @@ describe('Navbar component', () => {
       signInWithGoogle: jest.fn(),
       logout: jest.fn(),
       updateUsername: jest.fn(),
-      isAdmin: false
+      isAdmin: false,
+      refreshUser: jest.fn()
     })
 
     render(<Navbar />)
@@ -140,7 +146,8 @@ describe('Navbar component', () => {
       signInWithGoogle: jest.fn(),
       logout: jest.fn(),
       updateUsername: jest.fn(),
-      isAdmin: false
+      isAdmin: false,
+      refreshUser: jest.fn()
     })
 
     render(<Navbar />)

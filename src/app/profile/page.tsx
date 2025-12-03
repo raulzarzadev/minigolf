@@ -1,6 +1,6 @@
 'use client'
 
-import { Clock, Flag, Play, User } from 'lucide-react'
+import { Clock, Flag, Play, Target, User } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import DiscreteUsernameEditor from '@/components/DiscreteUsernameEditor'
@@ -8,13 +8,19 @@ import DiscreteUsernameEditor from '@/components/DiscreteUsernameEditor'
 import RewardLogrosCard from '@/components/RewardLogrosCard'
 import UserStats from '@/components/UserStats'
 import { useAuth } from '@/contexts/AuthContext'
-import { getUserGames } from '@/lib/db'
+import { consumeUserShot, getUserGames } from '@/lib/db'
 import { Game } from '@/types'
 
 export default function ProfilePage() {
-  const { user, loading } = useAuth()
+  const { user, loading, refreshUser } = useAuth()
   const [userGames, setUserGames] = useState<Game[]>([])
   const [gamesLoading, setGamesLoading] = useState(true)
+  const [pendingShots, setPendingShots] = useState(user?.shots?.pendings ?? 0)
+  const [isFiringShot, setIsFiringShot] = useState(false)
+  const [shotStatus, setShotStatus] = useState<{
+    message: string
+    tone: 'success' | 'error' | 'info'
+  } | null>(null)
 
   useEffect(() => {
     const loadUserGames = async () => {
@@ -34,6 +40,46 @@ export default function ProfilePage() {
       loadUserGames()
     }
   }, [user])
+
+  useEffect(() => {
+    setPendingShots(user?.shots?.pendings ?? 0)
+  }, [user?.shots?.pendings])
+
+  useEffect(() => {
+    if (!shotStatus) return
+    const timer = window.setTimeout(() => setShotStatus(null), 3200)
+    return () => window.clearTimeout(timer)
+  }, [shotStatus])
+
+  const handleUseShot = async () => {
+    if (!user) return
+    if (pendingShots <= 0) {
+      setShotStatus({
+        message: 'No tienes tiros pendientes por ahora.',
+        tone: 'info'
+      })
+      return
+    }
+
+    try {
+      setIsFiringShot(true)
+      const updatedShots = await consumeUserShot(user.id)
+      setPendingShots(updatedShots.pendings)
+      await refreshUser()
+      setShotStatus({
+        message: '¡Tiro registrado! Prepárate para tu próxima jugada.',
+        tone: 'success'
+      })
+    } catch (error) {
+      console.error('Error al registrar tiro:', error)
+      setShotStatus({
+        message: 'No se pudo registrar el tiro. Inténtalo más tarde.',
+        tone: 'error'
+      })
+    } finally {
+      setIsFiringShot(false)
+    }
+  }
 
   const calculateStats = () => {
     const completedGames = userGames.filter(
@@ -99,7 +145,7 @@ export default function ProfilePage() {
         {/* Profile Header */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">
           <div className="flex items-center space-x-3 mb-4">
-            <div className="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+            <div className="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center shrink-0">
               <User className="h-6 w-6 text-green-600" />
             </div>
             <div className="flex-1 min-w-0">
@@ -123,6 +169,54 @@ export default function ProfilePage() {
               <div className="text-xs text-gray-500">Partidas</div>
             </div>
           </div>
+        </div>
+
+        {/* Shots balance */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs uppercase font-semibold text-gray-500">
+                Tiros pendientes
+              </p>
+              <p className="text-3xl font-bold text-gray-900">{pendingShots}</p>
+              <p className="text-xs text-gray-500 mt-1">
+                Usa tus tiros para activar beneficios especiales en el club.
+              </p>
+            </div>
+            <div className="h-12 w-12 rounded-full bg-green-50 flex items-center justify-center">
+              <Target className="h-6 w-6 text-green-600" />
+            </div>
+          </div>
+          <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+            <button
+              type="button"
+              onClick={handleUseShot}
+              disabled={pendingShots <= 0 || isFiringShot}
+              className="px-4 py-2 bg-green-600 text-white rounded-md text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
+            >
+              {pendingShots > 0
+                ? isFiringShot
+                  ? 'Registrando tiro...'
+                  : 'Tirar ahora'
+                : 'Sin tiros disponibles'}
+            </button>
+            <span className="text-xs text-gray-500">
+              Cada tiro reduce tu saldo disponible.
+            </span>
+          </div>
+          {shotStatus && (
+            <p
+              className={`mt-3 text-sm ${
+                shotStatus.tone === 'error'
+                  ? 'text-red-600'
+                  : shotStatus.tone === 'success'
+                    ? 'text-green-600'
+                    : 'text-gray-600'
+              }`}
+            >
+              {shotStatus.message}
+            </p>
+          )}
         </div>
 
         {/* Stats Grid */}
@@ -180,7 +274,7 @@ export default function ProfilePage() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3 min-w-0 flex-1">
                         <div
-                          className={`h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                          className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 ${
                             game.status === 'finished'
                               ? 'bg-green-100'
                               : 'bg-blue-100'
@@ -205,7 +299,7 @@ export default function ProfilePage() {
                           </div>
                         </div>
                       </div>
-                      <div className="text-right flex-shrink-0">
+                      <div className="text-right shrink-0">
                         <div className="font-semibold text-base">
                           {completedHoles > 0 ? totalScore : '--'}
                         </div>
