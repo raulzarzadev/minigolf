@@ -17,9 +17,9 @@ import {
   useState
 } from 'react'
 import {
-  createDefaultUserShots,
+  createDefaultUserTiradas,
   generateUniqueUsername,
-  normalizeUserShots,
+  normalizeUserTiradas,
   updateUserUsername
 } from '@/lib/db'
 import { auth, db } from '@/lib/firebase'
@@ -38,7 +38,7 @@ interface AuthContextType {
 }
 
 const mapUserDocument = (uid: string, data: Record<string, any>): User => {
-  const normalizedShots = normalizeUserShots(data.shots)
+  const normalizedTiradas = normalizeUserTiradas(data.tiradas ?? data.shots)
   return {
     ...data,
     id: uid,
@@ -48,7 +48,7 @@ const mapUserDocument = (uid: string, data: Record<string, any>): User => {
     createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
     gamesPlayed: data.gamesPlayed || 0,
     averageScore: data.averageScore || 0,
-    shots: normalizedShots
+    tiradas: normalizedTiradas
   } as User
 }
 
@@ -161,7 +161,7 @@ export const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
           createdAt: new Date(),
           gamesPlayed: 0,
           averageScore: 0,
-          shots: createDefaultUserShots()
+          tiradas: createDefaultUserTiradas()
         }
         await setDoc(doc(db, 'users', result.user.uid), userData)
       }

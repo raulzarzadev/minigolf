@@ -1,5 +1,5 @@
-export interface UserShots {
-  pendings: number
+export interface UserTiradas {
+  pendientes: number
 }
 
 // User model
@@ -11,7 +11,7 @@ export interface User {
   createdAt: Date
   gamesPlayed: number
   averageScore: number
-  shots: UserShots
+  tiradas: UserTiradas
   /**
    * @deprecated Use roles instead
    */

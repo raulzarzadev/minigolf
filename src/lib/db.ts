@@ -13,7 +13,13 @@ import {
   where
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
-import { Game, Tournament, TournamentStanding, User, UserShots } from '@/types'
+import {
+  Game,
+  Tournament,
+  TournamentStanding,
+  User,
+  UserTiradas
+} from '@/types'
 
 // Games Collection Functions
 export const createGame = async (
@@ -467,96 +473,98 @@ const calculateTournamentPoints = (
   return Math.round(basePoints + bonusPoints)
 }
 
-export const createDefaultUserShots = (): UserShots => ({ pendings: 0 })
+export const createDefaultUserTiradas = (): UserTiradas => ({
+  pendientes: 0
+})
 
-export const normalizeUserShots = (raw?: unknown): UserShots => {
+export const normalizeUserTiradas = (raw?: unknown): UserTiradas => {
   if (!raw || typeof raw !== 'object') {
-    return createDefaultUserShots()
+    return createDefaultUserTiradas()
   }
 
-  const { pendings } = raw as { pendings?: unknown }
-  const pendingsValue = Number(pendings)
+  const source = raw as { pendientes?: unknown; pendings?: unknown }
+  const pendientesValue = Number(source.pendientes ?? source.pendings ?? 0)
 
   return {
-    pendings: Number.isFinite(pendingsValue)
-      ? Math.max(0, Math.floor(pendingsValue))
+    pendientes: Number.isFinite(pendientesValue)
+      ? Math.max(0, Math.floor(pendientesValue))
       : 0
   }
 }
 
-export const getUserShots = async (userId: string): Promise<UserShots> => {
+const pickUserTiradas = (data: Record<string, any>) =>
+  data?.tiradas ?? data?.shots
+
+export const getUserTiradas = async (userId: string): Promise<UserTiradas> => {
   try {
     const userRef = doc(db, 'users', userId)
     const userDoc = await getDoc(userRef)
     if (!userDoc.exists()) {
-      return createDefaultUserShots()
+      return createDefaultUserTiradas()
     }
 
-    return normalizeUserShots(userDoc.data().shots)
+    return normalizeUserTiradas(pickUserTiradas(userDoc.data()))
   } catch (error) {
-    console.error('Error getting user shots:', error)
-    return createDefaultUserShots()
+    console.error('Error getting user tiradas:', error)
+    return createDefaultUserTiradas()
   }
 }
 
-export const setUserShots = async (
+export const setUserTiradas = async (
   userId: string,
-  shots: UserShots
+  tiradas: UserTiradas
 ): Promise<void> => {
   try {
+    const normalized = normalizeUserTiradas(tiradas)
     const userRef = doc(db, 'users', userId)
-    await setDoc(
-      userRef,
-      {
-        shots: normalizeUserShots(shots)
-      },
-      { merge: true }
-    )
+    await setDoc(userRef, { tiradas: normalized }, { merge: true })
   } catch (error) {
-    console.error('Error setting user shots:', error)
+    console.error('Error setting user tiradas:', error)
     throw error
   }
 }
 
-export const incrementUserShotPendings = async (
+export const incrementUserTiradasPendientes = async (
   userId: string,
   delta = 1
-): Promise<UserShots> => {
+): Promise<UserTiradas> => {
   try {
-    const current = await getUserShots(userId)
-    const nextPendings = current.pendings + delta
-    const normalized = normalizeUserShots({ pendings: nextPendings })
-    await setUserShots(userId, normalized)
+    const current = await getUserTiradas(userId)
+    const nextPendientes = current.pendientes + delta
+    const normalized = normalizeUserTiradas({ pendientes: nextPendientes })
+    await setUserTiradas(userId, normalized)
     return normalized
   } catch (error) {
-    console.error('Error incrementing user shots:', error)
+    console.error('Error incrementing user tiradas:', error)
     throw error
   }
 }
 
-export const clearUserShots = async (userId: string): Promise<UserShots> => {
-  const reset = createDefaultUserShots()
-  await setUserShots(userId, reset)
+export const clearUserTiradas = async (
+  userId: string
+): Promise<UserTiradas> => {
+  const reset = createDefaultUserTiradas()
+  await setUserTiradas(userId, reset)
   return reset
 }
 
-export const consumeUserShot = async (
+export const consumeUserTirada = async (
   userId: string,
   amount = 1
-): Promise<UserShots> => {
+): Promise<UserTiradas> => {
   try {
-    const current = await getUserShots(userId)
-    if (current.pendings <= 0) {
+    const current = await getUserTiradas(userId)
+    if (current.pendientes <= 0) {
       return current
     }
 
-    const normalized = normalizeUserShots({
-      pendings: current.pendings - Math.max(1, Math.floor(amount))
+    const normalized = normalizeUserTiradas({
+      pendientes: current.pendientes - Math.max(1, Math.floor(amount))
     })
-    await setUserShots(userId, normalized)
+    await setUserTiradas(userId, normalized)
     return normalized
   } catch (error) {
-    console.error('Error consuming user shot:', error)
+    console.error('Error consumiendo tirada:', error)
     throw error
   }
 }
@@ -584,7 +592,7 @@ export const createOrUpdateUser = async (userData: {
         createdAt: serverTimestamp(),
         gamesPlayed: 0,
         averageScore: 0,
-        shots: createDefaultUserShots()
+        tiradas: createDefaultUserTiradas()
       })
     }
   } catch (error) {
@@ -602,7 +610,7 @@ export const getUserById = async (userId: string): Promise<User | null> => {
         id: userDoc.id,
         ...data,
         createdAt: data.createdAt.toDate(),
-        shots: normalizeUserShots(data.shots)
+        tiradas: normalizeUserTiradas(pickUserTiradas(data))
       } as User
     }
     return null
@@ -754,7 +762,7 @@ export const getUserByUsername = async (
       gamesPlayed: userData.gamesPlayed || 0,
       averageScore: userData.averageScore || 0,
       isAdmin: userData.isAdmin || false,
-      shots: normalizeUserShots(userData.shots)
+      tiradas: normalizeUserTiradas(pickUserTiradas(userData))
     }
   } catch (error) {
     console.error('Error getting user by username:', error)

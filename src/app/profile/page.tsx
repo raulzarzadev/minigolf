@@ -8,16 +8,18 @@ import DiscreteUsernameEditor from '@/components/DiscreteUsernameEditor'
 import RewardLogrosCard from '@/components/RewardLogrosCard'
 import UserStats from '@/components/UserStats'
 import { useAuth } from '@/contexts/AuthContext'
-import { consumeUserShot, getUserGames } from '@/lib/db'
+import { consumeUserTirada, getUserGames } from '@/lib/db'
 import { Game } from '@/types'
 
 export default function ProfilePage() {
   const { user, loading, refreshUser } = useAuth()
   const [userGames, setUserGames] = useState<Game[]>([])
   const [gamesLoading, setGamesLoading] = useState(true)
-  const [pendingShots, setPendingShots] = useState(user?.shots?.pendings ?? 0)
-  const [isFiringShot, setIsFiringShot] = useState(false)
-  const [shotStatus, setShotStatus] = useState<{
+  const [tiradasPendientes, setTiradasPendientes] = useState(
+    user?.tiradas?.pendientes ?? 0
+  )
+  const [isConsumiendoTirada, setIsConsumiendoTirada] = useState(false)
+  const [tiradaStatus, setTiradaStatus] = useState<{
     message: string
     tone: 'success' | 'error' | 'info'
   } | null>(null)
@@ -42,42 +44,42 @@ export default function ProfilePage() {
   }, [user])
 
   useEffect(() => {
-    setPendingShots(user?.shots?.pendings ?? 0)
-  }, [user?.shots?.pendings])
+    setTiradasPendientes(user?.tiradas?.pendientes ?? 0)
+  }, [user?.tiradas?.pendientes])
 
   useEffect(() => {
-    if (!shotStatus) return
-    const timer = window.setTimeout(() => setShotStatus(null), 3200)
+    if (!tiradaStatus) return
+    const timer = window.setTimeout(() => setTiradaStatus(null), 3200)
     return () => window.clearTimeout(timer)
-  }, [shotStatus])
+  }, [tiradaStatus])
 
-  const handleUseShot = async () => {
+  const handleConsumirTirada = async () => {
     if (!user) return
-    if (pendingShots <= 0) {
-      setShotStatus({
-        message: 'No tienes tiros pendientes por ahora.',
+    if (tiradasPendientes <= 0) {
+      setTiradaStatus({
+        message: 'No tienes tiradas pendientes por ahora.',
         tone: 'info'
       })
       return
     }
 
     try {
-      setIsFiringShot(true)
-      const updatedShots = await consumeUserShot(user.id)
-      setPendingShots(updatedShots.pendings)
+      setIsConsumiendoTirada(true)
+      const updatedTiradas = await consumeUserTirada(user.id)
+      setTiradasPendientes(updatedTiradas.pendientes)
       await refreshUser()
-      setShotStatus({
-        message: '¡Tiro registrado! Prepárate para tu próxima jugada.',
+      setTiradaStatus({
+        message: '¡Tirada registrada! Prepárate para tu próxima jugada.',
         tone: 'success'
       })
     } catch (error) {
-      console.error('Error al registrar tiro:', error)
-      setShotStatus({
-        message: 'No se pudo registrar el tiro. Inténtalo más tarde.',
+      console.error('Error al registrar tirada:', error)
+      setTiradaStatus({
+        message: 'No se pudo registrar la tirada. Inténtalo más tarde.',
         tone: 'error'
       })
     } finally {
-      setIsFiringShot(false)
+      setIsConsumiendoTirada(false)
     }
   }
 
@@ -171,16 +173,18 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Shots balance */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">
+        {/* Tiradas balance */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4 space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs uppercase font-semibold text-gray-500">
-                Tiros pendientes
+                Tiradas pendientes
               </p>
-              <p className="text-3xl font-bold text-gray-900">{pendingShots}</p>
+              <p className="text-3xl font-bold text-gray-900">
+                {tiradasPendientes}
+              </p>
               <p className="text-xs text-gray-500 mt-1">
-                Usa tus tiros para activar beneficios especiales en el club.
+                Usa tus tiradas para activar beneficios especiales en el club.
               </p>
             </div>
             <div className="h-12 w-12 rounded-full bg-green-50 flex items-center justify-center">
@@ -190,42 +194,53 @@ export default function ProfilePage() {
           <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
             <button
               type="button"
-              onClick={handleUseShot}
-              disabled={pendingShots <= 0 || isFiringShot}
+              onClick={handleConsumirTirada}
+              disabled={tiradasPendientes <= 0 || isConsumiendoTirada}
               className="px-4 py-2 bg-green-600 text-white rounded-md text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
             >
-              {pendingShots > 0
-                ? isFiringShot
-                  ? 'Registrando tiro...'
+              {tiradasPendientes > 0
+                ? isConsumiendoTirada
+                  ? 'Registrando tirada...'
                   : 'Tirar ahora'
-                : 'Sin tiros disponibles'}
+                : 'Sin tiradas disponibles'}
             </button>
             <span className="text-xs text-gray-500">
-              Cada tiro reduce tu saldo disponible.
+              Cada tirada reduce tu saldo disponible.
             </span>
           </div>
-          {shotStatus && (
+          {tiradaStatus && (
             <p
               className={`mt-3 text-sm ${
-                shotStatus.tone === 'error'
+                tiradaStatus.tone === 'error'
                   ? 'text-red-600'
-                  : shotStatus.tone === 'success'
+                  : tiradaStatus.tone === 'success'
                     ? 'text-green-600'
                     : 'text-gray-600'
               }`}
             >
-              {shotStatus.message}
+              {tiradaStatus.message}
             </p>
           )}
+
+          <div className="pt-4 border-t border-gray-100">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <p className="text-xs uppercase font-semibold text-gray-500">
+                  Ruleta y premios
+                </p>
+                <p className="text-[13px] text-gray-500">
+                  Gira la ruleta cuando termines tus partidas y revisa tus
+                  premios ganados.
+                </p>
+              </div>
+            </div>
+            <RewardLogrosCard games={userGames} />
+          </div>
         </div>
 
         {/* Stats Grid */}
 
         <UserStats user={user} />
-
-        <div className="my-4">
-          <RewardLogrosCard games={userGames} />
-        </div>
 
         {/* Games History */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">

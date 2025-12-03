@@ -53,7 +53,7 @@ const stepConfigs: StepConfig[] = [
     id: 'follow',
     title: 'Seguirnos en Instagram',
     description:
-      'Marca el paso y muestra en taquilla que ya nos sigues; el staff valida y te libera el tiro extra.',
+      'Marca el paso y muestra en taquilla que ya nos sigues; el staff valida y te libera la tirada extra.',
     icon: Instagram
   },
   {

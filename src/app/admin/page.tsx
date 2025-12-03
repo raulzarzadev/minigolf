@@ -15,7 +15,7 @@ import { useEffect, useMemo, useState } from 'react'
 import AdminProtectedRoute from '@/components/AdminProtectedRoute'
 import { useAuth } from '@/contexts/AuthContext'
 import { getAdminGames, getAdminStats, getAdminUsers } from '@/lib/admin'
-import { incrementUserShotPendings } from '@/lib/db'
+import { incrementUserTiradasPendientes } from '@/lib/db'
 import { checkMigrationStatus, migrateExistingUsers } from '@/lib/migration'
 import {
   createPrice,
@@ -118,7 +118,7 @@ export default function AdminPanel() {
     }
 
     loadAdminData()
-  }, [user])
+  }, [user, isAdmin])
 
   if (loading) {
     return (
@@ -1096,8 +1096,10 @@ function UsersTab({
   const { isAdmin } = useAuth()
   const [grantInputs, setGrantInputs] = useState<Record<string, string>>({})
   const [rowStatus, setRowStatus] = useState<Record<string, string | null>>({})
-  const [shotInputs, setShotInputs] = useState<Record<string, string>>({})
-  const [shotBalances, setShotBalances] = useState<Record<string, number>>({})
+  const [tiradaInputs, setTiradaInputs] = useState<Record<string, string>>({})
+  const [tiradaBalances, setTiradaBalances] = useState<Record<string, number>>(
+    {}
+  )
   const [searchTerm, setSearchTerm] = useState('')
 
   const gameMap = useMemo(() => {
@@ -1231,7 +1233,7 @@ function UsersTab({
     }
   }
 
-  const handleGrantShots = async (userId: string) => {
+  const handleGrantTiradas = async (userId: string) => {
     if (!isAdmin) {
       setRowStatus((prev) => ({
         ...prev,
@@ -1240,7 +1242,7 @@ function UsersTab({
       return
     }
 
-    const amount = Number(shotInputs[userId] ?? '1')
+    const amount = Number(tiradaInputs[userId] ?? '1')
     if (!Number.isFinite(amount) || amount <= 0) {
       setRowStatus((prev) => ({
         ...prev,
@@ -1250,24 +1252,27 @@ function UsersTab({
     }
 
     try {
-      const updatedShots = await incrementUserShotPendings(userId, amount)
-      setShotBalances((prev) => ({
+      const updatedTiradas = await incrementUserTiradasPendientes(
+        userId,
+        amount
+      )
+      setTiradaBalances((prev) => ({
         ...prev,
-        [userId]: updatedShots.pendings
+        [userId]: updatedTiradas.pendientes
       }))
-      setShotInputs((prev) => ({ ...prev, [userId]: '1' }))
+      setTiradaInputs((prev) => ({ ...prev, [userId]: '1' }))
       setRowStatus((prev) => ({
         ...prev,
-        [userId]: `+${amount} tiro(s) agregado(s)`
+        [userId]: `+${amount} tirada(s) agregada(s)`
       }))
       setTimeout(() => {
         setRowStatus((prev) => ({ ...prev, [userId]: null }))
       }, 2500)
     } catch (error) {
-      console.error('Error agregando tiros:', error)
+      console.error('Error agregando tiradas:', error)
       setRowStatus((prev) => ({
         ...prev,
-        [userId]: 'Error al agregar tiros'
+        [userId]: 'Error al agregar tiradas'
       }))
     }
   }
@@ -1281,8 +1286,8 @@ function UsersTab({
               Usuarios Registrados ({filteredUsers.length} de {users.length})
             </h3>
             <p className="text-sm text-gray-500">
-              Visualiza tiradas de ruleta, tiros globales y valida premios desde
-              aquí.
+              Visualiza tiradas de ruleta, tiradas globales y valida premios
+              desde aquí.
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
@@ -1349,9 +1354,9 @@ function UsersTab({
                     states: []
                   } as UserRewardSummary)
                 const grantValue = grantInputs[user.id] ?? '1'
-                const shotValue = shotInputs[user.id] ?? '1'
-                const currentShots =
-                  shotBalances[user.id] ?? user.shots?.pendings ?? 0
+                const tiradaValue = tiradaInputs[user.id] ?? '1'
+                const saldoTiradas =
+                  tiradaBalances[user.id] ?? user.tiradas?.pendientes ?? 0
 
                 return (
                   <tr key={user.id}>
@@ -1413,8 +1418,8 @@ function UsersTab({
                         </span>
                       </p>
                       <p className="flex items-center gap-1 mt-1 text-green-700">
-                        <Aperture className="h-4 w-4" /> Shots:{' '}
-                        <span className="font-semibold">{currentShots}</span>
+                        <Aperture className="h-4 w-4" /> Tiradas manuales:{' '}
+                        <span className="font-semibold">{saldoTiradas}</span>
                       </p>
                     </td>
                     <td className="px-4 py-4 align-top text-xs text-gray-600">
@@ -1488,9 +1493,9 @@ function UsersTab({
                           <input
                             type="number"
                             min={1}
-                            value={shotValue}
+                            value={tiradaValue}
                             onChange={(event) =>
-                              setShotInputs((prev) => ({
+                              setTiradaInputs((prev) => ({
                                 ...prev,
                                 [user.id]: event.target.value
                               }))
@@ -1499,10 +1504,10 @@ function UsersTab({
                           />
                           <button
                             type="button"
-                            onClick={() => handleGrantShots(user.id)}
+                            onClick={() => handleGrantTiradas(user.id)}
                             className="inline-flex items-center gap-1 px-2 py-1 rounded bg-emerald-600 text-white font-semibold text-xs"
                           >
-                            Agregar tiros
+                            Agregar tiradas
                           </button>
                         </div>
                         {rowStatus[user.id] && (

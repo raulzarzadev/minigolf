@@ -34,7 +34,7 @@ const mockUser = {
   createdAt: new Date(),
   gamesPlayed: 5,
   averageScore: 2.5,
-  shots: { pendings: 0 },
+  tiradas: { pendientes: 0 },
   isAdmin: false
 }
 

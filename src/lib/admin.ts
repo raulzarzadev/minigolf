@@ -8,6 +8,7 @@ import {
   where
 } from 'firebase/firestore'
 import { AdminGame, AdminStats, AdminUser } from '@/types'
+import { normalizeUserTiradas } from '@/lib/db'
 import { db } from './firebase'
 
 export async function getAdminStats(): Promise<AdminStats> {
@@ -149,15 +150,7 @@ export async function getAdminUsers(): Promise<AdminUser[]> {
           : new Date(),
         gamesPlayed: userData.gamesPlayed || 0,
         averageScore: userData.averageScore || 0,
-        shots:
-          userData.shots && typeof userData.shots === 'object'
-            ? {
-                pendings:
-                  Number(userData.shots.pendings) >= 0
-                    ? Math.floor(Number(userData.shots.pendings))
-                    : 0
-              }
-            : { pendings: 0 },
+        tiradas: normalizeUserTiradas(userData.tiradas ?? userData.shots),
         isAdmin: userData.isAdmin || false,
         lastLoginAt: userData.lastLoginAt?.toDate
           ? userData.lastLoginAt.toDate()

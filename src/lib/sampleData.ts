@@ -15,7 +15,7 @@ export async function createSampleData() {
         averageScore: 32.4,
         isAdmin: false,
         createdAt: serverTimestamp(),
-        shots: { pendings: 0 }
+        tiradas: { pendientes: 0 }
       },
       {
         name: 'María García',
@@ -24,7 +24,7 @@ export async function createSampleData() {
         averageScore: 28.7,
         isAdmin: false,
         createdAt: serverTimestamp(),
-        shots: { pendings: 0 }
+        tiradas: { pendientes: 0 }
       },
       {
         name: 'Carlos López',
@@ -33,7 +33,7 @@ export async function createSampleData() {
         averageScore: 35.1,
         isAdmin: false,
         createdAt: serverTimestamp(),
-        shots: { pendings: 0 }
+        tiradas: { pendientes: 0 }
       }
     ]
 
