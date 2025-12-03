@@ -95,7 +95,6 @@ export default function RankingPage() {
 
   return (
     <div className="min-h-screen">
-      <Navbar />
       <div className="max-w-4xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-6">
