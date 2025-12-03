@@ -1,6 +1,5 @@
-import { render, screen } from '@testing-library/react'
-
 // Importar el mock
+import { render, screen } from '@testing-library/react'
 import { useAuth } from '@/contexts/AuthContext'
 import { User } from '@/types'
 import Navbar from '@/components/Navbar'
