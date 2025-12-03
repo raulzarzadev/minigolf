@@ -3,6 +3,7 @@
 import { CheckCircle2, Gift, Loader2 } from 'lucide-react'
 import { FC, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
+import { consumeUserTirada, incrementUserTiradasPendientes } from '@/lib/db'
 import {
   getAllRewardStates,
   loadRewardState,
@@ -21,7 +22,6 @@ import {
   rouletteSegmentAngle,
   rouletteSegments
 } from '@/lib/roulette'
-import { consumeUserTirada, incrementUserTiradasPendientes } from '@/lib/db'
 import { Game } from '@/types'
 
 interface RewardLogrosCardProps {
