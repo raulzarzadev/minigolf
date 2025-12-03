@@ -42,7 +42,7 @@ import { createSampleData } from '@/lib/sampleData'
 import { AdminGame, AdminStats, AdminUser, User } from '@/types'
 
 export default function AdminPanel() {
-  const { user } = useAuth()
+  const { user, isAdmin } = useAuth()
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [users, setUsers] = useState<AdminUser[]>([])
   const [games, setGames] = useState<AdminGame[]>([])
@@ -85,7 +85,7 @@ export default function AdminPanel() {
 
   useEffect(() => {
     console.log('AdminPanel useEffect - user:', user)
-    if (!user || !user.isAdmin) {
+    if (!user || !isAdmin) {
       console.log('User not admin or not logged in')
       return
     }
@@ -203,7 +203,7 @@ export default function AdminPanel() {
             <h3 className="font-bold">Debug Info:</h3>
             <p>Loading: {loading.toString()}</p>
             <p>User: {user?.name || 'No user'}</p>
-            <p>Is Admin: {user?.isAdmin?.toString() || 'false'}</p>
+            <p>Is Admin: {isAdmin?.toString() || 'false'}</p>
             <p>Stats: {stats ? 'Loaded' : 'Not loaded'}</p>
             <p>Users count: {users.length}</p>
             <p>Games count: {games.length}</p>
@@ -381,6 +381,7 @@ function RewardsTab({
   onRefreshRewards: () => void
   adminUser: User | null
 }) {
+  const { isAdmin } = useAuth()
   const [oddsDraft, setOddsDraft] = useState({
     small: '10',
     medium: '5',
@@ -397,7 +398,7 @@ function RewardsTab({
   const [savingPriceId, setSavingPriceId] = useState<string | null>(null)
   const [deletingPriceId, setDeletingPriceId] = useState<string | null>(null)
 
-  const hasAccess = !!adminUser?.isAdmin
+  const hasAccess = !!isAdmin
 
   useEffect(() => {
     if (rewardConfig) {
@@ -1092,6 +1093,7 @@ function UsersTab({
   adminUser: User | null
   onRefreshRewards: () => void
 }) {
+  const { isAdmin } = useAuth()
   const [grantInputs, setGrantInputs] = useState<Record<string, string>>({})
   const [rowStatus, setRowStatus] = useState<Record<string, string | null>>({})
   const [shotInputs, setShotInputs] = useState<Record<string, string>>({})
@@ -1167,7 +1169,7 @@ function UsersTab({
       }))
       return
     }
-    if (!adminUser?.isAdmin) {
+    if (!isAdmin) {
       setRowStatus((prev) => ({
         ...prev,
         [userId]: 'Permisos insuficientes'
@@ -1204,7 +1206,7 @@ function UsersTab({
   }
 
   const handleDeliverPrize = (userId: string, prize: PendingPrize) => {
-    if (!adminUser?.isAdmin) {
+    if (!isAdmin) {
       setRowStatus((prev) => ({
         ...prev,
         [userId]: 'Permisos insuficientes'
@@ -1230,7 +1232,7 @@ function UsersTab({
   }
 
   const handleGrantShots = async (userId: string) => {
-    if (!adminUser?.isAdmin) {
+    if (!isAdmin) {
       setRowStatus((prev) => ({
         ...prev,
         [userId]: 'Permisos insuficientes'

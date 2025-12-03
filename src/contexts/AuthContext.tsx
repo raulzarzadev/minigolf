@@ -230,7 +230,7 @@ export const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
     signInWithGoogle,
     logout,
     updateUsername,
-    isAdmin: user?.roles?.includes('admin') || user?.isAdmin || false,
+    isAdmin: user?.roles?.includes('admin') || false,
     refreshUser
   }
 

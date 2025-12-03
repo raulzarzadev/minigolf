@@ -39,7 +39,7 @@ const RewardLogrosCard: FC<RewardLogrosCardProps> = ({ games }) => {
   const [wheelRotation, setWheelRotation] = useState(0)
   const [lastResult, setLastResult] = useState<RewardPrize | null>(null)
   const spinTimeoutRef = useRef<number | null>(null)
-  const { user } = useAuth()
+  const { user, isAdmin } = useAuth()
 
   const gameOptions = useMemo(() => {
     return rewardStates.map((state) => {
@@ -181,7 +181,7 @@ const RewardLogrosCard: FC<RewardLogrosCardProps> = ({ games }) => {
   }
 
   const handleAdminGrant = () => {
-    if (!currentState || !user?.isAdmin) return
+    if (!currentState || isAdmin) return
     const rollsToGrant = Math.max(1, Math.floor(Number(adminRollInput) || 0))
     const updatedState = grantAdminRolls({
       admin: user,
@@ -202,7 +202,7 @@ const RewardLogrosCard: FC<RewardLogrosCardProps> = ({ games }) => {
   }
 
   const handleMarkDelivered = (rollId: string) => {
-    if (!currentState || !user?.isAdmin) return
+    if (!currentState || isAdmin) return
     const updatedState = markPrizeDelivered({
       admin: user,
       gameId: currentState.gameId,
@@ -262,7 +262,7 @@ const RewardLogrosCard: FC<RewardLogrosCardProps> = ({ games }) => {
         )}
       </div>
 
-      {user?.isAdmin && (
+      {isAdmin && (
         <div className="flex flex-wrap items-center gap-2 border border-dashed border-gray-200 rounded-lg p-2 text-xs">
           <span className="font-semibold text-gray-700">Modo staff</span>
           <input
@@ -417,7 +417,7 @@ const RewardLogrosCard: FC<RewardLogrosCardProps> = ({ games }) => {
                         })}
                       </span>
                     </div>
-                    {user?.isAdmin && (
+                    {isAdmin && (
                       <button
                         type="button"
                         onClick={() => handleMarkDelivered(roll.id)}
