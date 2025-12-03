@@ -8,6 +8,7 @@ jest.mock('@/contexts/AuthContext', () => ({
 // Importar el mock
 import { useAuth } from '@/contexts/AuthContext'
 import { User } from '@/types'
+import Navbar from '@/components/Navbar'
 
 const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>
 
