@@ -215,7 +215,7 @@ export const MainUserStats = ({
       {(list.length === 0 || list.includes('averagePerHole')) && (
         <div className="bg-white rounded-lg border border-gray-200 p-3">
           <div className="flex items-center">
-            <div className="flex-shrink-0">
+            <div className="shrink-0">
               <Target className="h-5 w-5 text-green-600" />
             </div>
             <div className="ml-3">
