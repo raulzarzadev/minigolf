@@ -36,7 +36,8 @@ describe('Navbar component', () => {
       firebaseError: null,
       signInWithGoogle: jest.fn(),
       logout: jest.fn(),
-      updateUsername: jest.fn()
+      updateUsername: jest.fn(),
+      isAdmin: false
     })
 
     const { container } = render(<Navbar />)
@@ -51,7 +52,8 @@ describe('Navbar component', () => {
       firebaseError: null,
       signInWithGoogle: jest.fn(),
       logout: jest.fn(),
-      updateUsername: jest.fn()
+      updateUsername: jest.fn(),
+      isAdmin: false
     })
 
     render(<Navbar />)
@@ -73,7 +75,8 @@ describe('Navbar component', () => {
       firebaseError: null,
       signInWithGoogle: jest.fn(),
       logout: jest.fn(),
-      updateUsername: jest.fn()
+      updateUsername: jest.fn(),
+      isAdmin: false
     })
 
     render(<Navbar />)
@@ -90,7 +93,8 @@ describe('Navbar component', () => {
       firebaseError: null,
       signInWithGoogle: jest.fn(),
       logout: jest.fn(),
-      updateUsername: jest.fn()
+      updateUsername: jest.fn(),
+      isAdmin: false
     })
 
     render(<Navbar />)
@@ -117,7 +121,8 @@ describe('Navbar component', () => {
       firebaseError: null,
       signInWithGoogle: jest.fn(),
       logout: jest.fn(),
-      updateUsername: jest.fn()
+      updateUsername: jest.fn(),
+      isAdmin: false
     })
 
     render(<Navbar />)
@@ -134,7 +139,8 @@ describe('Navbar component', () => {
       firebaseError: null,
       signInWithGoogle: jest.fn(),
       logout: jest.fn(),
-      updateUsername: jest.fn()
+      updateUsername: jest.fn(),
+      isAdmin: false
     })
 
     render(<Navbar />)
