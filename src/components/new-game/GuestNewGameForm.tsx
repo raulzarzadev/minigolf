@@ -13,7 +13,6 @@ interface GuestNewGameFormProps {
   onDismissError: () => void
   onCancel: () => void
   renderGameTypeSelector?: () => ReactNode
-  renderPrimaryPlayerInput: () => ReactNode
   renderPlayersSection?: () => ReactNode
   renderHoleCountSelect: () => ReactNode
   renderHiddenFields?: () => ReactNode
@@ -27,7 +26,6 @@ const GuestNewGameForm: FC<GuestNewGameFormProps> = ({
   onDismissError,
   onCancel,
   renderGameTypeSelector,
-  renderPrimaryPlayerInput,
   renderPlayersSection,
   renderHoleCountSelect,
   renderHiddenFields
@@ -47,8 +45,6 @@ const GuestNewGameForm: FC<GuestNewGameFormProps> = ({
             {renderHiddenFields?.()}
 
             {renderGameTypeSelector?.()}
-
-            {renderPrimaryPlayerInput()}
 
             {renderPlayersSection?.()}
 
@@ -82,7 +78,7 @@ const GuestNewGameForm: FC<GuestNewGameFormProps> = ({
             </div>
             {!hasMinimumPlayers && (
               <p className="text-xs text-red-600 text-right">
-                Agrega al menos un jugador adicional
+                Completa los datos requeridos para continuar
               </p>
             )}
           </form>

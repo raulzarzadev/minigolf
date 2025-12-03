@@ -7,7 +7,6 @@ import './globals.css'
 
 import Providers from './providers'
 import Navbar from '@/components/Navbar'
-import ActiveGameBanner from '@/components/ActiveGameBanner'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -82,7 +81,7 @@ export default function RootLayout({
         <div className="bg-gray-50">
           <Providers>
             <Navbar />
-            <ActiveGameBanner />
+
             {children}
             <LogoPreloader />
           </Providers>

@@ -11,6 +11,5 @@ export interface GuestInput {
 
 export interface GameFormData {
   holeCount: number
-  isMultiplayer: string
   tournamentId?: string
 }

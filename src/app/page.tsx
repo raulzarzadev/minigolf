@@ -2,9 +2,9 @@
 import { BarChart3, Clock, Plus, Trophy, User, Users } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import ActiveGameBanner from '@/components/ActiveGameBanner'
 import AuthForm from '@/components/AuthForm'
 import FirebaseSetupGuide from '@/components/FirebaseSetupGuide'
-
 import {
   getUserStats,
   MainUserStats,
@@ -79,6 +79,7 @@ export default function Home() {
   }
   return (
     <div className="min-h-screen">
+      <ActiveGameBanner />
       <div className="max-w-7xl mx-auto py-3 px-3 sm:py-8 sm:px-6 lg:px-8">
         {/* Welcome Header - Shows different content based on auth state */}
         <div className="mb-4">
