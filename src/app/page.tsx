@@ -2,7 +2,6 @@
 import { BarChart3, Clock, Plus, Trophy, User, Users } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import ActiveGameBanner from '@/components/ActiveGameBanner'
 import AuthForm from '@/components/AuthForm'
 import FirebaseSetupGuide from '@/components/FirebaseSetupGuide'
 
