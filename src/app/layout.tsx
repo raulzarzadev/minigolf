@@ -78,12 +78,14 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Providers>
-          <Navbar />
-          <ActiveGameBanner />
-          {children}
-          <LogoPreloader />
-        </Providers>
+        <div className="bg-gray-50">
+          <Providers>
+            <Navbar />
+            <ActiveGameBanner />
+            {children}
+            <LogoPreloader />
+          </Providers>
+        </div>
       </body>
     </html>
   )

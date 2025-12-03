@@ -83,7 +83,7 @@ export default function ProfilePage() {
 
   if (loading || !user) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen">
         <div className="flex items-center justify-center py-16">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-green-500"></div>
         </div>
@@ -94,7 +94,7 @@ export default function ProfilePage() {
   const stats = calculateStats()
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <div className="max-w-7xl mx-auto py-3 px-3 sm:px-6 lg:px-8">
         {/* Profile Header */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">

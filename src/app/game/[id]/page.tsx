@@ -129,7 +129,7 @@ export default function GamePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen">
         <div className="flex items-center justify-center py-16">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-green-500"></div>
         </div>
@@ -139,7 +139,7 @@ export default function GamePage() {
 
   if (!game) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen">
         <div className="max-w-3xl mx-auto py-16 px-4 text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">
             Partida no encontrada
@@ -164,7 +164,7 @@ export default function GamePage() {
   const shouldShowFinishSuggestion = canFinish && allPlayersFinished()
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <div className="max-w-6xl mx-auto py-3 px-3 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-4">

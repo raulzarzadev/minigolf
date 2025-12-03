@@ -320,7 +320,7 @@ export default function NewGamePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <div className="max-w-3xl mx-auto py-4 px-3 sm:px-6 lg:px-8">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <h1 className="text-xl font-bold text-gray-900 mb-4">

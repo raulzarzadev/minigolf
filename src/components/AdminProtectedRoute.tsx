@@ -22,7 +22,7 @@ export default function AdminProtectedRoute({
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center max-w-md mx-auto p-8">
           <div className="mb-6">
             <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
@@ -62,7 +62,7 @@ export default function AdminProtectedRoute({
 
   if (!isAdmin) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center max-w-md mx-auto p-8">
           <div className="mb-6">
             <div className="mx-auto w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center">

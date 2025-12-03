@@ -22,30 +22,32 @@ const ActiveGameBanner: FC = () => {
 
   return (
     <div className="px-3 sm:px-6 lg:px-8 mt-2">
-      <div className="rounded-2xl bg-gradient-to-r from-orange-500 via-orange-400 to-yellow-400 text-white shadow-lg">
-        <div className="p-4 flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="relative h-12 w-12 rounded-2xl bg-white/20 flex items-center justify-center">
-              <Clock className="h-6 w-6 text-white" />
-              <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-red-300 animate-ping"></span>
-              <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-white"></span>
+      <div className="relative overflow-hidden rounded-3xl bg-linear-to-r from-orange-500 via-orange-400 to-yellow-400 text-white shadow-xl">
+        <div className="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.9),transparent_60%)]" />
+        <div className="relative p-5 space-y-4">
+          <div className="flex items-start gap-4">
+            <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-white/25 backdrop-blur-sm">
+              <Clock className="h-7 w-7 text-white" />
+              <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-red-300 animate-ping" />
+              <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-white" />
             </div>
-            <div className="text-sm">
-              <p className="text-xs uppercase tracking-wide text-white/80">
+            <div className="flex-1 space-y-1">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/80">
                 Tienes una partida en curso
               </p>
-              <p className="text-base font-semibold">{label}</p>
-              <p className="text-xs text-white/80 flex items-center gap-1">
-                <Users className="h-3.5 w-3.5" />
+              <p className="text-lg font-semibold leading-tight">{label}</p>
+              <p className="text-sm text-white/90 flex items-center gap-1.5">
+                <Users className="h-4 w-4" />
                 <span>
                   {playerLabel} · {activeGame.holeCount} hoyos · {badgeLabel}
                 </span>
               </p>
             </div>
           </div>
+
           <Link
             href={`/game/${activeGame.id}`}
-            className="inline-flex items-center justify-center px-4 py-2 bg-white text-orange-600 font-semibold rounded-xl shadow-sm hover:bg-orange-50 active:scale-95 transition-all text-sm touch-manipulation"
+            className="inline-flex w-full items-center justify-center rounded-2xl bg-white/95 px-6 py-3 text-base font-semibold text-orange-600 shadow-md transition-all hover:bg-white touch-manipulation"
           >
             Continuar partida
           </Link>

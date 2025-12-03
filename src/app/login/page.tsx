@@ -55,7 +55,7 @@ function LoginContent() {
   if (user) {
     if (isMigrating) {
       return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen">
           <div className="flex items-center justify-center py-16">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto mb-4"></div>
@@ -75,7 +75,7 @@ function LoginContent() {
   }
 
   return (
-    <div className=" bg-gray-50 min-h-screen">
+    <div className="min-h-screen">
       <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <AuthForm />
       </div>
@@ -87,7 +87,7 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen">
           <div className="flex items-center justify-center py-16">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
           </div>
