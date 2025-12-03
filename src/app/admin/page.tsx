@@ -28,7 +28,6 @@ import {
   getAllRewardStates,
   getPrizeDeliveryStats,
   getRewardConfig,
-  grantAdminRolls,
   markPrizeDelivered,
   PrizeTier,
   prizeCatalog,
@@ -315,7 +314,6 @@ function OverviewTab({ stats }: { stats: AdminStats | null }) {
 type PendingPrize = RewardRoll & { gameId: string }
 
 interface UserRewardSummary {
-  availableRolls: number
   totalRolls: number
   deliveredPrizes: number
   pendingPrizes: PendingPrize[]
@@ -1094,7 +1092,6 @@ function UsersTab({
   onRefreshRewards: () => void
 }) {
   const { isAdmin } = useAuth()
-  const [grantInputs, setGrantInputs] = useState<Record<string, string>>({})
   const [rowStatus, setRowStatus] = useState<Record<string, string | null>>({})
   const [tiradaInputs, setTiradaInputs] = useState<Record<string, string>>({})
   const [tiradaBalances, setTiradaBalances] = useState<Record<string, number>>(
@@ -1119,7 +1116,6 @@ function UsersTab({
       const ownerId = game.createdBy
       if (!summary[ownerId]) {
         summary[ownerId] = {
-          availableRolls: 0,
           totalRolls: 0,
           deliveredPrizes: 0,
           pendingPrizes: [],
@@ -1128,7 +1124,6 @@ function UsersTab({
       }
 
       const entry = summary[ownerId]
-      entry.availableRolls += state.availableRolls
       entry.totalRolls += state.rollHistory.length
       entry.states.push(state)
 
@@ -1161,51 +1156,6 @@ function UsersTab({
         )
     )
   }, [users, searchTerm])
-
-  const handleGrantRolls = (userId: string) => {
-    const entry = rewardSummary[userId]
-    if (!entry || entry.states.length === 0) {
-      setRowStatus((prev) => ({
-        ...prev,
-        [userId]: 'No hay partidas elegibles'
-      }))
-      return
-    }
-    if (!isAdmin) {
-      setRowStatus((prev) => ({
-        ...prev,
-        [userId]: 'Permisos insuficientes'
-      }))
-      return
-    }
-
-    const amount = Number(grantInputs[userId] ?? '1')
-    if (!Number.isFinite(amount) || amount <= 0) {
-      setRowStatus((prev) => ({
-        ...prev,
-        [userId]: 'Ingresa una cantidad válida'
-      }))
-      return
-    }
-
-    const targetState = [...entry.states].sort(
-      (a, b) => b.updatedAt - a.updatedAt
-    )[0]
-    grantAdminRolls({
-      admin: adminUser,
-      gameId: targetState.gameId,
-      rolls: amount
-    })
-    setRowStatus((prev) => ({
-      ...prev,
-      [userId]: `Se otorgaron ${amount} tirada(s)`
-    }))
-    setGrantInputs((prev) => ({ ...prev, [userId]: '1' }))
-    onRefreshRewards()
-    setTimeout(() => {
-      setRowStatus((prev) => ({ ...prev, [userId]: null }))
-    }, 2500)
-  }
 
   const handleDeliverPrize = (userId: string, prize: PendingPrize) => {
     if (!isAdmin) {
@@ -1347,13 +1297,11 @@ function UsersTab({
                 const entry =
                   rewardSummary[user.id] ||
                   ({
-                    availableRolls: 0,
                     totalRolls: 0,
                     deliveredPrizes: 0,
                     pendingPrizes: [],
                     states: []
                   } as UserRewardSummary)
-                const grantValue = grantInputs[user.id] ?? '1'
                 const tiradaValue = tiradaInputs[user.id] ?? '1'
                 const saldoTiradas =
                   tiradaBalances[user.id] ?? user.tiradas?.pendientes ?? 0
@@ -1410,15 +1358,8 @@ function UsersTab({
                           {entry.totalRolls}
                         </span>
                       </p>
-                      <p className="flex items-center gap-1 mt-1">
-                        <Aperture className="h-4 w-4 text-amber-600" />
-                        Por tirar:{' '}
-                        <span className="font-semibold text-gray-900">
-                          {entry.availableRolls}
-                        </span>
-                      </p>
                       <p className="flex items-center gap-1 mt-1 text-green-700">
-                        <Aperture className="h-4 w-4" /> Tiradas manuales:{' '}
+                        <Aperture className="h-4 w-4" /> Tiradas disponibles:{' '}
                         <span className="font-semibold">{saldoTiradas}</span>
                       </p>
                     </td>
@@ -1468,28 +1409,6 @@ function UsersTab({
                     <td className="px-4 py-4 align-top text-xs text-gray-600">
                       <div className="flex flex-col gap-2">
                         <div className="flex items-center gap-2">
-                          <input
-                            type="number"
-                            min={1}
-                            value={grantValue}
-                            onChange={(event) =>
-                              setGrantInputs((prev) => ({
-                                ...prev,
-                                [user.id]: event.target.value
-                              }))
-                            }
-                            className="w-16 border border-gray-300 rounded px-1 py-1 text-xs"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => handleGrantRolls(user.id)}
-                            className="inline-flex items-center gap-1 px-2 py-1 rounded bg-green-600 text-white font-semibold text-xs disabled:opacity-50"
-                            disabled={entry.states.length === 0}
-                          >
-                            Dar tiradas
-                          </button>
-                        </div>
-                        <div className="flex items-center gap-2 pt-2 border-t border-dashed border-gray-200">
                           <input
                             type="number"
                             min={1}

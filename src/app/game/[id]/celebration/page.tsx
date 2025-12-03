@@ -14,7 +14,11 @@ import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 
 import { useAuth } from '@/contexts/AuthContext'
-import { subscribeToGame } from '@/lib/db'
+import {
+  consumeUserTirada,
+  incrementUserTiradasPendientes,
+  subscribeToGame
+} from '@/lib/db'
 import { getLocalGame, isLocalGame } from '@/lib/localStorage'
 import {
   loadRewardState,
@@ -74,7 +78,7 @@ type RollResult = {
 export default function CelebrationPage() {
   const params = useParams()
   const router = useRouter()
-  const { user } = useAuth()
+  const { user, refreshUser } = useAuth()
   const [game, setGame] = useState<Game | null>(null)
   const [loading, setLoading] = useState(true)
   const [completedSteps, setCompletedSteps] = useState<Record<string, boolean>>(
@@ -99,6 +103,12 @@ export default function CelebrationPage() {
     setLastResult(stored.rollHistory[0]?.tier ?? null)
     setRewardInitialized(true)
   }, [gameId])
+
+  useEffect(() => {
+    if (typeof user?.tiradas?.pendientes === 'number') {
+      setAvailableRolls(user.tiradas.pendientes)
+    }
+  }, [user?.tiradas?.pendientes])
 
   useEffect(() => {
     return () => {
@@ -144,20 +154,37 @@ export default function CelebrationPage() {
     if (!rewardInitialized || completedSteps[stepId]) return
     triggerRewardStepAction(stepId, { gameId, user })
     const updatedSteps = { ...completedSteps, [stepId]: true }
-    const nextRolls = availableRolls + 1
     setCompletedSteps(updatedSteps)
-    setAvailableRolls(nextRolls)
     syncRewardState({
       completedSteps: updatedSteps,
-      availableRolls: nextRolls,
       lastInstruction: null
     })
     setLastInstruction(gameId, null)
+
+    if (!user) {
+      return
+    }
+
+    try {
+      const updatedTiradas = await incrementUserTiradasPendientes(user.id, 1)
+      setAvailableRolls(updatedTiradas.pendientes)
+      syncRewardState({ availableRolls: updatedTiradas.pendientes })
+      await refreshUser()
+    } catch (error) {
+      console.error('Error incrementando tiradas tras completar paso:', error)
+    }
   }
 
   const handleSpinRoulette = () => {
-    if (!rewardInitialized || availableRolls <= 0 || !isFinished || isSpinning)
+    if (
+      !rewardInitialized ||
+      availableRolls <= 0 ||
+      !isFinished ||
+      isSpinning ||
+      !user
+    ) {
       return
+    }
 
     setIsSpinning(true)
     setLastResult(null)
@@ -187,22 +214,28 @@ export default function CelebrationPage() {
       window.clearTimeout(spinTimeoutRef.current)
     }
 
-    spinTimeoutRef.current = window.setTimeout(() => {
+    spinTimeoutRef.current = window.setTimeout(async () => {
       setRollHistory((prevHistory) => {
         const updatedHistory = [newRoll, ...prevHistory]
-        setAvailableRolls((prevRolls) => {
-          const nextRolls = Math.max(0, prevRolls - 1)
-          syncRewardState({
-            rollHistory: updatedHistory,
-            availableRolls: nextRolls
-          })
-          return nextRolls
-        })
+        syncRewardState({ rollHistory: updatedHistory })
         return updatedHistory
       })
-      setIsSpinning(false)
-      setLastResult(tier)
-      spinTimeoutRef.current = null
+
+      try {
+        const updatedTiradas = await consumeUserTirada(user.id, 1)
+        setAvailableRolls(updatedTiradas.pendientes)
+        syncRewardState({ availableRolls: updatedTiradas.pendientes })
+        await refreshUser()
+      } catch (error) {
+        console.error(
+          'Error consumiendo tirada después de girar ruleta:',
+          error
+        )
+      } finally {
+        setIsSpinning(false)
+        setLastResult(tier)
+        spinTimeoutRef.current = null
+      }
     }, ROULETTE_SPIN_DURATION_MS)
   }
 

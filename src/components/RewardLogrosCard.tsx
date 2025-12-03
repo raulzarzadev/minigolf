@@ -5,7 +5,6 @@ import { FC, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import {
   getAllRewardStates,
-  grantAdminRolls,
   loadRewardState,
   markPrizeDelivered,
   PrizeTier,
@@ -22,6 +21,7 @@ import {
   rouletteSegmentAngle,
   rouletteSegments
 } from '@/lib/roulette'
+import { consumeUserTirada, incrementUserTiradasPendientes } from '@/lib/db'
 import { Game } from '@/types'
 
 interface RewardLogrosCardProps {
@@ -39,7 +39,7 @@ const RewardLogrosCard: FC<RewardLogrosCardProps> = ({ games }) => {
   const [wheelRotation, setWheelRotation] = useState(0)
   const [lastResult, setLastResult] = useState<RewardPrize | null>(null)
   const spinTimeoutRef = useRef<number | null>(null)
-  const { user, isAdmin } = useAuth()
+  const { user, isAdmin, refreshUser } = useAuth()
 
   const gameOptions = useMemo(() => {
     return rewardStates.map((state) => {
@@ -108,7 +108,8 @@ const RewardLogrosCard: FC<RewardLogrosCardProps> = ({ games }) => {
   const selectedGame = currentState
     ? games.find((game) => game.id === currentState.gameId)
     : undefined
-  const rollsAvailable = currentState?.availableRolls ?? 0
+  const rollsAvailable =
+    user?.tiradas?.pendientes ?? currentState?.availableRolls ?? 0
   const isFinishedGame = selectedGame?.status === 'finished'
   const rouletteHelperMessage = isFinishedGame
     ? rollsAvailable > 0
@@ -127,8 +128,15 @@ const RewardLogrosCard: FC<RewardLogrosCardProps> = ({ games }) => {
     : 'Pulsa la ruleta cuando tengas tiradas disponibles.'
 
   const handleSpinRoulette = () => {
-    if (!currentState || !isFinishedGame || rollsAvailable <= 0 || isSpinning)
+    if (
+      !currentState ||
+      !isFinishedGame ||
+      rollsAvailable <= 0 ||
+      isSpinning ||
+      !user
+    ) {
       return
+    }
 
     setIsSpinning(true)
     setLastResult(null)
@@ -161,11 +169,45 @@ const RewardLogrosCard: FC<RewardLogrosCardProps> = ({ games }) => {
       window.clearTimeout(spinTimeoutRef.current)
     }
 
-    spinTimeoutRef.current = window.setTimeout(() => {
-      const latestState = loadRewardState(activeGameId)
-      const updatedState = persistRewardState(activeGameId, {
-        availableRolls: Math.max(0, latestState.availableRolls - 1),
-        rollHistory: [newRoll, ...latestState.rollHistory]
+    spinTimeoutRef.current = window.setTimeout(async () => {
+      try {
+        const latestState = loadRewardState(activeGameId)
+        const updatedState = persistRewardState(activeGameId, {
+          availableRolls: Math.max(0, latestState.availableRolls - 1),
+          rollHistory: [newRoll, ...latestState.rollHistory]
+        })
+
+        setCurrentState(updatedState)
+        setRewardStates((prev) =>
+          prev.map((state) =>
+            state.gameId === updatedState.gameId ? updatedState : state
+          )
+        )
+
+        await consumeUserTirada(user.id, 1)
+        await refreshUser()
+      } catch (error) {
+        console.error('Error consumiendo tirada tras girar ruleta:', error)
+      } finally {
+        setIsSpinning(false)
+        setLastResult(tier)
+        spinTimeoutRef.current = null
+      }
+    }, ROULETTE_SPIN_DURATION_MS)
+  }
+
+  const handleAdminGrant = async () => {
+    if (!currentState || !user || !isAdmin) return
+    const rollsToGrant = Math.max(1, Math.floor(Number(adminRollInput) || 0))
+
+    try {
+      const updatedTiradas = await incrementUserTiradasPendientes(
+        user.id,
+        rollsToGrant
+      )
+
+      const updatedState = persistRewardState(currentState.gameId, {
+        availableRolls: updatedTiradas.pendientes
       })
 
       setCurrentState(updatedState)
@@ -174,31 +216,16 @@ const RewardLogrosCard: FC<RewardLogrosCardProps> = ({ games }) => {
           state.gameId === updatedState.gameId ? updatedState : state
         )
       )
-      setIsSpinning(false)
-      setLastResult(tier)
-      spinTimeoutRef.current = null
-    }, ROULETTE_SPIN_DURATION_MS)
-  }
 
-  const handleAdminGrant = () => {
-    if (!currentState || isAdmin) return
-    const rollsToGrant = Math.max(1, Math.floor(Number(adminRollInput) || 0))
-    const updatedState = grantAdminRolls({
-      admin: user,
-      gameId: currentState.gameId,
-      rolls: rollsToGrant
-    })
-    if (!updatedState) return
-
-    setCurrentState(updatedState)
-    setRewardStates((prev) =>
-      prev.map((state) =>
-        state.gameId === updatedState.gameId ? updatedState : state
-      )
-    )
-    setAdminRollInput('1')
-    setAdminStatus(`+${rollsToGrant} tirada(s) asignada(s)`)
-    setTimeout(() => setAdminStatus(null), 2500)
+      setAdminRollInput('1')
+      setAdminStatus(`+${rollsToGrant} tirada(s) asignada(s)`)
+      await refreshUser()
+    } catch (error) {
+      console.error('Error asignando tiradas manuales:', error)
+      setAdminStatus('No se pudo asignar tiradas')
+    } finally {
+      setTimeout(() => setAdminStatus(null), 2500)
+    }
   }
 
   const handleMarkDelivered = (rollId: string) => {
