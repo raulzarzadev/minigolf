@@ -61,12 +61,22 @@ const RewardLogrosCard: FC<RewardLogrosCardProps> = ({ games }) => {
   useEffect(() => {
     const states = getAllRewardStates()
     setRewardStates(states)
-    const fallback = states[0] ?? null
-    const fallbackId = fallback?.gameId ?? null
+
+    if (states.length > 0) {
+      const fallback = states[0]
+      setSelectedGameId(fallback.gameId)
+      setCurrentState(loadRewardState(fallback.gameId))
+      setLoading(false)
+      return
+    }
+
+    const fallbackId = user ? `global-${user.id}` : 'global'
+    const fallbackState = loadRewardState(fallbackId)
+    setRewardStates([fallbackState])
     setSelectedGameId(fallbackId)
-    setCurrentState(fallbackId ? loadRewardState(fallbackId) : null)
+    setCurrentState(fallbackState)
     setLoading(false)
-  }, [])
+  }, [user?.id, user])
 
   useEffect(() => {
     return () => {
@@ -110,7 +120,9 @@ const RewardLogrosCard: FC<RewardLogrosCardProps> = ({ games }) => {
     : undefined
   const rollsAvailable =
     user?.tiradas?.pendientes ?? currentState?.availableRolls ?? 0
-  const isFinishedGame = selectedGame?.status === 'finished'
+  const isFinishedGame = selectedGame
+    ? selectedGame.status === 'finished'
+    : true
   const rouletteHelperMessage = isFinishedGame
     ? rollsAvailable > 0
       ? `${rollsAvailable} tirada(s) disponible(s)`
