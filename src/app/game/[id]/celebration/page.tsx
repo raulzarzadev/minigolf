@@ -424,7 +424,7 @@ export default function CelebrationPage() {
                 type="button"
                 onClick={handleSpinRoulette}
                 disabled={!isFinished || availableRolls === 0 || isSpinning}
-                className="relative h-44 w-44 rounded-full focus-visible:outline-none disabled:opacity-40 disabled:cursor-not-allowed"
+                className="relative h-56 w-56 md:h-64 md:w-64 rounded-full focus-visible:outline-none disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <div
                   aria-hidden="true"
@@ -443,7 +443,7 @@ export default function CelebrationPage() {
                   />
                 </div>
                 <div
-                  className="absolute inset-0 rounded-full border-4 border-white shadow-lg transition-transform ease-out"
+                  className="absolute inset-0 rounded-full border-[6px] border-white shadow-xl transition-transform ease-out"
                   style={{
                     backgroundImage: rouletteGradient,
                     transform: `rotate(${wheelRotation}deg)`,
@@ -451,7 +451,30 @@ export default function CelebrationPage() {
                   }}
                 />
                 <div className="absolute inset-0 rounded-full overflow-hidden">
-                  <div className="absolute inset-3 rounded-full bg-white/90 backdrop-blur flex flex-col items-center justify-center text-center px-4">
+                  <div className="absolute inset-2 flex items-center justify-center">
+                    {rouletteSegments.map((segment, index) => {
+                      const rotation =
+                        index * rouletteSegmentAngle + rouletteSegmentAngle / 2
+                      return (
+                        <div
+                          key={segment.tier}
+                          className="absolute inset-4 flex items-center justify-center"
+                          style={{ transform: `rotate(${rotation}deg)` }}
+                        >
+                          <span
+                            className="text-[11px] font-semibold uppercase tracking-tight text-center"
+                            style={{
+                              color: segment.color,
+                              transform: `rotate(-${rotation}deg)`
+                            }}
+                          >
+                            {segment.label}
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                  <div className="absolute inset-5 rounded-full bg-white/95 backdrop-blur flex flex-col items-center justify-center text-center px-4">
                     <p className="text-[11px] uppercase tracking-wide text-gray-400">
                       Ruleta
                     </p>
