@@ -14,6 +14,7 @@ import {
 import { useEffect, useMemo, useState } from 'react'
 import AdminProtectedRoute from '@/components/AdminProtectedRoute'
 import { useAuth } from '@/contexts/AuthContext'
+import { prizeCatalog } from '@/constants/prizes'
 import { getAdminGames, getAdminStats, getAdminUsers } from '@/lib/admin'
 import { checkMigrationStatus, migrateExistingUsers } from '@/lib/migration'
 import {
@@ -23,22 +24,10 @@ import {
   PriceRecord,
   updatePrice
 } from '@/lib/prices'
-import {
-  getAllRewardStates,
-  getPrizeDeliveryStats,
-  getRewardConfig,
-  markPrizeDelivered,
-  PrizeTier,
-  prizeCatalog,
-  RewardConfig,
-  RewardPrize,
-  RewardRoll,
-  RewardState,
-  updateRewardOdds
-} from '@/lib/rewards'
 import { createSampleData } from '@/lib/sampleData'
-import { incrementUserTries } from '@/lib/tries'
-import { AdminGame, AdminStats, AdminUser, User } from '@/types'
+import { deliverPrizeForUser, incrementUserTries } from '@/lib/tries'
+import { AdminGame, AdminStats, AdminUser } from '@/types'
+import { PrizeTier } from '@/types/rewards'
 
 export default function AdminPanel() {
   const { user, isAdmin } = useAuth()
@@ -49,27 +38,17 @@ export default function AdminPanel() {
   const [activeTab, setActiveTab] = useState<
     'overview' | 'users' | 'games' | 'rewards' | 'migration'
   >('overview')
-  const [rewardStates, setRewardStates] = useState<RewardState[]>([])
-  const [rewardConfig, setRewardConfig] = useState<RewardConfig | null>(null)
-  const [deliveryStats, setDeliveryStats] = useState<
-    Record<RewardPrize, number>
-  >({
-    large: 0,
-    medium: 0,
-    small: 0,
-    none: 0
-  })
   const [prices, setPrices] = useState<PriceRecord[]>([])
   const [rewardsLoading, setRewardsLoading] = useState(true)
   const refreshRewardCenter = async () => {
     setRewardsLoading(true)
     try {
-      const states = getAllRewardStates()
-      setRewardStates(states)
-      setRewardConfig(getRewardConfig())
-      setDeliveryStats(getPrizeDeliveryStats())
-      const remotePrices = await listPrices()
+      const [remotePrices, latestUsers] = await Promise.all([
+        listPrices(),
+        getAdminUsers()
+      ])
       setPrices(remotePrices)
+      setUsers(latestUsers)
     } catch (error) {
       console.error('Error loading reward data:', error)
     } finally {
@@ -212,24 +191,17 @@ export default function AdminPanel() {
           {activeTab === 'users' && (
             <UsersTab
               users={users}
-              games={games}
-              rewardStates={rewardStates}
-              adminUser={user}
+              prices={prices}
               onRefreshRewards={refreshRewardCenter}
             />
           )}
           {activeTab === 'games' && <GamesTab games={games} />}
           {activeTab === 'rewards' && (
             <RewardsTab
-              rewardConfig={rewardConfig}
-              deliveryStats={deliveryStats}
-              rewardStates={rewardStates}
-              games={games}
               users={users}
               prices={prices}
               loading={rewardsLoading}
               onRefreshRewards={refreshRewardCenter}
-              adminUser={user}
             />
           )}
           {activeTab === 'migration' && <MigrationTab />}
@@ -311,17 +283,6 @@ function OverviewTab({ stats }: { stats: AdminStats | null }) {
   )
 }
 
-type PendingPrize = RewardRoll & { gameId: string }
-
-interface UserRewardSummary {
-  totalRolls: number
-  deliveredPrizes: number
-  pendingPrizes: PendingPrize[]
-  states: RewardState[]
-}
-
-type RecentRoll = RewardRoll & { gameId: string }
-
 type PriceFormState = {
   title: string
   description: string
@@ -358,33 +319,36 @@ const formToPayload = (form: PriceFormState) => ({
   isActive: form.isActive
 })
 
+type TierStats = Record<
+  'small' | 'medium' | 'large' | 'bonus',
+  { pending: number; delivered: number }
+>
+
+type RecentPrizeRow = {
+  id: string
+  userId: string
+  username: string
+  userName: string
+  prizeId: string
+  prizeTitle: string
+  prizeDescription: string
+  tier: PrizeTier | 'bonus'
+  wonAt: Date
+  deliveredAt: Date | null
+}
+
 function RewardsTab({
-  rewardConfig,
-  deliveryStats,
-  rewardStates,
-  games = [],
   users,
   prices,
   loading,
-  onRefreshRewards,
-  adminUser
+  onRefreshRewards
 }: {
-  rewardConfig: RewardConfig | null
-  deliveryStats: Record<RewardPrize, number>
-  rewardStates: RewardState[]
-  games: AdminGame[]
   users: AdminUser[]
   prices: PriceRecord[]
   loading: boolean
   onRefreshRewards: () => void
-  adminUser: User | null
 }) {
   const { isAdmin } = useAuth()
-  const [oddsDraft, setOddsDraft] = useState({
-    small: '10',
-    medium: '5',
-    large: '2'
-  })
   const [statusMessage, setStatusMessage] = useState<string | null>(null)
   const [priceDraft, setPriceDraft] = useState<PriceFormState>(() =>
     emptyPriceForm()
@@ -395,72 +359,114 @@ function RewardsTab({
   const [creatingPrice, setCreatingPrice] = useState(false)
   const [savingPriceId, setSavingPriceId] = useState<string | null>(null)
   const [deletingPriceId, setDeletingPriceId] = useState<string | null>(null)
+  const [deliveringPrizeId, setDeliveringPrizeId] = useState<string | null>(
+    null
+  )
 
   const hasAccess = !!isAdmin
-
-  useEffect(() => {
-    if (rewardConfig) {
-      setOddsDraft({
-        small: Math.round((rewardConfig.odds.small || 0) * 100).toString(),
-        medium: Math.round((rewardConfig.odds.medium || 0) * 100).toString(),
-        large: Math.round((rewardConfig.odds.large || 0) * 100).toString()
-      })
-    }
-  }, [rewardConfig])
-
-  const gameMap = useMemo(() => {
-    const map = new Map<string, AdminGame>()
-    games?.forEach((game) => {
-      map.set(game.id, game)
-    })
-    return map
-  }, [games])
-
-  const userMap = useMemo(() => {
-    const map = new Map<string, AdminUser>()
-    users.forEach((u) => {
-      map.set(u.id, u)
-    })
-    return map
-  }, [users])
-
-  const recentRolls = useMemo<RecentRoll[]>(() => {
-    const entries: RecentRoll[] = []
-    rewardStates.forEach((state) => {
-      state.rollHistory.forEach((roll) => {
-        entries.push({ ...roll, gameId: state.gameId })
-      })
-    })
-    return entries.sort((a, b) => b.timestamp - a.timestamp).slice(0, 20)
-  }, [rewardStates])
-
   const priceList = prices
 
-  const handleSaveOdds = async () => {
-    if (!hasAccess) {
-      setStatusMessage('Solo los administradores pueden editar probabilidades')
-      return
-    }
-    updateRewardOdds({
-      small: Number(oddsDraft.small) / 100,
-      medium: Number(oddsDraft.medium) / 100,
-      large: Number(oddsDraft.large) / 100
+  const prizeMap = useMemo(() => {
+    const map = new Map<string, PriceRecord>()
+    prices.forEach((price) => {
+      map.set(price.id, price)
     })
-    setStatusMessage('Probabilidades actualizadas')
-    await onRefreshRewards()
-    setTimeout(() => setStatusMessage(null), 2500)
-  }
+    return map
+  }, [prices])
 
-  const handleDeliver = async (roll: RecentRoll) => {
-    if (!hasAccess || roll.tier === 'none') return
-    const result = markPrizeDelivered({
-      admin: adminUser,
-      gameId: roll.gameId,
-      rollId: roll.id
+  const tierStats = useMemo<TierStats>(() => {
+    const base: TierStats = {
+      small: { pending: 0, delivered: 0 },
+      medium: { pending: 0, delivered: 0 },
+      large: { pending: 0, delivered: 0 },
+      bonus: { pending: 0, delivered: 0 }
+    }
+
+    users.forEach((candidate) => {
+      candidate.tries?.prizesWon?.forEach((entry) => {
+        const record = prizeMap.get(entry.prizeId)
+        const tier = (record?.tier ?? 'bonus') as keyof TierStats
+        const bucket = base[tier] ?? base.bonus
+        if (entry.deliveredAt) {
+          bucket.delivered += 1
+        } else {
+          bucket.pending += 1
+        }
+      })
     })
-    if (result) {
+
+    return base
+  }, [users, prizeMap])
+
+  const totalTriesAvailable = useMemo(
+    () =>
+      users.reduce(
+        (sum, candidate) => sum + (candidate.tries?.triesLeft ?? 0),
+        0
+      ),
+    [users]
+  )
+
+  const totalTriesPlayed = useMemo(
+    () =>
+      users.reduce(
+        (sum, candidate) => sum + (candidate.tries?.triesPlayed ?? 0),
+        0
+      ),
+    [users]
+  )
+
+  const totalPendingPrizes = useMemo(
+    () =>
+      Object.values(tierStats).reduce((sum, bucket) => sum + bucket.pending, 0),
+    [tierStats]
+  )
+
+  const recentPrizes = useMemo<RecentPrizeRow[]>(() => {
+    const rows: RecentPrizeRow[] = []
+
+    users.forEach((candidate) => {
+      candidate.tries?.prizesWon?.forEach((entry, index) => {
+        const record = prizeMap.get(entry.prizeId)
+        const tier = (record?.tier ?? 'bonus') as PrizeTier | 'bonus'
+        const fallback =
+          tier === 'bonus' ? null : prizeCatalog[tier as PrizeTier]
+        const wonAt = entry.wonAt ?? new Date()
+        rows.push({
+          id: `${candidate.id}-${entry.prizeId}-${wonAt.getTime()}-${index}`,
+          userId: candidate.id,
+          username: candidate.username,
+          userName: candidate.name,
+          prizeId: entry.prizeId,
+          prizeTitle: record?.title ?? fallback?.label ?? 'Premio sorpresa',
+          prizeDescription:
+            record?.description ??
+            fallback?.description ??
+            'Valida este premio con el staff.',
+          tier,
+          wonAt,
+          deliveredAt: entry.deliveredAt ?? null
+        })
+      })
+    })
+
+    return rows
+      .sort((a, b) => b.wonAt.getTime() - a.wonAt.getTime())
+      .slice(0, 20)
+  }, [users, prizeMap])
+
+  const handleDeliver = async (prize: RecentPrizeRow) => {
+    if (!hasAccess || prize.deliveredAt) return
+    try {
+      setDeliveringPrizeId(prize.id)
+      await deliverPrizeForUser(prize.userId, prize.prizeId)
       setStatusMessage('Premio marcado como entregado')
       await onRefreshRewards()
+    } catch (error) {
+      console.error('Error marcando premio como entregado:', error)
+      setStatusMessage('No se pudo marcar el premio')
+    } finally {
+      setDeliveringPrizeId(null)
       setTimeout(() => setStatusMessage(null), 2500)
     }
   }
@@ -586,7 +592,12 @@ function RewardsTab({
     }
   }
 
-  const statOrder: RewardPrize[] = ['large', 'medium', 'small', 'none']
+  const statOrder: Array<keyof TierStats> = [
+    'large',
+    'medium',
+    'small',
+    'bonus'
+  ]
 
   return (
     <div className="space-y-6">
@@ -596,8 +607,7 @@ function RewardsTab({
             Premios y tiradas
           </h3>
           <p className="text-sm text-gray-500">
-            Controla las probabilidades, catálogo de premios y seguimiento de
-            entregas.
+            Controla el catálogo de premios y el seguimiento de entregas.
           </p>
         </div>
         <button
@@ -618,11 +628,11 @@ function RewardsTab({
         <>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {statOrder.map((tier) => {
-              const count = deliveryStats[tier] || 0
-              const label =
-                tier === 'none'
-                  ? 'Intentos sin premio'
-                  : prizeCatalog[tier as PrizeTier]?.label || `Premio ${tier}`
+              const bucket = tierStats[tier]
+              const tierLabel =
+                tier === 'bonus'
+                  ? 'Premios bonus'
+                  : prizeCatalog[tier]?.label || `Premio ${tier}`
               const accent =
                 tier === 'large'
                   ? 'text-purple-700'
@@ -630,7 +640,7 @@ function RewardsTab({
                     ? 'text-blue-600'
                     : tier === 'small'
                       ? 'text-green-600'
-                      : 'text-gray-500'
+                      : 'text-amber-600'
 
               return (
                 <div
@@ -639,8 +649,16 @@ function RewardsTab({
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-xs uppercase text-gray-500">{label}</p>
-                      <p className={`text-2xl font-bold ${accent}`}>{count}</p>
+                      <p className="text-xs uppercase text-gray-500">
+                        {tierLabel}
+                      </p>
+                      <p className={`text-2xl font-bold ${accent}`}>
+                        {bucket.delivered + bucket.pending}
+                      </p>
+                      <p className="text-[11px] text-gray-500">
+                        {bucket.delivered} entregados · {bucket.pending}{' '}
+                        pendientes
+                      </p>
                     </div>
                     <Gift className="h-8 w-8 text-gray-300" />
                   </div>
@@ -652,47 +670,28 @@ function RewardsTab({
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
               <h4 className="text-sm font-semibold text-gray-900">
-                Probabilidades de premios
+                Resumen de tiradas
               </h4>
-              <div className="grid grid-cols-3 gap-2">
-                {(['small', 'medium', 'large'] as PrizeTier[]).map((tier) => (
-                  <label
-                    key={`odds-${tier}`}
-                    className="text-xs text-gray-600 space-y-1"
-                  >
-                    <span className="font-semibold capitalize">
-                      {tier === 'small'
-                        ? 'Premio chico'
-                        : tier === 'medium'
-                          ? 'Premio mediano'
-                          : 'Premio grande'}
-                    </span>
-                    <input
-                      type="number"
-                      min={0}
-                      step={0.5}
-                      value={oddsDraft[tier]}
-                      onChange={(event) =>
-                        setOddsDraft((prev) => ({
-                          ...prev,
-                          [tier]: event.target.value
-                        }))
-                      }
-                      className="w-full border border-gray-300 rounded px-2 py-1"
-                    />
-                    <span className="text-[11px] text-gray-400">
-                      Probabilidad %
-                    </span>
-                  </label>
-                ))}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+                <div className="rounded-lg border border-gray-100 bg-gray-50 p-3">
+                  <p className="text-xs text-gray-500">Tiradas usadas</p>
+                  <p className="text-2xl font-semibold text-gray-900">
+                    {totalTriesPlayed}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-gray-100 bg-gray-50 p-3">
+                  <p className="text-xs text-gray-500">Tiradas disponibles</p>
+                  <p className="text-2xl font-semibold text-gray-900">
+                    {totalTriesAvailable}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-gray-100 bg-gray-50 p-3">
+                  <p className="text-xs text-gray-500">Premios pendientes</p>
+                  <p className="text-2xl font-semibold text-amber-600">
+                    {totalPendingPrizes}
+                  </p>
+                </div>
               </div>
-              <button
-                type="button"
-                onClick={handleSaveOdds}
-                className="inline-flex items-center px-3 py-1.5 rounded bg-green-600 text-white text-xs font-semibold"
-              >
-                Guardar probabilidades
-              </button>
             </div>
 
             <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
@@ -975,10 +974,10 @@ function RewardsTab({
           <div className="bg-white rounded-lg border border-gray-200 p-4">
             <div className="flex items-center justify-between mb-3">
               <h4 className="text-sm font-semibold text-gray-900">
-                Historial reciente de tiradas
+                Historial reciente de premios
               </h4>
               <span className="text-xs text-gray-500">
-                {recentRolls.length} registros
+                {recentPrizes.length} registros
               </span>
             </div>
             <div className="overflow-x-auto">
@@ -987,46 +986,39 @@ function RewardsTab({
                   <tr className="text-left text-gray-500 uppercase tracking-wide">
                     <th className="px-2 py-2">Premio</th>
                     <th className="px-2 py-2">Jugador</th>
-                    <th className="px-2 py-2">Juego</th>
+                    <th className="px-2 py-2">Nivel</th>
                     <th className="px-2 py-2">Fecha</th>
                     <th className="px-2 py-2">Estado</th>
                     <th className="px-2 py-2">Acción</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {recentRolls.map((roll) => {
-                    const prizeMeta =
-                      roll.tier === 'none'
-                        ? {
-                            label: 'Sin premio',
-                            description: 'No hubo premio en esta tirada.'
-                          }
-                        : prizeCatalog[roll.tier as PrizeTier]
-                    const game = gameMap.get(roll.gameId)
-                    const owner = game ? userMap.get(game.createdBy) : null
-                    const isDelivered = !!roll.delivered
+                  {recentPrizes.map((prize) => {
+                    const isDelivered = Boolean(prize.deliveredAt)
+                    const tierLabel =
+                      prize.tier === 'bonus'
+                        ? 'Bonus'
+                        : prizeCatalog[prize.tier]?.label || prize.tier
 
                     return (
-                      <tr key={roll.id} className="text-gray-700">
+                      <tr key={prize.id} className="text-gray-700">
                         <td className="px-2 py-2">
-                          <p className="font-semibold">{prizeMeta?.label}</p>
+                          <p className="font-semibold">{prize.prizeTitle}</p>
                           <p className="text-[11px] text-gray-500">
-                            {prizeMeta?.description}
+                            {prize.prizeDescription}
                           </p>
                         </td>
                         <td className="px-2 py-2">
-                          <p className="font-semibold">
-                            {owner?.name || 'Jugador desconocido'}
-                          </p>
+                          <p className="font-semibold">{prize.userName}</p>
                           <p className="text-[11px] text-gray-500 font-mono">
-                            {owner ? `@${owner.username}` : game?.createdBy}
+                            @{prize.username || 'sin-usuario'}
                           </p>
                         </td>
                         <td className="px-2 py-2 text-[11px] text-gray-500">
-                          {roll.gameId}
+                          {tierLabel}
                         </td>
                         <td className="px-2 py-2 text-[11px]">
-                          {new Date(roll.timestamp).toLocaleString('es-MX', {
+                          {prize.wonAt.toLocaleString('es-MX', {
                             day: '2-digit',
                             month: 'short',
                             hour: '2-digit',
@@ -1038,8 +1030,6 @@ function RewardsTab({
                             <span className="inline-flex items-center gap-1 text-green-600 font-semibold">
                               <CheckCircle2 className="h-4 w-4" /> Entregado
                             </span>
-                          ) : roll.tier === 'none' ? (
-                            <span className="text-gray-500">Sin premio</span>
                           ) : (
                             <span className="text-amber-600 font-semibold">
                               Pendiente
@@ -1047,13 +1037,16 @@ function RewardsTab({
                           )}
                         </td>
                         <td className="px-2 py-2">
-                          {!isDelivered && roll.tier !== 'none' ? (
+                          {!isDelivered ? (
                             <button
                               type="button"
-                              onClick={() => handleDeliver(roll)}
-                              className="text-[11px] font-semibold text-green-600 hover:underline"
+                              onClick={() => handleDeliver(prize)}
+                              className="text-[11px] font-semibold text-green-600 hover:underline disabled:opacity-50"
+                              disabled={deliveringPrizeId === prize.id}
                             >
-                              Marcar entregado
+                              {deliveringPrizeId === prize.id
+                                ? 'Marcando...'
+                                : 'Marcar entregado'}
                             </button>
                           ) : (
                             <span className="text-[11px] text-gray-400">—</span>
@@ -1080,15 +1073,11 @@ function RewardsTab({
 
 function UsersTab({
   users,
-  games,
-  rewardStates,
-  adminUser,
+  prices,
   onRefreshRewards
 }: {
   users: AdminUser[]
-  games: AdminGame[]
-  rewardStates: RewardState[]
-  adminUser: User | null
+  prices: PriceRecord[]
   onRefreshRewards: () => void
 }) {
   const { isAdmin } = useAuth()
@@ -1099,48 +1088,13 @@ function UsersTab({
   )
   const [searchTerm, setSearchTerm] = useState('')
 
-  const gameMap = useMemo(() => {
-    const map = new Map<string, AdminGame>()
-    games.forEach((game) => {
-      map.set(game.id, game)
+  const prizeMap = useMemo(() => {
+    const map = new Map<string, PriceRecord>()
+    prices.forEach((prize) => {
+      map.set(prize.id, prize)
     })
     return map
-  }, [games])
-
-  const rewardSummary = useMemo<Record<string, UserRewardSummary>>(() => {
-    const summary: Record<string, UserRewardSummary> = {}
-
-    rewardStates.forEach((state) => {
-      const game = gameMap.get(state.gameId)
-      if (!game) return
-      const ownerId = game.createdBy
-      if (!summary[ownerId]) {
-        summary[ownerId] = {
-          totalRolls: 0,
-          deliveredPrizes: 0,
-          pendingPrizes: [],
-          states: []
-        }
-      }
-
-      const entry = summary[ownerId]
-      entry.totalRolls += state.rollHistory.length
-      entry.states.push(state)
-
-      state.rollHistory.forEach((roll) => {
-        if (roll.tier === 'none') {
-          return
-        }
-        if (roll.delivered) {
-          entry.deliveredPrizes += 1
-        } else {
-          entry.pendingPrizes.push({ ...roll, gameId: state.gameId })
-        }
-      })
-    })
-
-    return summary
-  }, [rewardStates, gameMap])
+  }, [prices])
 
   const filteredUsers = useMemo(() => {
     if (!searchTerm.trim()) {
@@ -1157,7 +1111,7 @@ function UsersTab({
     )
   }, [users, searchTerm])
 
-  const handleDeliverPrize = (userId: string, prize: PendingPrize) => {
+  const handleDeliverPrize = async (userId: string, prizeId: string) => {
     if (!isAdmin) {
       setRowStatus((prev) => ({
         ...prev,
@@ -1166,20 +1120,22 @@ function UsersTab({
       return
     }
 
-    const result = markPrizeDelivered({
-      admin: adminUser,
-      gameId: prize.gameId,
-      rollId: prize.id
-    })
-    if (result) {
+    try {
+      await deliverPrizeForUser(userId, prizeId)
       setRowStatus((prev) => ({
         ...prev,
         [userId]: 'Premio validado'
       }))
-      onRefreshRewards()
+      await onRefreshRewards()
       setTimeout(() => {
         setRowStatus((prev) => ({ ...prev, [userId]: null }))
       }, 2500)
+    } catch (error) {
+      console.error('Error validando premio:', error)
+      setRowStatus((prev) => ({
+        ...prev,
+        [userId]: 'No se pudo validar'
+      }))
     }
   }
 
@@ -1291,17 +1247,16 @@ function UsersTab({
                 </tr>
               )}
               {filteredUsers.map((user) => {
-                const entry =
-                  rewardSummary[user.id] ||
-                  ({
-                    totalRolls: 0,
-                    deliveredPrizes: 0,
-                    pendingPrizes: [],
-                    states: []
-                  } as UserRewardSummary)
                 const tiradaValue = tiradaInputs[user.id] ?? '1'
+                const triesInfo = user.tries
                 const saldoTiradas =
-                  tiradaBalances[user.id] ?? user.tries?.triesLeft ?? 0
+                  tiradaBalances[user.id] ?? triesInfo?.triesLeft ?? 0
+                const totalRolls = triesInfo?.triesPlayed ?? 0
+                const pendingPrizes =
+                  triesInfo?.prizesWon?.filter((entry) => !entry.deliveredAt) ??
+                  []
+                const deliveredCount =
+                  (triesInfo?.prizesWon?.length ?? 0) - pendingPrizes.length
 
                 return (
                   <tr key={user.id}>
@@ -1352,7 +1307,7 @@ function UsersTab({
                         <Aperture className="h-4 w-4 text-green-600" />
                         Tiradas usadas:{' '}
                         <span className="font-semibold text-gray-900">
-                          {entry.totalRolls}
+                          {totalRolls}
                         </span>
                       </p>
                       <p className="flex items-center gap-1 mt-1 text-green-700">
@@ -1364,40 +1319,50 @@ function UsersTab({
                       <p>
                         Entregados:{' '}
                         <span className="font-semibold text-gray-900">
-                          {entry.deliveredPrizes}
+                          {deliveredCount}
                         </span>
                       </p>
                       <p className="mt-1">
                         Pendientes:{' '}
                         <span className="font-semibold text-gray-900">
-                          {entry.pendingPrizes.length}
+                          {pendingPrizes.length}
                         </span>
                       </p>
-                      {entry.pendingPrizes.length > 0 && (
+                      {pendingPrizes.length > 0 && (
                         <div className="mt-2 space-y-1">
-                          {entry.pendingPrizes.slice(0, 2).map((prize) => (
-                            <div
-                              key={prize.id}
-                              className="flex items-center justify-between gap-2 bg-gray-50 border border-gray-200 rounded px-2 py-1"
-                            >
-                              <span className="text-[11px] font-semibold text-gray-700">
-                                {prizeCatalog[prize.tier as PrizeTier]?.label ||
-                                  'Premio'}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  handleDeliverPrize(user.id, prize)
-                                }
-                                className="text-[11px] text-green-600 font-semibold hover:underline"
+                          {pendingPrizes.slice(0, 2).map((prize) => {
+                            const record = prizeMap.get(prize.prizeId)
+                            const tierMeta =
+                              record?.tier && record.tier !== 'bonus'
+                                ? prizeCatalog[record.tier]
+                                : null
+                            const label =
+                              record?.title ??
+                              tierMeta?.label ??
+                              'Premio sorpresa'
+                            return (
+                              <div
+                                key={`${prize.prizeId}-${prize.wonAt}`}
+                                className="flex items-center justify-between gap-2 bg-gray-50 border border-gray-200 rounded px-2 py-1"
                               >
-                                Validar
-                              </button>
-                            </div>
-                          ))}
-                          {entry.pendingPrizes.length > 2 && (
+                                <span className="text-[11px] font-semibold text-gray-700">
+                                  {label}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleDeliverPrize(user.id, prize.prizeId)
+                                  }
+                                  className="text-[11px] text-green-600 font-semibold hover:underline"
+                                >
+                                  Validar
+                                </button>
+                              </div>
+                            )
+                          })}
+                          {pendingPrizes.length > 2 && (
                             <p className="text-[11px] text-gray-500">
-                              + {entry.pendingPrizes.length - 2} premio(s)
+                              + {pendingPrizes.length - 2} premio(s)
                             </p>
                           )}
                         </div>
