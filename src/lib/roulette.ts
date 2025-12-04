@@ -1,4 +1,4 @@
-import { RewardPrize } from '@/lib/rewards'
+import { RewardPrize } from '@/types/rewards'
 
 export const rouletteSegments: Array<{
   tier: RewardPrize

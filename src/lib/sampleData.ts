@@ -1,4 +1,5 @@
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore'
+import { createDefaultUserTries } from '@/lib/tries'
 import { db } from './firebase'
 
 // Script para crear datos de ejemplo para el panel de administrador
@@ -15,7 +16,7 @@ export async function createSampleData() {
         averageScore: 32.4,
         isAdmin: false,
         createdAt: serverTimestamp(),
-        tiradas: { pendientes: 0 }
+        tries: createDefaultUserTries()
       },
       {
         name: 'María García',
@@ -24,7 +25,7 @@ export async function createSampleData() {
         averageScore: 28.7,
         isAdmin: false,
         createdAt: serverTimestamp(),
-        tiradas: { pendientes: 0 }
+        tries: createDefaultUserTries()
       },
       {
         name: 'Carlos López',
@@ -33,7 +34,7 @@ export async function createSampleData() {
         averageScore: 35.1,
         isAdmin: false,
         createdAt: serverTimestamp(),
-        tiradas: { pendientes: 0 }
+        tries: createDefaultUserTries()
       }
     ]
 

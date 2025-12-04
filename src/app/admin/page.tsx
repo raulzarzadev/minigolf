@@ -15,7 +15,6 @@ import { useEffect, useMemo, useState } from 'react'
 import AdminProtectedRoute from '@/components/AdminProtectedRoute'
 import { useAuth } from '@/contexts/AuthContext'
 import { getAdminGames, getAdminStats, getAdminUsers } from '@/lib/admin'
-import { incrementUserTiradasPendientes } from '@/lib/db'
 import { checkMigrationStatus, migrateExistingUsers } from '@/lib/migration'
 import {
   createPrice,
@@ -38,6 +37,7 @@ import {
   updateRewardOdds
 } from '@/lib/rewards'
 import { createSampleData } from '@/lib/sampleData'
+import { incrementUserTries } from '@/lib/tries'
 import { AdminGame, AdminStats, AdminUser, User } from '@/types'
 
 export default function AdminPanel() {
@@ -1202,13 +1202,10 @@ function UsersTab({
     }
 
     try {
-      const updatedTiradas = await incrementUserTiradasPendientes(
-        userId,
-        amount
-      )
+      const updatedTries = await incrementUserTries(userId, amount)
       setTiradaBalances((prev) => ({
         ...prev,
-        [userId]: updatedTiradas.pendientes
+        [userId]: updatedTries.triesLeft
       }))
       setTiradaInputs((prev) => ({ ...prev, [userId]: '1' }))
       setRowStatus((prev) => ({
@@ -1304,7 +1301,7 @@ function UsersTab({
                   } as UserRewardSummary)
                 const tiradaValue = tiradaInputs[user.id] ?? '1'
                 const saldoTiradas =
-                  tiradaBalances[user.id] ?? user.tiradas?.pendientes ?? 0
+                  tiradaBalances[user.id] ?? user.tries?.triesLeft ?? 0
 
                 return (
                   <tr key={user.id}>

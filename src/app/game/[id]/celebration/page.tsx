@@ -12,31 +12,22 @@ import {
 } from 'lucide-react'
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
-
+import { prizeCatalog } from '@/constants/prizes'
 import { useAuth } from '@/contexts/AuthContext'
-import {
-  consumeUserTirada,
-  incrementUserTiradasPendientes,
-  subscribeToGame
-} from '@/lib/db'
+import { subscribeToGame } from '@/lib/db'
 import { getLocalGame, isLocalGame } from '@/lib/localStorage'
-import {
-  loadRewardState,
-  PrizeTier,
-  persistRewardState,
-  prizeCatalog,
-  RewardStepId,
-  rollPrizeOutcome,
-  setLastInstruction,
-  triggerRewardStepAction
-} from '@/lib/rewards'
+import { PrizeRecord } from '@/lib/prizes'
 import {
   ROULETTE_SPIN_DURATION_MS,
   rouletteGradient,
   rouletteSegmentAngle,
   rouletteSegments
 } from '@/lib/roulette'
+import { incrementUserTries, spinPrizeWheel } from '@/lib/tries'
 import { Game } from '@/types'
+import { RewardPrize } from '@/types/rewards'
+
+type RewardStepId = 'register' | 'follow' | 'share'
 
 type StepConfig = {
   id: RewardStepId
@@ -71,8 +62,70 @@ const stepConfigs: StepConfig[] = [
 
 type RollResult = {
   id: string
-  tier: PrizeTier | 'none'
+  tier: RewardPrize
   timestamp: number
+  prizeId?: string
+  prizeTitle?: string
+  prizeDescription?: string
+}
+
+type CelebrationState = {
+  completedSteps: Partial<Record<RewardStepId, boolean>>
+  rollHistory: RollResult[]
+}
+
+type CelebrationStorage = Record<string, CelebrationState>
+
+const CELEBRATION_STORAGE_KEY = 'baja-celebration-center'
+
+const readCelebrationStorage = (): CelebrationStorage => {
+  if (typeof window === 'undefined') return {}
+  try {
+    const raw = window.localStorage.getItem(CELEBRATION_STORAGE_KEY)
+    return raw ? (JSON.parse(raw) as CelebrationStorage) : {}
+  } catch {
+    return {}
+  }
+}
+
+const writeCelebrationStorage = (payload: CelebrationStorage) => {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage.setItem(
+      CELEBRATION_STORAGE_KEY,
+      JSON.stringify(payload)
+    )
+  } catch {
+    // ignore storage quota errors
+  }
+}
+
+const loadCelebrationState = (gameId: string): CelebrationState => {
+  const storage = readCelebrationStorage()
+  return (
+    storage[gameId] ?? {
+      completedSteps: {},
+      rollHistory: []
+    }
+  )
+}
+
+const persistCelebrationState = (
+  gameId: string,
+  patch: Partial<CelebrationState>
+): CelebrationState => {
+  const storage = readCelebrationStorage()
+  const current = storage[gameId] ?? {
+    completedSteps: {},
+    rollHistory: []
+  }
+  const next: CelebrationState = {
+    completedSteps: patch.completedSteps ?? current.completedSteps,
+    rollHistory: patch.rollHistory ?? current.rollHistory
+  }
+  storage[gameId] = next
+  writeCelebrationStorage(storage)
+  return next
 }
 
 export default function CelebrationPage() {
@@ -81,54 +134,33 @@ export default function CelebrationPage() {
   const { user, refreshUser } = useAuth()
   const [game, setGame] = useState<Game | null>(null)
   const [loading, setLoading] = useState(true)
-  const [completedSteps, setCompletedSteps] = useState<Record<string, boolean>>(
-    {}
-  )
   const [availableRolls, setAvailableRolls] = useState(0)
+  const [completedSteps, setCompletedSteps] = useState<
+    Partial<Record<RewardStepId, boolean>>
+  >({})
   const [rollHistory, setRollHistory] = useState<RollResult[]>([])
-  const [rewardInitialized, setRewardInitialized] = useState(false)
+  const [ready, setReady] = useState(false)
   const [isSpinning, setIsSpinning] = useState(false)
   const [wheelRotation, setWheelRotation] = useState(0)
-  const [lastResult, setLastResult] = useState<RollResult['tier'] | null>(null)
+  const [lastResult, setLastResult] = useState<RewardPrize | null>(null)
+  const [lastPrize, setLastPrize] = useState<PrizeRecord | null>(null)
   const spinTimeoutRef = useRef<number | null>(null)
 
   const gameId = params.id as string
 
   useEffect(() => {
     if (!gameId) return
-    const stored = loadRewardState(gameId)
+    const stored = loadCelebrationState(gameId)
     setCompletedSteps(stored.completedSteps)
-    setAvailableRolls(stored.availableRolls)
     setRollHistory(stored.rollHistory)
-    setLastResult(stored.rollHistory[0]?.tier ?? null)
-    setRewardInitialized(true)
+    setReady(true)
   }, [gameId])
 
   useEffect(() => {
-    if (typeof user?.tiradas?.pendientes === 'number') {
-      setAvailableRolls(user.tiradas.pendientes)
+    if (typeof user?.tries?.triesLeft === 'number') {
+      setAvailableRolls(user.tries.triesLeft)
     }
-  }, [user?.tiradas?.pendientes])
-
-  useEffect(() => {
-    return () => {
-      if (spinTimeoutRef.current) {
-        window.clearTimeout(spinTimeoutRef.current)
-      }
-    }
-  }, [])
-
-  const syncRewardState = (
-    next: Partial<{
-      completedSteps: Record<string, boolean>
-      availableRolls: number
-      rollHistory: RollResult[]
-      lastInstruction: RewardStepId | null
-    }>
-  ) => {
-    if (!gameId) return
-    persistRewardState(gameId, next)
-  }
+  }, [user?.tries?.triesLeft])
 
   useEffect(() => {
     if (!gameId) return
@@ -150,93 +182,107 @@ export default function CelebrationPage() {
     return () => unsubscribe()
   }, [gameId])
 
+  useEffect(() => {
+    return () => {
+      if (spinTimeoutRef.current) {
+        window.clearTimeout(spinTimeoutRef.current)
+      }
+    }
+  }, [])
+
+  const runStepAction = (stepId: RewardStepId) => {
+    if (typeof window === 'undefined') return
+    if (stepId === 'register') {
+      router.push('/profile')
+      return
+    }
+    window.open('https://instagram.com/bajaminigolf', '_blank')
+  }
+
   const handleMarkStep = async (stepId: RewardStepId) => {
-    if (!rewardInitialized || completedSteps[stepId]) return
-    triggerRewardStepAction(stepId, { gameId, user })
+    if (!ready || completedSteps[stepId]) return
+    runStepAction(stepId)
     const updatedSteps = { ...completedSteps, [stepId]: true }
     setCompletedSteps(updatedSteps)
-    syncRewardState({
-      completedSteps: updatedSteps,
-      lastInstruction: null
-    })
-    setLastInstruction(gameId, null)
+    persistCelebrationState(gameId, { completedSteps: updatedSteps })
 
     if (!user) {
       return
     }
 
     try {
-      const updatedTiradas = await incrementUserTiradasPendientes(user.id, 1)
-      setAvailableRolls(updatedTiradas.pendientes)
-      syncRewardState({ availableRolls: updatedTiradas.pendientes })
+      const updatedTries = await incrementUserTries(user.id, 1)
+      setAvailableRolls(updatedTries.triesLeft)
       await refreshUser()
     } catch (error) {
       console.error('Error incrementando tiradas tras completar paso:', error)
     }
   }
 
-  const handleSpinRoulette = () => {
-    if (
-      !rewardInitialized ||
-      availableRolls <= 0 ||
-      !isFinished ||
-      isSpinning ||
-      !user
-    ) {
+  const isFinished = game?.status === 'finished'
+
+  const handleSpinRoulette = async () => {
+    if (!ready || !isFinished || availableRolls <= 0 || isSpinning || !user) {
       return
     }
 
     setIsSpinning(true)
     setLastResult(null)
+    setLastPrize(null)
 
-    const tier = rollPrizeOutcome()
-    const newRoll: RollResult = {
-      id: `${tier}-${Date.now()}`,
-      tier,
-      timestamp: Date.now()
-    }
+    try {
+      const spinResult = await spinPrizeWheel(user.id)
+      const tier: RewardPrize =
+        (spinResult.prize?.tier as RewardPrize | undefined) ?? 'none'
+      const newRoll: RollResult = {
+        id: `${tier}-${Date.now()}`,
+        tier,
+        timestamp: Date.now(),
+        prizeId: spinResult.prize?.id,
+        prizeTitle: spinResult.prize?.title,
+        prizeDescription: spinResult.prize?.description
+      }
 
-    const segmentIndex = rouletteSegments.findIndex(
-      (segment) => segment.tier === tier
-    )
-    const safeIndex = segmentIndex === -1 ? 0 : segmentIndex
-    const extraSpins = 4 + Math.floor(Math.random() * 3)
-    const rotationOffset =
-      safeIndex * rouletteSegmentAngle + rouletteSegmentAngle / 2
+      const segmentIndex = rouletteSegments.findIndex(
+        (segment) => segment.tier === tier
+      )
+      const safeIndex = segmentIndex === -1 ? 0 : segmentIndex
+      const extraSpins = 4 + Math.floor(Math.random() * 3)
+      const rotationOffset =
+        safeIndex * rouletteSegmentAngle + rouletteSegmentAngle / 2
 
-    setWheelRotation((prev) => {
-      const normalizedPrev = prev % 360
-      const alignmentOffset = rotationOffset - normalizedPrev
-      return prev + extraSpins * 360 + alignmentOffset
-    })
-
-    if (spinTimeoutRef.current) {
-      window.clearTimeout(spinTimeoutRef.current)
-    }
-
-    spinTimeoutRef.current = window.setTimeout(async () => {
-      setRollHistory((prevHistory) => {
-        const updatedHistory = [newRoll, ...prevHistory]
-        syncRewardState({ rollHistory: updatedHistory })
-        return updatedHistory
+      setWheelRotation((prev) => {
+        const normalizedPrev = prev % 360
+        const alignmentOffset = rotationOffset - normalizedPrev
+        return prev + extraSpins * 360 + alignmentOffset
       })
 
-      try {
-        const updatedTiradas = await consumeUserTirada(user.id, 1)
-        setAvailableRolls(updatedTiradas.pendientes)
-        syncRewardState({ availableRolls: updatedTiradas.pendientes })
-        await refreshUser()
-      } catch (error) {
-        console.error(
-          'Error consumiendo tirada después de girar ruleta:',
-          error
-        )
-      } finally {
-        setIsSpinning(false)
+      if (spinTimeoutRef.current) {
+        window.clearTimeout(spinTimeoutRef.current)
+      }
+
+      spinTimeoutRef.current = window.setTimeout(() => {
+        setRollHistory((prevHistory) => {
+          const updatedHistory = [newRoll, ...prevHistory]
+          persistCelebrationState(gameId, { rollHistory: updatedHistory })
+          return updatedHistory
+        })
+        setAvailableRolls(spinResult.triesLeft)
         setLastResult(tier)
+        setLastPrize(spinResult.prize ?? null)
+        setIsSpinning(false)
+        spinTimeoutRef.current = null
+      }, ROULETTE_SPIN_DURATION_MS)
+
+      await refreshUser()
+    } catch (error) {
+      console.error('Error al girar la ruleta:', error)
+      setIsSpinning(false)
+      if (spinTimeoutRef.current) {
+        window.clearTimeout(spinTimeoutRef.current)
         spinTimeoutRef.current = null
       }
-    }, ROULETTE_SPIN_DURATION_MS)
+    }
   }
 
   const handleBackToGame = () => {
@@ -265,22 +311,32 @@ export default function CelebrationPage() {
     )
   }
 
-  const isFinished = game.status === 'finished'
   const rouletteHelperMessage = isFinished
     ? availableRolls > 0
       ? `${availableRolls} tirada(s) disponible(s)`
       : 'Completa acciones pendientes para ganar más tiradas'
     : 'Termina la partida para desbloquear las tiradas'
-  const lastResultMeta =
-    lastResult && lastResult !== 'none' ? prizeCatalog[lastResult] : null
-  const rouletteStatusLabel = lastResult
-    ? (lastResultMeta?.label ?? 'Sin premio esta vez')
-    : 'Listo para girar'
-  const rouletteStatusDescription = lastResult
-    ? lastResult !== 'none'
-      ? (lastResultMeta?.description ?? 'Reclámalo con el staff.')
-      : 'Esta vez no salió premio. Inténtalo de nuevo.'
-    : 'Pulsa la ruleta cuando tengas tiradas disponibles.'
+  const lastResultMeta = (() => {
+    if (lastPrize) {
+      return {
+        label: lastPrize.title,
+        description: lastPrize.description || 'Reclámalo con el staff.'
+      }
+    }
+    if (lastResult && lastResult !== 'none') {
+      return prizeCatalog[lastResult]
+    }
+    return null
+  })()
+  const rouletteStatusLabel =
+    lastResult === 'none'
+      ? 'Sin premio esta vez'
+      : (lastResultMeta?.label ?? 'Listo para girar')
+  const rouletteStatusDescription =
+    lastResult === 'none'
+      ? 'Esta vez no salió premio. Inténtalo de nuevo.'
+      : (lastResultMeta?.description ??
+        'Pulsa la ruleta cuando tengas tiradas disponibles.')
 
   return (
     <div className="min-h-screen">
@@ -537,7 +593,7 @@ export default function CelebrationPage() {
           {rollHistory.length > 0 ? (
             <div className="mt-4 space-y-2">
               {rollHistory.map((roll) => {
-                const prize =
+                const baseMeta =
                   roll.tier === 'none'
                     ? {
                         label: 'Sin premio',
@@ -546,6 +602,9 @@ export default function CelebrationPage() {
                         accent: 'bg-gray-100 text-gray-600'
                       }
                     : prizeCatalog[roll.tier]
+                const label = roll.prizeTitle ?? baseMeta.label
+                const description =
+                  roll.prizeDescription ?? baseMeta.description
                 return (
                   <div
                     key={roll.id}
@@ -553,14 +612,12 @@ export default function CelebrationPage() {
                   >
                     <div>
                       <p className="text-sm font-semibold text-slate-900">
-                        {prize.label}
+                        {label}
                       </p>
-                      <p className="text-xs text-slate-500">
-                        {prize.description}
-                      </p>
+                      <p className="text-xs text-slate-500">{description}</p>
                     </div>
                     <span
-                      className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${prize.accent}`}
+                      className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${baseMeta.accent}`}
                     >
                       {new Date(roll.timestamp).toLocaleTimeString('es-MX', {
                         hour: '2-digit',

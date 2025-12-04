@@ -13,13 +13,8 @@ import {
   where
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
-import {
-  Game,
-  Tournament,
-  TournamentStanding,
-  User,
-  UserTiradas
-} from '@/types'
+import { createDefaultUserTries, normalizeUserTries } from '@/lib/tries'
+import { Game, Tournament, TournamentStanding, User } from '@/types'
 
 // Games Collection Functions
 export const createGame = async (
@@ -473,102 +468,6 @@ const calculateTournamentPoints = (
   return Math.round(basePoints + bonusPoints)
 }
 
-export const createDefaultUserTiradas = (): UserTiradas => ({
-  pendientes: 0
-})
-
-export const normalizeUserTiradas = (raw?: unknown): UserTiradas => {
-  if (!raw || typeof raw !== 'object') {
-    return createDefaultUserTiradas()
-  }
-
-  const source = raw as { pendientes?: unknown; pendings?: unknown }
-  const pendientesValue = Number(source.pendientes ?? source.pendings ?? 0)
-
-  return {
-    pendientes: Number.isFinite(pendientesValue)
-      ? Math.max(0, Math.floor(pendientesValue))
-      : 0
-  }
-}
-
-const pickUserTiradas = (data: Record<string, any>) =>
-  data?.tiradas ?? data?.shots
-
-export const getUserTiradas = async (userId: string): Promise<UserTiradas> => {
-  try {
-    const userRef = doc(db, 'users', userId)
-    const userDoc = await getDoc(userRef)
-    if (!userDoc.exists()) {
-      return createDefaultUserTiradas()
-    }
-
-    return normalizeUserTiradas(pickUserTiradas(userDoc.data()))
-  } catch (error) {
-    console.error('Error getting user tiradas:', error)
-    return createDefaultUserTiradas()
-  }
-}
-
-export const setUserTiradas = async (
-  userId: string,
-  tiradas: UserTiradas
-): Promise<void> => {
-  try {
-    const normalized = normalizeUserTiradas(tiradas)
-    const userRef = doc(db, 'users', userId)
-    await setDoc(userRef, { tiradas: normalized }, { merge: true })
-  } catch (error) {
-    console.error('Error setting user tiradas:', error)
-    throw error
-  }
-}
-
-export const incrementUserTiradasPendientes = async (
-  userId: string,
-  delta = 1
-): Promise<UserTiradas> => {
-  try {
-    const current = await getUserTiradas(userId)
-    const nextPendientes = current.pendientes + delta
-    const normalized = normalizeUserTiradas({ pendientes: nextPendientes })
-    await setUserTiradas(userId, normalized)
-    return normalized
-  } catch (error) {
-    console.error('Error incrementing user tiradas:', error)
-    throw error
-  }
-}
-
-export const clearUserTiradas = async (
-  userId: string
-): Promise<UserTiradas> => {
-  const reset = createDefaultUserTiradas()
-  await setUserTiradas(userId, reset)
-  return reset
-}
-
-export const consumeUserTirada = async (
-  userId: string,
-  amount = 1
-): Promise<UserTiradas> => {
-  try {
-    const current = await getUserTiradas(userId)
-    if (current.pendientes <= 0) {
-      return current
-    }
-
-    const normalized = normalizeUserTiradas({
-      pendientes: current.pendientes - Math.max(1, Math.floor(amount))
-    })
-    await setUserTiradas(userId, normalized)
-    return normalized
-  } catch (error) {
-    console.error('Error consumiendo tirada:', error)
-    throw error
-  }
-}
-
 // User management functions
 export const createOrUpdateUser = async (userData: {
   id: string
@@ -592,7 +491,7 @@ export const createOrUpdateUser = async (userData: {
         createdAt: serverTimestamp(),
         gamesPlayed: 0,
         averageScore: 0,
-        tiradas: createDefaultUserTiradas()
+        tries: createDefaultUserTries()
       })
     }
   } catch (error) {
@@ -610,7 +509,7 @@ export const getUserById = async (userId: string): Promise<User | null> => {
         id: userDoc.id,
         ...data,
         createdAt: data.createdAt.toDate(),
-        tiradas: normalizeUserTiradas(pickUserTiradas(data))
+        tries: normalizeUserTries(data.tries)
       } as User
     }
     return null
@@ -762,7 +661,7 @@ export const getUserByUsername = async (
       gamesPlayed: userData.gamesPlayed || 0,
       averageScore: userData.averageScore || 0,
       isAdmin: userData.isAdmin || false,
-      tiradas: normalizeUserTiradas(pickUserTiradas(userData))
+      tries: normalizeUserTries(userData.tries)
     }
   } catch (error) {
     console.error('Error getting user by username:', error)

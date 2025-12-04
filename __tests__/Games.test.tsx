@@ -55,7 +55,12 @@ describe('GamesPage', () => {
         gamesPlayed: 0,
         averageScore: 0,
         username: 'testuser',
-        tiradas: { pendientes: 0 }
+        tries: {
+          triesLeft: 0,
+          triesPlayed: 0,
+          prizesWon: [],
+          lastTryAt: null
+        }
       },
       firebaseUser: null,
       loading: false,
@@ -87,7 +92,12 @@ describe('GamesPage', () => {
         gamesPlayed: 0,
         averageScore: 0,
         username: 'testuser',
-        tiradas: { pendientes: 0 }
+        tries: {
+          triesLeft: 0,
+          triesPlayed: 0,
+          prizesWon: [],
+          lastTryAt: null
+        }
       },
       firebaseUser: null,
       loading: false,

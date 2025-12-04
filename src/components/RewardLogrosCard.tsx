@@ -2,81 +2,37 @@
 
 import { CheckCircle2, Gift, Loader2 } from 'lucide-react'
 import { FC, useEffect, useMemo, useRef, useState } from 'react'
+import { prizeCatalog } from '@/constants/prizes'
 import { useAuth } from '@/contexts/AuthContext'
-import { consumeUserTirada, incrementUserTiradasPendientes } from '@/lib/db'
-import {
-  getAllRewardStates,
-  loadRewardState,
-  markPrizeDelivered,
-  PrizeTier,
-  persistRewardState,
-  prizeCatalog,
-  RewardPrize,
-  RewardRoll,
-  RewardState,
-  rollPrizeOutcome
-} from '@/lib/rewards'
+import { usePrizes } from '@/hooks/usePrizes'
+import { PrizeRecord } from '@/lib/prizes'
 import {
   ROULETTE_SPIN_DURATION_MS,
   rouletteGradient,
   rouletteSegmentAngle,
   rouletteSegments
 } from '@/lib/roulette'
+import { incrementUserTries, spinPrizeWheel } from '@/lib/tries'
 import { Game } from '@/types'
+import { PrizeTier, RewardPrize } from '@/types/rewards'
 
 interface RewardLogrosCardProps {
   games: Game[]
 }
 
+const isCorePrizeTier = (tier: PrizeRecord['tier']): tier is PrizeTier =>
+  tier === 'small' || tier === 'medium' || tier === 'large'
+
 const RewardLogrosCard: FC<RewardLogrosCardProps> = ({ games }) => {
-  const [rewardStates, setRewardStates] = useState<RewardState[]>([])
-  const [selectedGameId, setSelectedGameId] = useState<string | null>(null)
-  const [currentState, setCurrentState] = useState<RewardState | null>(null)
-  const [loading, setLoading] = useState(true)
+  const { user, isAdmin, refreshUser } = useAuth()
+  const { byId: prizeMap, loading: prizesLoading } = usePrizes()
   const [adminRollInput, setAdminRollInput] = useState('1')
   const [adminStatus, setAdminStatus] = useState<string | null>(null)
   const [isSpinning, setIsSpinning] = useState(false)
   const [wheelRotation, setWheelRotation] = useState(0)
   const [lastResult, setLastResult] = useState<RewardPrize | null>(null)
+  const [lastPrize, setLastPrize] = useState<PrizeRecord | null>(null)
   const spinTimeoutRef = useRef<number | null>(null)
-  const { user, isAdmin, refreshUser } = useAuth()
-
-  const gameOptions = useMemo(() => {
-    return rewardStates.map((state) => {
-      const game = games.find((g) => g.id === state.gameId)
-      const dateLabel = game
-        ? new Date(game.createdAt).toLocaleDateString('es-MX', {
-            month: 'short',
-            day: 'numeric'
-          })
-        : 'Partida'
-      const players = game?.players.length || 1
-      return {
-        value: state.gameId,
-        label: `${dateLabel} · ${players} jugador${players !== 1 ? 'es' : ''}`
-      }
-    })
-  }, [games, rewardStates])
-
-  useEffect(() => {
-    const states = getAllRewardStates()
-    setRewardStates(states)
-
-    if (states.length > 0) {
-      const fallback = states[0]
-      setSelectedGameId(fallback.gameId)
-      setCurrentState(loadRewardState(fallback.gameId))
-      setLoading(false)
-      return
-    }
-
-    const fallbackId = user ? `global-${user.id}` : 'global'
-    const fallbackState = loadRewardState(fallbackId)
-    setRewardStates([fallbackState])
-    setSelectedGameId(fallbackId)
-    setCurrentState(fallbackState)
-    setLoading(false)
-  }, [user?.id, user])
 
   useEffect(() => {
     return () => {
@@ -86,149 +42,113 @@ const RewardLogrosCard: FC<RewardLogrosCardProps> = ({ games }) => {
     }
   }, [])
 
-  useEffect(() => {
-    if (!selectedGameId) {
-      setCurrentState(null)
-      return
-    }
-    setCurrentState(loadRewardState(selectedGameId))
-    setLastResult(null)
-  }, [selectedGameId])
-
-  const rollHistory = currentState?.rollHistory ?? []
-
-  const pendingPrizes = useMemo(
-    () =>
-      rollHistory.filter(
-        (roll): roll is RewardRoll & { tier: PrizeTier } =>
-          roll.tier !== 'none' && !roll.delivered
-      ),
-    [rollHistory]
+  const rollsAvailable = user?.tries?.triesLeft ?? 0
+  const hasFinishedGame = useMemo(
+    () => games.some((game) => game.status === 'finished'),
+    [games]
   )
-
-  const claimedPrizes = useMemo(
-    () =>
-      rollHistory.filter(
-        (roll): roll is RewardRoll & { tier: PrizeTier } =>
-          roll.tier !== 'none' && Boolean(roll.delivered)
-      ),
-    [rollHistory]
-  )
-
-  const selectedGame = currentState
-    ? games.find((game) => game.id === currentState.gameId)
-    : undefined
-  const rollsAvailable =
-    user?.tiradas?.pendientes ?? currentState?.availableRolls ?? 0
-  const isFinishedGame = selectedGame
-    ? selectedGame.status === 'finished'
-    : true
-  const rouletteHelperMessage = isFinishedGame
+  const rouletteHelperMessage = hasFinishedGame
     ? rollsAvailable > 0
       ? `${rollsAvailable} tirada(s) disponible(s)`
-      : 'Completa acciones pendientes para ganar más tiradas'
-    : 'Termina esta partida para desbloquear las tiradas'
-  const lastResultMeta =
-    lastResult && lastResult !== 'none' ? prizeCatalog[lastResult] : null
-  const rouletteStatusLabel = lastResult
-    ? (lastResultMeta?.label ?? 'Sin premio esta vez')
-    : 'Listo para girar'
-  const rouletteStatusDescription = lastResult
-    ? lastResult !== 'none'
-      ? (lastResultMeta?.description ?? 'Reclámalo con el staff.')
-      : 'Esta vez no tocó premio, vuelve a intentarlo.'
-    : 'Pulsa la ruleta cuando tengas tiradas disponibles.'
+      : 'Sin tiradas disponibles, completa retos para ganar más.'
+    : 'Termina una partida para activar la ruleta.'
 
-  const handleSpinRoulette = () => {
-    if (
-      !currentState ||
-      !isFinishedGame ||
-      rollsAvailable <= 0 ||
-      isSpinning ||
-      !user
-    ) {
+  const normalizePrizeMeta = (prizeId?: string) => {
+    if (!prizeId) return null
+    const record = prizeMap[prizeId]
+    if (!record) return null
+    return record
+  }
+
+  const prizeEntries = user?.tries?.prizesWon ?? []
+  const pendingPrizes = useMemo(
+    () => prizeEntries.filter((entry) => !entry.deliveredAt),
+    [prizeEntries]
+  )
+  const claimedPrizes = useMemo(
+    () => prizeEntries.filter((entry) => !!entry.deliveredAt),
+    [prizeEntries]
+  )
+
+  const lastResultMeta = (() => {
+    if (lastPrize) {
+      return {
+        label: lastPrize.title,
+        description: lastPrize.description || 'Reclámalo con el staff.'
+      }
+    }
+    if (lastResult && lastResult !== 'none') {
+      return prizeCatalog[lastResult]
+    }
+    return null
+  })()
+
+  const rouletteStatusLabel =
+    lastResult === 'none'
+      ? 'Sin premio esta vez'
+      : (lastResultMeta?.label ?? 'Listo para girar')
+  const rouletteStatusDescription =
+    lastResult === 'none'
+      ? 'Esta vez no tocó premio, vuelve a intentarlo.'
+      : (lastResultMeta?.description ??
+        'Pulsa la ruleta cuando tengas tiradas disponibles.')
+
+  const handleSpinRoulette = async () => {
+    if (!user || isSpinning || rollsAvailable <= 0 || !hasFinishedGame) {
       return
     }
 
     setIsSpinning(true)
     setLastResult(null)
+    setLastPrize(null)
 
-    const tier = rollPrizeOutcome()
-    const newRoll: RewardRoll = {
-      id: `${tier}-${Date.now()}`,
-      tier,
-      timestamp: Date.now(),
-      delivered: false
-    }
+    try {
+      const spinResult = await spinPrizeWheel(user.id)
+      const tier: RewardPrize =
+        (spinResult.prize?.tier as RewardPrize | undefined) ?? 'none'
 
-    const segmentIndex = rouletteSegments.findIndex(
-      (segment) => segment.tier === tier
-    )
-    const safeIndex = segmentIndex === -1 ? 0 : segmentIndex
-    const extraSpins = 4 + Math.floor(Math.random() * 3)
-    const rotationOffset =
-      safeIndex * rouletteSegmentAngle + rouletteSegmentAngle / 2
+      const segmentIndex = rouletteSegments.findIndex(
+        (segment) => segment.tier === tier
+      )
+      const safeIndex = segmentIndex === -1 ? 0 : segmentIndex
+      const extraSpins = 4 + Math.floor(Math.random() * 3)
+      const rotationOffset =
+        safeIndex * rouletteSegmentAngle + rouletteSegmentAngle / 2
 
-    setWheelRotation((prev) => {
-      const normalizedPrev = prev % 360
-      const alignmentOffset = rotationOffset - normalizedPrev
-      return prev + extraSpins * 360 + alignmentOffset
-    })
+      setWheelRotation((prev) => {
+        const normalizedPrev = prev % 360
+        const alignmentOffset = rotationOffset - normalizedPrev
+        return prev + extraSpins * 360 + alignmentOffset
+      })
 
-    const activeGameId = currentState.gameId
+      if (spinTimeoutRef.current) {
+        window.clearTimeout(spinTimeoutRef.current)
+      }
 
-    if (spinTimeoutRef.current) {
-      window.clearTimeout(spinTimeoutRef.current)
-    }
-
-    spinTimeoutRef.current = window.setTimeout(async () => {
-      try {
-        const latestState = loadRewardState(activeGameId)
-        const updatedState = persistRewardState(activeGameId, {
-          availableRolls: Math.max(0, latestState.availableRolls - 1),
-          rollHistory: [newRoll, ...latestState.rollHistory]
-        })
-
-        setCurrentState(updatedState)
-        setRewardStates((prev) =>
-          prev.map((state) =>
-            state.gameId === updatedState.gameId ? updatedState : state
-          )
-        )
-
-        await consumeUserTirada(user.id, 1)
-        await refreshUser()
-      } catch (error) {
-        console.error('Error consumiendo tirada tras girar ruleta:', error)
-      } finally {
-        setIsSpinning(false)
+      spinTimeoutRef.current = window.setTimeout(() => {
         setLastResult(tier)
+        setLastPrize(spinResult.prize ?? null)
+        setIsSpinning(false)
+        spinTimeoutRef.current = null
+      }, ROULETTE_SPIN_DURATION_MS)
+
+      await refreshUser()
+    } catch (error) {
+      console.error('Error al girar la ruleta:', error)
+      setIsSpinning(false)
+      if (spinTimeoutRef.current) {
+        window.clearTimeout(spinTimeoutRef.current)
         spinTimeoutRef.current = null
       }
-    }, ROULETTE_SPIN_DURATION_MS)
+    }
   }
 
   const handleAdminGrant = async () => {
-    if (!currentState || !user || !isAdmin) return
+    if (!user || !isAdmin) return
     const rollsToGrant = Math.max(1, Math.floor(Number(adminRollInput) || 0))
 
     try {
-      const updatedTiradas = await incrementUserTiradasPendientes(
-        user.id,
-        rollsToGrant
-      )
-
-      const updatedState = persistRewardState(currentState.gameId, {
-        availableRolls: updatedTiradas.pendientes
-      })
-
-      setCurrentState(updatedState)
-      setRewardStates((prev) =>
-        prev.map((state) =>
-          state.gameId === updatedState.gameId ? updatedState : state
-        )
-      )
-
+      await incrementUserTries(user.id, rollsToGrant)
       setAdminRollInput('1')
       setAdminStatus(`+${rollsToGrant} tirada(s) asignada(s)`)
       await refreshUser()
@@ -240,24 +160,7 @@ const RewardLogrosCard: FC<RewardLogrosCardProps> = ({ games }) => {
     }
   }
 
-  const handleMarkDelivered = (rollId: string) => {
-    if (!currentState || isAdmin) return
-    const updatedState = markPrizeDelivered({
-      admin: user,
-      gameId: currentState.gameId,
-      rollId
-    })
-    if (!updatedState) return
-
-    setCurrentState(updatedState)
-    setRewardStates((prev) =>
-      prev.map((state) =>
-        state.gameId === updatedState.gameId ? updatedState : state
-      )
-    )
-  }
-
-  if (loading) {
+  if (!user) {
     return (
       <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
         <Loader2 className="h-6 w-6 animate-spin text-green-600 mx-auto" />
@@ -265,39 +168,30 @@ const RewardLogrosCard: FC<RewardLogrosCardProps> = ({ games }) => {
     )
   }
 
-  if (!currentState) {
-    return (
-      <div className="bg-white rounded-lg border border-gray-200 p-4 text-center text-sm text-gray-600">
-        Completa una partida y visita la celebración para desbloquear premios.
-      </div>
-    )
+  const formatDate = (date: Date | null | undefined) => {
+    if (!date) return 'Fecha pendiente'
+    return new Date(date).toLocaleDateString('es-MX', {
+      month: 'short',
+      day: 'numeric'
+    })
   }
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h4 className="text-sm font-semibold text-gray-900">Logros</h4>
-          {!isFinishedGame && (
-            <p className="text-[11px] text-gray-500 mt-1">
-              Termina la partida y completa acciones para ganar tiradas y
-              premios.
-            </p>
-          )}
+          <h4 className="text-sm font-semibold text-gray-900">
+            Centro de premios
+          </h4>
+          <p className="text-[11px] text-gray-500 mt-1">
+            Guarda tus tiradas y revisa los premios ganados.
+          </p>
         </div>
-        {rewardStates.length > 1 && (
-          <select
-            value={selectedGameId ?? ''}
-            onChange={(event) => setSelectedGameId(event.target.value)}
-            disabled={isSpinning}
-            className="text-xs border border-gray-300 rounded-lg px-2 py-1 disabled:opacity-50"
-          >
-            {gameOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+        {games.length > 0 && (
+          <p className="text-[11px] text-gray-500">
+            {games.filter((game) => game.status === 'finished').length} partidas
+            finalizadas
+          </p>
         )}
       </div>
 
@@ -331,7 +225,9 @@ const RewardLogrosCard: FC<RewardLogrosCardProps> = ({ games }) => {
               <button
                 type="button"
                 onClick={handleSpinRoulette}
-                disabled={!isFinishedGame || rollsAvailable === 0 || isSpinning}
+                disabled={
+                  !hasFinishedGame || rollsAvailable === 0 || isSpinning
+                }
                 className="relative h-56 w-56 md:h-64 md:w-64 rounded-full focus-visible:outline-none disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <div
@@ -396,9 +292,9 @@ const RewardLogrosCard: FC<RewardLogrosCardProps> = ({ games }) => {
                 </div>
               </button>
               <p className="text-[11px] text-gray-500 text-center">
-                {isFinishedGame
-                  ? 'Deja que el staff valide el premio al terminar el giro.'
-                  : 'Termina la partida para activar la ruleta.'}
+                {hasFinishedGame
+                  ? 'Valida el premio con el staff al terminar el giro.'
+                  : 'Termina una partida para activar la ruleta.'}
               </p>
             </div>
 
@@ -422,8 +318,10 @@ const RewardLogrosCard: FC<RewardLogrosCardProps> = ({ games }) => {
               <button
                 type="button"
                 onClick={handleSpinRoulette}
-                disabled={!isFinishedGame || rollsAvailable === 0 || isSpinning}
-                className="w-full inline-flex items-center justify-center px-4 py-2 rounded-2xl bg-green-500 text-black font-semibold text-xs hover:bg-green-400 disabled:opacity-40"
+                disabled={
+                  !hasFinishedGame || rollsAvailable === 0 || isSpinning
+                }
+                className="w-full inline-flex items-center justify-center px-4 py-2 rounded-2xl bg-green-500 text-white font-semibold text-xs hover:bg-green-400 disabled:opacity-40"
               >
                 {isSpinning ? 'Girando...' : 'Girar ruleta'}
               </button>
@@ -457,37 +355,33 @@ const RewardLogrosCard: FC<RewardLogrosCardProps> = ({ games }) => {
           </div>
           {pendingPrizes.length > 0 ? (
             <div className="space-y-2">
-              {pendingPrizes.map((roll) => {
-                const reward = prizeCatalog[roll.tier]
+              {pendingPrizes.map((entry) => {
+                const record = normalizePrizeMeta(entry.prizeId)
+                const fallback =
+                  record && isCorePrizeTier(record.tier)
+                    ? prizeCatalog[record.tier]
+                    : undefined
                 return (
                   <div
-                    key={roll.id}
+                    key={`${entry.prizeId}-${entry.wonAt?.toString()}`}
                     className="flex items-start justify-between gap-3 rounded-xl bg-white border border-yellow-100 px-3 py-2"
                   >
                     <div>
                       <p className="text-sm font-semibold text-gray-900">
-                        {reward?.label ?? 'Premio sorpresa'}
+                        {record?.title ?? fallback?.label ?? 'Premio sorpresa'}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {reward?.description ?? 'Reclámalo con el staff.'}
+                        {record?.description ??
+                          fallback?.description ??
+                          'Reclámalo con el staff.'}
                       </p>
                       <span className="text-[11px] text-gray-400">
-                        Ganado el{' '}
-                        {new Date(roll.timestamp).toLocaleDateString('es-MX', {
-                          month: 'short',
-                          day: 'numeric'
-                        })}
+                        Ganado el {formatDate(entry.wonAt)}
                       </span>
                     </div>
-                    {isAdmin && (
-                      <button
-                        type="button"
-                        onClick={() => handleMarkDelivered(roll.id)}
-                        className="text-[11px] font-semibold text-yellow-900 border border-yellow-400 rounded px-2 py-0.5 hover:bg-yellow-100"
-                      >
-                        Marcar entregado
-                      </button>
-                    )}
+                    <span className="text-[11px] font-semibold text-yellow-900">
+                      Mostrar a staff
+                    </span>
                   </div>
                 )
               })}
@@ -508,27 +402,27 @@ const RewardLogrosCard: FC<RewardLogrosCardProps> = ({ games }) => {
           </div>
           {claimedPrizes.length > 0 ? (
             <div className="space-y-2">
-              {claimedPrizes.map((roll) => {
-                const reward = prizeCatalog[roll.tier]
-                const deliveredDate = roll.deliveredAt ?? roll.timestamp
+              {claimedPrizes.map((entry) => {
+                const record = normalizePrizeMeta(entry.prizeId)
+                const fallback =
+                  record && isCorePrizeTier(record.tier)
+                    ? prizeCatalog[record.tier]
+                    : undefined
+                const deliveredDate = entry.deliveredAt ?? entry.wonAt
                 return (
                   <div
-                    key={roll.id}
+                    key={`${entry.prizeId}-${entry.wonAt?.toString()}-delivered`}
                     className="flex items-center justify-between rounded-xl bg-white border border-green-100 px-3 py-2"
                   >
                     <div>
                       <p className="text-sm font-semibold text-gray-900">
-                        {reward?.label ?? 'Premio reclamado'}
+                        {record?.title ?? fallback?.label ?? 'Premio reclamado'}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {reward?.description ?? ''}
+                        {record?.description ?? fallback?.description ?? ''}
                       </p>
                       <span className="text-[11px] text-gray-400">
-                        Entregado el{' '}
-                        {new Date(deliveredDate).toLocaleDateString('es-MX', {
-                          month: 'short',
-                          day: 'numeric'
-                        })}
+                        Entregado el {formatDate(deliveredDate)}
                       </span>
                     </div>
                     <span className="inline-flex items-center text-[11px] font-semibold text-green-700">
@@ -546,6 +440,12 @@ const RewardLogrosCard: FC<RewardLogrosCardProps> = ({ games }) => {
           )}
         </div>
       </div>
+
+      {prizesLoading && (
+        <p className="text-[11px] text-gray-400">
+          Actualizando catálogo de premios...
+        </p>
+      )}
     </div>
   )
 }

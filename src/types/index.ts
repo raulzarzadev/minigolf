@@ -1,5 +1,12 @@
-export interface UserTiradas {
-  pendientes: number
+export interface UserTries {
+  triesLeft: number
+  lastTryAt: Date | null
+  prizesWon: {
+    prizeId: string
+    wonAt: Date
+    deliveredAt: Date | null
+  }[]
+  triesPlayed: number
 }
 
 // User model
@@ -11,7 +18,7 @@ export interface User {
   createdAt: Date
   gamesPlayed: number
   averageScore: number
-  tiradas: UserTiradas
+  tries: UserTries
   /**
    * @deprecated Use roles instead
    */

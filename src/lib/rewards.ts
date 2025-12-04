@@ -83,7 +83,7 @@ const writeStorage = (payload: RewardStorage) => {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload))
   } catch {
-    // ignore quota errors
+    // ignore
   }
 }
 
@@ -127,7 +127,7 @@ const writeConfig = (config: RewardConfig) => {
   try {
     window.localStorage.setItem(CONFIG_KEY, JSON.stringify(config))
   } catch {
-    // ignore errors
+    // ignore
   }
 }
 
@@ -144,11 +144,26 @@ const sanitizeOdds = (
   return next
 }
 
+const incrementDeliveredCount = (tier: RewardPrize) => {
+  const config = readConfig()
+  const updated: RewardConfig = {
+    ...config,
+    deliveredCounts: {
+      ...config.deliveredCounts,
+      [tier]: (config.deliveredCounts[tier] || 0) + 1
+    }
+  }
+  writeConfig(updated)
+  return updated.deliveredCounts
+}
+
 export const getRewardConfig = (): RewardConfig => readConfig()
 
 export const getRewardOdds = () => readConfig().odds
 
-export const updateRewardOdds = (odds: Partial<Record<PrizeTier, number>>) => {
+export const updateRewardOdds = (
+  odds: Partial<Record<PrizeTier, number>>
+): RewardConfig => {
   const config = readConfig()
   const updated: RewardConfig = {
     ...config,
@@ -180,19 +195,6 @@ export const removeRewardPerk = (perkId: string) => {
   return updated
 }
 
-const incrementDeliveredCount = (tier: RewardPrize) => {
-  const config = readConfig()
-  const updated: RewardConfig = {
-    ...config,
-    deliveredCounts: {
-      ...config.deliveredCounts,
-      [tier]: (config.deliveredCounts[tier] || 0) + 1
-    }
-  }
-  writeConfig(updated)
-  return updated.deliveredCounts
-}
-
 export const getPrizeDeliveryStats = () => readConfig().deliveredCounts
 
 export const loadRewardState = (gameId: string): RewardState => {
@@ -220,14 +222,13 @@ export const persistRewardState = (
   return next
 }
 
-export const upsertStepCompletion = (gameId: string, stepId: RewardStepId) => {
-  const state = loadRewardState(gameId)
-  if (state.completedSteps[stepId]) return state
-  return persistRewardState(gameId, {
-    completedSteps: { ...state.completedSteps, [stepId]: true },
-    availableRolls: state.availableRolls + 1
-  })
+export const getAllRewardStates = (): RewardState[] => {
+  const storage = readStorage()
+  return Object.values(storage).sort((a, b) => b.updatedAt - a.updatedAt)
 }
+
+export const setAvailableRolls = (gameId: string, rolls: number) =>
+  persistRewardState(gameId, { availableRolls: Math.max(0, rolls) })
 
 export const registerRoll = (gameId: string, roll: RewardRoll) => {
   const state = loadRewardState(gameId)
@@ -237,12 +238,13 @@ export const registerRoll = (gameId: string, roll: RewardRoll) => {
   })
 }
 
-export const setAvailableRolls = (gameId: string, rolls: number) =>
-  persistRewardState(gameId, { availableRolls: Math.max(0, rolls) })
-
-export const getAllRewardStates = (): RewardState[] => {
-  const storage = readStorage()
-  return Object.values(storage).sort((a, b) => b.updatedAt - a.updatedAt)
+export const upsertStepCompletion = (gameId: string, stepId: RewardStepId) => {
+  const state = loadRewardState(gameId)
+  if (state.completedSteps[stepId]) return state
+  return persistRewardState(gameId, {
+    completedSteps: { ...state.completedSteps, [stepId]: true },
+    availableRolls: state.availableRolls + 1
+  })
 }
 
 export const clearRewardState = (gameId: string) => {
@@ -278,55 +280,7 @@ export const rewardStepMeta: Record<
       'Copia el texto oficial del reto y publícalo con tu foto o reel.',
       'Enséñale la publicación al staff para validar tu tirada.'
     ],
-    ctaLabel: 'Copiar copy'
-  }
-}
-
-const INSTAGRAM_PROFILE = 'https://www.instagram.com/baja_mini_golf/'
-const SHARE_COPY =
-  '📸 Terminé mi partida en Baja Mini Golf. ¡Acepto el reto! #BajaMiniGolf #BajaBlast'
-
-export const triggerRewardStepAction = (
-  stepId: RewardStepId,
-  {
-    gameId,
-    user
-  }: {
-    gameId: string
-    user?: User | null
-  }
-) => {
-  if (typeof window === 'undefined') return
-
-  switch (stepId) {
-    case 'register': {
-      const redirectTo = `/login?redirect=${encodeURIComponent(
-        `/game/${gameId}/celebration`
-      )}`
-      if (user) {
-        window.open('/profile', '_blank')
-      } else {
-        window.open(redirectTo, '_blank')
-      }
-      break
-    }
-    case 'follow':
-      window.open(INSTAGRAM_PROFILE, '_blank')
-      break
-    case 'share':
-      if (typeof navigator !== 'undefined') {
-        navigator.clipboard
-          .writeText(SHARE_COPY)
-          .then(() => {
-            alert(
-              'Texto copiado. Pega el copy al subir tu foto en Instagram 📲'
-            )
-          })
-          .catch(() => {})
-      }
-      break
-    default:
-      break
+    ctaLabel: 'Abrir Instagram'
   }
 }
 
@@ -335,83 +289,64 @@ export const setLastInstruction = (
   stepId: RewardStepId | null
 ) => persistRewardState(gameId, { lastInstruction: stepId })
 
-export interface RewardPerk {
-  id: string
-  title: string
-  description: string
-  tier: PrizeTier | 'bonus'
-}
-
-export const rollPrizeOutcome = (randomValue = Math.random()): RewardPrize => {
-  const odds = getRewardOdds()
-  const ordered: PrizeTier[] = ['large', 'medium', 'small']
-  let cumulative = 0
-
-  for (const tier of ordered) {
-    cumulative += Math.max(0, odds[tier] ?? 0)
-    if (randomValue < cumulative) {
-      return tier
-    }
+export const triggerRewardStepAction = (
+  stepId: RewardStepId,
+  context: { gameId?: string; user?: User | null }
+) => {
+  if (typeof window === 'undefined') return
+  if (stepId === 'follow' || stepId === 'share') {
+    window.open('https://instagram.com/bajaminigolf', '_blank')
+  } else if (stepId === 'register') {
+    window.location.href = '/profile'
   }
 
-  return 'none'
-}
-
-export const grantAdminRolls = ({
-  admin,
-  gameId,
-  rolls
-}: {
-  admin?: User | null
-  gameId: string
-  rolls: number
-}) => {
-  if (!admin?.isAdmin) {
-    console.warn('grantAdminRolls: admin privileges required')
-    return null
+  if (context.gameId) {
+    setLastInstruction(context.gameId, stepId)
   }
-  if (rolls <= 0) return loadRewardState(gameId)
-
-  const state = loadRewardState(gameId)
-  const updated = persistRewardState(gameId, {
-    availableRolls: state.availableRolls + rolls
-  })
-  return updated
 }
 
-export const markPrizeDelivered = ({
-  admin,
-  gameId,
-  rollId
-}: {
+type MarkDeliveredPayload = {
   admin?: User | null
   gameId: string
   rollId: string
-}) => {
-  if (!admin?.isAdmin) {
-    console.warn('markPrizeDelivered: admin privileges required')
+}
+
+export const markPrizeDelivered = (
+  payload: MarkDeliveredPayload
+): RewardState | null => {
+  const storage = readStorage()
+  const state = storage[payload.gameId]
+  if (!state) {
     return null
   }
 
-  const state = loadRewardState(gameId)
+  let prizeTier: RewardPrize | null = null
   const updatedHistory = state.rollHistory.map((roll) => {
-    if (roll.id !== rollId || roll.delivered) return roll
-    const updatedRoll: RewardRoll = {
+    if (roll.id !== payload.rollId) {
+      return roll
+    }
+    prizeTier = roll.tier
+    return {
       ...roll,
       delivered: true,
       deliveredAt: Date.now(),
-      deliveredBy: admin.id
+      deliveredBy: payload.admin?.id
     }
-    if (updatedRoll.tier !== 'none') {
-      incrementDeliveredCount(updatedRoll.tier)
-    } else {
-      incrementDeliveredCount('none')
-    }
-    return updatedRoll
   })
 
-  const updatedState = persistRewardState(gameId, {
-    rollHistory: updatedHistory
-  })
+  if (!prizeTier || prizeTier === 'none') {
+    return null
+  }
+
+  incrementDeliveredCount(prizeTier)
+
+  const updatedState: RewardState = {
+    ...state,
+    rollHistory: updatedHistory,
+    updatedAt: Date.now()
+  }
+
+  storage[payload.gameId] = updatedState
+  writeStorage(storage)
   return updatedState
 }

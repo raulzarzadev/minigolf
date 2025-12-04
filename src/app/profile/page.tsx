@@ -8,21 +8,13 @@ import DiscreteUsernameEditor from '@/components/DiscreteUsernameEditor'
 import RewardLogrosCard from '@/components/RewardLogrosCard'
 import UserStats from '@/components/UserStats'
 import { useAuth } from '@/contexts/AuthContext'
-import { consumeUserTirada, getUserGames } from '@/lib/db'
+import { getUserGames } from '@/lib/db'
 import { Game } from '@/types'
 
 export default function ProfilePage() {
-  const { user, loading, refreshUser } = useAuth()
+  const { user, loading } = useAuth()
   const [userGames, setUserGames] = useState<Game[]>([])
   const [gamesLoading, setGamesLoading] = useState(true)
-  const [tiradasPendientes, setTiradasPendientes] = useState(
-    user?.tiradas?.pendientes ?? 0
-  )
-  const [isConsumiendoTirada, setIsConsumiendoTirada] = useState(false)
-  const [tiradaStatus, setTiradaStatus] = useState<{
-    message: string
-    tone: 'success' | 'error' | 'info'
-  } | null>(null)
 
   useEffect(() => {
     const loadUserGames = async () => {
@@ -42,46 +34,6 @@ export default function ProfilePage() {
       loadUserGames()
     }
   }, [user])
-
-  useEffect(() => {
-    setTiradasPendientes(user?.tiradas?.pendientes ?? 0)
-  }, [user?.tiradas?.pendientes])
-
-  useEffect(() => {
-    if (!tiradaStatus) return
-    const timer = window.setTimeout(() => setTiradaStatus(null), 3200)
-    return () => window.clearTimeout(timer)
-  }, [tiradaStatus])
-
-  const handleConsumirTirada = async () => {
-    if (!user) return
-    if (tiradasPendientes <= 0) {
-      setTiradaStatus({
-        message: 'No tienes tiradas pendientes por ahora.',
-        tone: 'info'
-      })
-      return
-    }
-
-    try {
-      setIsConsumiendoTirada(true)
-      const updatedTiradas = await consumeUserTirada(user.id)
-      setTiradasPendientes(updatedTiradas.pendientes)
-      await refreshUser()
-      setTiradaStatus({
-        message: '¡Tirada registrada! Prepárate para tu próxima jugada.',
-        tone: 'success'
-      })
-    } catch (error) {
-      console.error('Error al registrar tirada:', error)
-      setTiradaStatus({
-        message: 'No se pudo registrar la tirada. Inténtalo más tarde.',
-        tone: 'error'
-      })
-    } finally {
-      setIsConsumiendoTirada(false)
-    }
-  }
 
   const calculateStats = () => {
     const completedGames = userGames.filter(
@@ -139,6 +91,13 @@ export default function ProfilePage() {
     )
   }
 
+  const triesLeft = user.tries?.triesLeft ?? 0
+
+  const handleFocusRewardCenter = () => {
+    const target = document.getElementById('reward-center')
+    target?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
   const stats = calculateStats()
 
   return (
@@ -180,9 +139,7 @@ export default function ProfilePage() {
               <p className="text-xs uppercase font-semibold text-gray-500">
                 Tiradas pendientes
               </p>
-              <p className="text-3xl font-bold text-gray-900">
-                {tiradasPendientes}
-              </p>
+              <p className="text-3xl font-bold text-gray-900">{triesLeft}</p>
               <p className="text-xs text-gray-500 mt-1">
                 Usa tus tiradas para activar beneficios especiales en el club.
               </p>
@@ -194,35 +151,18 @@ export default function ProfilePage() {
           <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
             <button
               type="button"
-              onClick={handleConsumirTirada}
-              disabled={tiradasPendientes <= 0 || isConsumiendoTirada}
+              onClick={handleFocusRewardCenter}
+              disabled={triesLeft <= 0}
               className="px-4 py-2 bg-green-600 text-white rounded-md text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
             >
-              {tiradasPendientes > 0
-                ? isConsumiendoTirada
-                  ? 'Registrando tirada...'
-                  : 'Tirar ahora'
-                : 'Sin tiradas disponibles'}
+              {triesLeft > 0 ? 'Ver ruleta' : 'Sin tiradas disponibles'}
             </button>
             <span className="text-xs text-gray-500">
-              Cada tirada reduce tu saldo disponible.
+              Cada giro se gestiona directamente desde la ruleta inferior.
             </span>
           </div>
-          {tiradaStatus && (
-            <p
-              className={`mt-3 text-sm ${
-                tiradaStatus.tone === 'error'
-                  ? 'text-red-600'
-                  : tiradaStatus.tone === 'success'
-                    ? 'text-green-600'
-                    : 'text-gray-600'
-              }`}
-            >
-              {tiradaStatus.message}
-            </p>
-          )}
 
-          <div className="pt-4 border-t border-gray-100">
+          <div id="reward-center" className="pt-4 border-t border-gray-100">
             <div className="flex items-center justify-between mb-3">
               <div>
                 <p className="text-xs uppercase font-semibold text-gray-500">

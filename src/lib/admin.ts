@@ -7,7 +7,7 @@ import {
   Timestamp,
   where
 } from 'firebase/firestore'
-import { normalizeUserTiradas } from '@/lib/db'
+import { normalizeUserTries } from '@/lib/tries'
 import { AdminGame, AdminStats, AdminUser } from '@/types'
 import { db } from './firebase'
 
@@ -150,7 +150,7 @@ export async function getAdminUsers(): Promise<AdminUser[]> {
           : new Date(),
         gamesPlayed: userData.gamesPlayed || 0,
         averageScore: userData.averageScore || 0,
-        tiradas: normalizeUserTiradas(userData.tiradas ?? userData.shots),
+        tries: normalizeUserTries(userData.tries),
         isAdmin: userData.isAdmin || false,
         lastLoginAt: userData.lastLoginAt?.toDate
           ? userData.lastLoginAt.toDate()

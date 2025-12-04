@@ -20,7 +20,12 @@ const mockUser: User = {
   gamesPlayed: 0,
   averageScore: 0,
   username: 'testuser',
-  tiradas: { pendientes: 0 },
+  tries: {
+    triesLeft: 0,
+    triesPlayed: 0,
+    prizesWon: [],
+    lastTryAt: null
+  },
   isAdmin: false
 }
 
