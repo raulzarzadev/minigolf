@@ -20,8 +20,6 @@ const tierLabels: Record<string, string> = {
   bonus: 'Premio bonus'
 }
 
-const MAX_PRIZE_SEGMENT_PERCENT = 18
-const MIN_NO_PRIZE_SEGMENTS = 3
 const POINTER_ANGLE = 90
 
 type Segment = {
@@ -94,9 +92,19 @@ export function Roulette({
   const [result, setResult] = useState<PrizeRecord | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [hasOutcome, setHasOutcome] = useState(false)
+  const [buttonScale, setButtonScale] = useState(1)
+  const [isPressing, setIsPressing] = useState(false)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const rotationTargetRef = useRef(0)
-  const duration = spinTime ?? DEFAULT_SPIN_TIME
+  const pressStartTimeRef = useRef<number>(0)
+  const animationFrameRef = useRef<number | null>(null)
+  const durationRef = useRef<number>(spinTime ?? DEFAULT_SPIN_TIME)
+  const [duration, setDuration] = useState(spinTime ?? DEFAULT_SPIN_TIME)
+
+  const updateDuration = (value: number) => {
+    durationRef.current = value
+    setDuration(value)
+  }
 
   const activePrizes = useMemo(
     () => prizes.filter((prize) => prize.isActive),
@@ -122,11 +130,13 @@ export function Roulette({
 
     const noneWeight = totalPrizeWeight >= 100 ? 0 : 100 - totalPrizeWeight
 
+    const minWeight =
+      weightedPrizes.length > 0
+        ? Math.min(...weightedPrizes.map((p) => p.weight))
+        : 10
+
     const prizeChunks = weightedPrizes.flatMap(({ prize, weight }) => {
-      const chunkCount = Math.max(
-        1,
-        Math.ceil(weight / MAX_PRIZE_SEGMENT_PERCENT)
-      )
+      const chunkCount = Math.max(1, Math.round(weight / minWeight))
       const chunkWeight = weight / chunkCount
       return Array.from({ length: chunkCount }, (_, index) => ({
         id: `${prize.id}-${index}`,
@@ -136,13 +146,7 @@ export function Roulette({
     })
 
     const fillerCount =
-      noneWeight > 0
-        ? Math.max(
-            prizeChunks.length,
-            Math.ceil(noneWeight / MAX_PRIZE_SEGMENT_PERCENT),
-            MIN_NO_PRIZE_SEGMENTS
-          )
-        : 0
+      noneWeight > 0 ? Math.max(1, Math.round(noneWeight / minWeight)) : 0
 
     const fillerChunks =
       noneWeight > 0
@@ -159,14 +163,29 @@ export function Roulette({
       weight: number
     }> = []
 
-    const fillerQueue = [...fillerChunks]
-    prizeChunks.forEach((chunk) => {
-      orderedChunks.push(chunk)
-      if (fillerQueue.length > 0) {
-        orderedChunks.push(fillerQueue.shift()!)
+    if (fillerChunks.length === 0) {
+      orderedChunks.push(...prizeChunks)
+    } else if (prizeChunks.length === 0) {
+      orderedChunks.push(...fillerChunks)
+    } else {
+      const totalChunks = prizeChunks.length + fillerChunks.length
+      const prizeRatio = prizeChunks.length / totalChunks
+      let prizeIndex = 0
+      let fillerIndex = 0
+
+      for (let i = 0; i < totalChunks; i++) {
+        const currentRatio = prizeIndex / (i + 1)
+        const shouldAddPrize =
+          prizeIndex < prizeChunks.length &&
+          (fillerIndex >= fillerChunks.length || currentRatio < prizeRatio)
+
+        if (shouldAddPrize) {
+          orderedChunks.push(prizeChunks[prizeIndex++])
+        } else {
+          orderedChunks.push(fillerChunks[fillerIndex++])
+        }
       }
-    })
-    orderedChunks.push(...fillerQueue)
+    }
 
     if (orderedChunks.length === 0) {
       orderedChunks.push({ id: 'none-0', prize: null, weight: 100 })
@@ -190,11 +209,13 @@ export function Roulette({
       const isNoPrize = chunk.prize === null
       const tier = chunk.prize?.tier || 'small'
       const color = isNoPrize ? NO_PRIZE_COLOR : tierColors[tier] || '#fbbf24'
-      const label = isNoPrize
-        ? 'Sin premio'
-        : percentage >= 12
-          ? (chunk.prize?.title ?? tierLabels[tier])
-          : tierLabels[tier] || tier.toUpperCase()
+
+      let label: string
+      if (isNoPrize) {
+        label = 'Sin premio'
+      } else {
+        label = chunk.prize?.title ?? tierLabels[tier]
+      }
 
       return {
         id: chunk.id,
@@ -216,8 +237,28 @@ export function Roulette({
       if (timerRef.current) {
         clearTimeout(timerRef.current)
       }
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current)
+      }
     }
   }, [])
+
+  useEffect(() => {
+    if (isPressing) {
+      const animate = () => {
+        const elapsed = Date.now() - pressStartTimeRef.current
+        const scale = 1 + Math.min(elapsed / 1000, 0.7) // Crece hasta 1.7x en 1 segundo
+        setButtonScale(scale)
+        animationFrameRef.current = requestAnimationFrame(animate)
+      }
+      animationFrameRef.current = requestAnimationFrame(animate)
+    } else {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current)
+      }
+      setButtonScale(1)
+    }
+  }, [isPressing])
 
   const resolveResult = (segment: Segment | null) => {
     const prize = segment && !segment.isNoPrize ? segment.prize : null
@@ -244,7 +285,7 @@ export function Roulette({
     return segmentList[segmentList.length - 1] ?? null
   }
 
-  const handleSpin = () => {
+  const handleSpin = (overrideDuration?: number) => {
     if (isSpinning || segments.length === 0) {
       return
     }
@@ -252,8 +293,11 @@ export function Roulette({
     setError(null)
     setResult(null)
     setHasOutcome(false)
+    setIsPressing(false)
     onStart?.()
     setIsSpinning(true)
+
+    const useDuration = overrideDuration ?? durationRef.current
 
     const segmentSnapshot = segments
     const winningSegment = pickWinningSegment(segmentSnapshot)
@@ -290,16 +334,33 @@ export function Roulette({
       const landedSegment =
         findSegmentByAngle(pointerAngle, segmentSnapshot) ?? winningSegment
       resolveResult(landedSegment)
-    }, duration)
+    }, useDuration)
   }
 
-  const handleReset = () => {
-    if (isSpinning) {
-      return
+  const handleMouseDown = () => {
+    if (isSpinning || segments.length === 0) return
+    setIsPressing(true)
+    pressStartTimeRef.current = Date.now()
+  }
+
+  const handleMouseUp = () => {
+    if (!isPressing) return
+
+    setIsPressing(false)
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current)
     }
-    setResult(null)
-    setError(null)
-    setHasOutcome(false)
+
+    const elapsed = Date.now() - pressStartTimeRef.current
+    const baseDuration = spinTime ?? DEFAULT_SPIN_TIME
+    const maxDuration = baseDuration * 2
+    const dynamicDuration = Math.min(
+      maxDuration,
+      baseDuration + elapsed * 4 // cada ms agrega 2ms al giro, hasta 2x
+    )
+
+    updateDuration(dynamicDuration)
+    handleSpin(dynamicDuration)
   }
 
   if (prizes.length === 0) {
@@ -321,69 +382,69 @@ export function Roulette({
           }}
         >
           <svg viewBox="-200 -200 400 400" className="h-full w-full">
-            <g>
-              {segments.map((segment) => (
+            {segments.map((segment) => {
+              //const sweep = segment.endAngle - segment.startAngle
+              const rotation = segment.midAngle - 90
+              const textOffset = 90
+
+              return (
                 <g key={segment.id}>
                   <path
                     d={describeArc(180, segment.startAngle, segment.endAngle)}
                     fill={segment.color}
+                    stroke="#ffffff"
+                    strokeWidth="1"
                   />
-                  {(() => {
-                    const labelPoint = polarToCartesian(125, segment.midAngle)
-                    const percentPoint = polarToCartesian(103, segment.midAngle)
 
-                    return (
-                      <>
-                        <text
-                          x={labelPoint.x}
-                          y={labelPoint.y}
-                          textAnchor="middle"
-                          dominantBaseline="middle"
-                          className="pointer-events-none select-none fill-slate-900 text-xs font-semibold"
-                        >
-                          {segment.displayLabel}
-                        </text>
-                        <text
-                          x={percentPoint.x}
-                          y={percentPoint.y}
-                          textAnchor="middle"
-                          dominantBaseline="middle"
-                          className="pointer-events-none select-none fill-slate-700 text-[10px]"
-                        >
-                          {segment.percentage.toFixed(1)}%
-                        </text>
-                      </>
-                    )
-                  })()}
+                  <text
+                    transform={`rotate(${rotation}) translate(${textOffset}, 0)`}
+                    textAnchor="start"
+                    dominantBaseline="middle"
+                    className="pointer-events-none select-none fill-slate-900 text-[11px] font-semibold"
+                    style={{ transformOrigin: '0 0' }}
+                  >
+                    {segment.displayLabel}
+                  </text>
                 </g>
-              ))}
-            </g>
+              )
+            })}
           </svg>
+
+          {/* Botón central para girar */}
+          <button
+            type="button"
+            onMouseDown={handleMouseDown}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={() => setIsPressing(false)}
+            onTouchStart={handleMouseDown}
+            onTouchEnd={handleMouseUp}
+            disabled={isSpinning || segments.length === 0}
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-linear-to-br from-emerald-400 to-emerald-600 text-white font-bold shadow-lg hover:from-emerald-500 hover:to-emerald-700 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed transition-colors"
+            style={{
+              width: `${60 * buttonScale}px`,
+              height: `${60 * buttonScale}px`,
+              transition: isPressing
+                ? 'none'
+                : 'width 0.2s ease-out, height 0.2s ease-out'
+            }}
+          >
+            <span className="text-sm">{isSpinning ? '...' : 'GIRAR'}</span>
+          </button>
         </div>
-        <div className="pointer-events-none absolute top-1/2 -right-6 z-30 -translate-y-1/2">
-          <div className="relative h-10 w-10 rotate-45 rounded bg-white shadow">
-            <div className="absolute -left-2 top-1/2 h-6 w-2 -translate-y-1/2 rounded bg-slate-900" />
+
+        <div className="pointer-events-none absolute top-1/2 -right-3 z-30 -translate-y-1/2">
+          <div className="flex items-center">
+            <div
+              className="w-0 h-0"
+              style={{
+                borderTop: '12px solid transparent',
+                borderBottom: '12px solid transparent',
+                borderRight: '16px solid #ef4444'
+              }}
+            />
+            <div className="h-8 w-8 rounded-full bg-red-500 shadow-lg -ml-2" />
           </div>
         </div>
-      </div>
-
-      <div className="flex gap-3">
-        <button
-          type="button"
-          onClick={handleSpin}
-          disabled={isSpinning || segments.length === 0}
-          className="rounded-full bg-emerald-500 px-6 py-2 font-semibold text-white transition disabled:cursor-not-allowed disabled:bg-emerald-300"
-        >
-          {isSpinning ? 'Girando...' : 'Girar'}
-        </button>
-        <button
-          type="button"
-          onClick={handleReset}
-          disabled={isSpinning}
-          className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          Reiniciar
-        </button>
       </div>
 
       {error && (
@@ -397,8 +458,7 @@ export function Roulette({
           {result ? (
             <>
               <p className="text-sm font-medium text-emerald-800">
-                Resultado: <span className="font-semibold">{result.title}</span>{' '}
-                ({tierLabels[result.tier] || result.tier})
+                ¡Ganaste! <span className="font-semibold">{result.title}</span>
               </p>
               {result.description && (
                 <p className="mt-2 text-xs text-emerald-700">
@@ -407,9 +467,8 @@ export function Roulette({
               )}
             </>
           ) : (
-            <p className="text-sm font-medium text-emerald-800">
-              Resultado: <span className="font-semibold">Sin premio</span>.
-              Intenta de nuevo.
+            <p className="text-sm font-medium text-slate-600">
+              Sin premio esta vez. ¡Intenta de nuevo!
             </p>
           )}
         </div>
