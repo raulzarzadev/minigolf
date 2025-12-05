@@ -20,6 +20,10 @@ const tierLabels: Record<string, string> = {
   bonus: 'Premio bonus'
 }
 
+const MAX_PRIZE_SEGMENT_PERCENT = 18
+const MIN_NO_PRIZE_SEGMENTS = 3
+const POINTER_ANGLE = 90
+
 type Segment = {
   id: string
   prize: PrizeRecord | null
@@ -29,7 +33,6 @@ type Segment = {
   percentage: number
   color: string
   displayLabel: string
-  labelPosition: { x: number; y: number }
   weightFraction: number
   isNoPrize: boolean
 }
@@ -118,63 +121,94 @@ export function Roulette({
     )
 
     const noneWeight = totalPrizeWeight >= 100 ? 0 : 100 - totalPrizeWeight
-    const totalWeight =
-      totalPrizeWeight + noneWeight > 0 ? totalPrizeWeight + noneWeight : 100
 
-    const segmentsList: Segment[] = []
+    const prizeChunks = weightedPrizes.flatMap(({ prize, weight }) => {
+      const chunkCount = Math.max(
+        1,
+        Math.ceil(weight / MAX_PRIZE_SEGMENT_PERCENT)
+      )
+      const chunkWeight = weight / chunkCount
+      return Array.from({ length: chunkCount }, (_, index) => ({
+        id: `${prize.id}-${index}`,
+        prize,
+        weight: chunkWeight
+      }))
+    })
+
+    const fillerCount =
+      noneWeight > 0
+        ? Math.max(
+            prizeChunks.length,
+            Math.ceil(noneWeight / MAX_PRIZE_SEGMENT_PERCENT),
+            MIN_NO_PRIZE_SEGMENTS
+          )
+        : 0
+
+    const fillerChunks =
+      noneWeight > 0
+        ? Array.from({ length: fillerCount }, (_, index) => ({
+            id: `none-${index}`,
+            prize: null,
+            weight: noneWeight / fillerCount
+          }))
+        : []
+
+    const orderedChunks: Array<{
+      id: string
+      prize: PrizeRecord | null
+      weight: number
+    }> = []
+
+    const fillerQueue = [...fillerChunks]
+    prizeChunks.forEach((chunk) => {
+      orderedChunks.push(chunk)
+      if (fillerQueue.length > 0) {
+        orderedChunks.push(fillerQueue.shift()!)
+      }
+    })
+    orderedChunks.push(...fillerQueue)
+
+    if (orderedChunks.length === 0) {
+      orderedChunks.push({ id: 'none-0', prize: null, weight: 100 })
+    }
+
+    const wheelWeight = orderedChunks.reduce(
+      (sum, chunk) => sum + chunk.weight,
+      0
+    )
     let cursor = 0
 
-    const pushSegment = (
-      payload:
-        | { prize: PrizeRecord; weight: number }
-        | { prize: null; weight: number }
-    ) => {
-      if (payload.weight <= 0) {
-        return
-      }
-
-      const normalized = payload.weight / totalWeight
+    return orderedChunks.map((chunk) => {
+      const normalized = chunk.weight / wheelWeight
       const sweep = normalized * 360
       const startAngle = cursor
       const endAngle = cursor + sweep
       const percentage = normalized * 100
       cursor = endAngle
+      const midAngle = startAngle + sweep / 2
 
-      const isNoPrize = payload.prize === null
-      const tier = payload.prize?.tier || 'small'
+      const isNoPrize = chunk.prize === null
+      const tier = chunk.prize?.tier || 'small'
       const color = isNoPrize ? NO_PRIZE_COLOR : tierColors[tier] || '#fbbf24'
       const label = isNoPrize
         ? 'Sin premio'
         : percentage >= 12
-          ? (payload.prize?.title ?? tierLabels[tier])
+          ? (chunk.prize?.title ?? tierLabels[tier])
           : tierLabels[tier] || tier.toUpperCase()
 
-      const midAngle = startAngle + sweep / 2
-      const labelPosition = polarToCartesian(110, midAngle)
-
-      segmentsList.push({
-        id: isNoPrize ? 'no-prize' : payload.prize!.id,
-        prize: payload.prize,
+      return {
+        id: chunk.id,
+        prize: chunk.prize,
         startAngle,
         endAngle,
         midAngle,
         percentage,
         color,
         displayLabel: label,
-        labelPosition,
         weightFraction: normalized,
         isNoPrize
-      })
-    }
-
-    weightedPrizes.forEach((entry) => {
-      pushSegment(entry)
+      }
     })
-    if (noneWeight > 0 || segmentsList.length === 0) {
-      pushSegment({ prize: null, weight: noneWeight > 0 ? noneWeight : 100 })
-    }
-
-    return segmentsList
   }, [activePrizes])
 
   useEffect(() => {
@@ -231,11 +265,15 @@ export function Roulette({
     }
 
     const extraSpins = 5 + Math.random() * 2
-    const landingAngle = 360 - winningSegment.midAngle
+    const desiredLanding = normalizeAngle(
+      POINTER_ANGLE - winningSegment.midAngle
+    )
     setRotation((current) => {
       const normalizedCurrent = normalizeAngle(current)
-      const normalizedLanding = normalizeAngle(landingAngle)
-      const delta = normalizedLanding - normalizedCurrent
+      let delta = desiredLanding - normalizedCurrent
+      while (delta <= 0) {
+        delta += 360
+      }
       const targetRotation = extraSpins * 360 + delta
       const nextRotation = current + targetRotation
       rotationTargetRef.current = nextRotation
@@ -248,7 +286,7 @@ export function Roulette({
 
     timerRef.current = setTimeout(() => {
       const finalRotation = rotationTargetRef.current
-      const pointerAngle = normalizeAngle(-finalRotation)
+      const pointerAngle = normalizeAngle(POINTER_ANGLE - finalRotation)
       const landedSegment =
         findSegmentByAngle(pointerAngle, segmentSnapshot) ?? winningSegment
       resolveResult(landedSegment)
@@ -275,9 +313,6 @@ export function Roulette({
   return (
     <div className="flex flex-col items-center gap-6">
       <div className="relative">
-        <div className="absolute -top-4 left-1/2 z-20 flex -translate-x-1/2 items-center justify-center">
-          <div className="h-8 w-6 rounded-b-full bg-slate-900" />
-        </div>
         <div
           className="relative h-80 w-80 rounded-full bg-white shadow-xl"
           style={{
@@ -293,30 +328,42 @@ export function Roulette({
                     d={describeArc(180, segment.startAngle, segment.endAngle)}
                     fill={segment.color}
                   />
-                  <text
-                    x={segment.labelPosition.x}
-                    y={segment.labelPosition.y}
-                    textAnchor="middle"
-                    dominantBaseline="middle"
-                    className="pointer-events-none select-none fill-slate-900 text-xs font-semibold"
-                  >
-                    {segment.displayLabel}
-                  </text>
-                  <text
-                    x={segment.labelPosition.x}
-                    y={segment.labelPosition.y + 16}
-                    textAnchor="middle"
-                    className="pointer-events-none select-none fill-slate-700 text-[10px]"
-                  >
-                    {segment.percentage.toFixed(1)}%
-                  </text>
+                  {(() => {
+                    const labelPoint = polarToCartesian(125, segment.midAngle)
+                    const percentPoint = polarToCartesian(103, segment.midAngle)
+
+                    return (
+                      <>
+                        <text
+                          x={labelPoint.x}
+                          y={labelPoint.y}
+                          textAnchor="middle"
+                          dominantBaseline="middle"
+                          className="pointer-events-none select-none fill-slate-900 text-xs font-semibold"
+                        >
+                          {segment.displayLabel}
+                        </text>
+                        <text
+                          x={percentPoint.x}
+                          y={percentPoint.y}
+                          textAnchor="middle"
+                          dominantBaseline="middle"
+                          className="pointer-events-none select-none fill-slate-700 text-[10px]"
+                        >
+                          {segment.percentage.toFixed(1)}%
+                        </text>
+                      </>
+                    )
+                  })()}
                 </g>
               ))}
             </g>
           </svg>
         </div>
-        <div className="pointer-events-none absolute top-0 left-1/2 z-30 -translate-x-1/2">
-          <div className="h-10 w-10 -translate-y-5 rotate-45 rounded bg-white shadow" />
+        <div className="pointer-events-none absolute top-1/2 -right-6 z-30 -translate-y-1/2">
+          <div className="relative h-10 w-10 rotate-45 rounded bg-white shadow">
+            <div className="absolute -left-2 top-1/2 h-6 w-2 -translate-y-1/2 rounded bg-slate-900" />
+          </div>
         </div>
       </div>
 
