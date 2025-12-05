@@ -1,49 +1,21 @@
 import { useEffect, useState } from 'react'
-import { listPrices, PriceRecord } from '@/lib/prices'
-import { PrizeTier } from '@/types/rewards'
+import { listPrizes, PrizeRecord } from '@/lib/prizes'
 
-export type PrizeCatalog = Record<PrizeTier, PriceRecord | undefined>
+export type PrizeCatalog = PrizeRecord[]
 
 export function usePrizes() {
-  const [prizes, setPrizes] = useState<PrizeCatalog>({
-    small: undefined,
-    medium: undefined,
-    large: undefined
-  })
+  const [prizes, setPrizes] = useState<PrizeCatalog>([])
   const [loading, setLoading] = useState(true)
-  const [byId, setById] = useState<Record<string, PriceRecord>>({})
 
   useEffect(() => {
     async function fetchPrizes() {
       try {
-        const allPrices = await listPrices()
+        const allPrices = await listPrizes()
         const activePrices = allPrices.filter(
-          (candidate: PriceRecord) => candidate.isActive
+          (candidate: PrizeRecord) => candidate.isActive
         )
 
-        // Prioritize most recently created/updated if multiple exist?
-        // listPrices sorts by createdAt desc.
-        const catalog: PrizeCatalog = {
-          small: activePrices.find(
-            (record: PriceRecord) => record.tier === 'small'
-          ),
-          medium: activePrices.find(
-            (record: PriceRecord) => record.tier === 'medium'
-          ),
-          large: activePrices.find(
-            (record: PriceRecord) => record.tier === 'large'
-          )
-        }
-        setPrizes(catalog)
-        setById(
-          activePrices.reduce<Record<string, PriceRecord>>(
-            (map: Record<string, PriceRecord>, prize: PriceRecord) => {
-              map[prize.id] = prize
-              return map
-            },
-            {}
-          )
-        )
+        setPrizes(activePrices)
       } catch (error) {
         console.error('Failed to fetch prizes', error)
       } finally {
@@ -53,5 +25,5 @@ export function usePrizes() {
     fetchPrizes()
   }, [])
 
-  return { prizes, byId, loading }
+  return { prizes, loading }
 }

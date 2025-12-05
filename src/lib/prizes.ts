@@ -90,7 +90,6 @@ export const getPrizeById = async (
 export const createPrize = async (
   payload: PrizePayload
 ): Promise<PrizeRecord | null> => {
-  console.log({ payload })
   const docRef = await addDoc(prizesCollection, {
     ...payload,
     isActive: payload.isActive ?? true,

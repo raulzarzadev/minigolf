@@ -133,8 +133,8 @@ export default function ProfilePage() {
         </div>
 
         {/* Tiradas balance */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4 space-y-4">
-          <div className="flex items-center justify-between">
+
+        {/* <div className="flex items-center justify-between">
             <div>
               <p className="text-xs uppercase font-semibold text-gray-500">
                 Tiradas pendientes
@@ -147,8 +147,8 @@ export default function ProfilePage() {
             <div className="h-12 w-12 rounded-full bg-green-50 flex items-center justify-center">
               <Target className="h-6 w-6 text-green-600" />
             </div>
-          </div>
-          <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+          </div> */}
+        {/* <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
             <button
               type="button"
               onClick={handleFocusRewardCenter}
@@ -160,9 +160,9 @@ export default function ProfilePage() {
             <span className="text-xs text-gray-500">
               Cada giro se gestiona directamente desde la ruleta inferior.
             </span>
-          </div>
+          </div> */}
 
-          <div id="reward-center" className="pt-4 border-t border-gray-100">
+        {/* <div id="reward-center" className="pt-4 border-t border-gray-100">
             <div className="flex items-center justify-between mb-3">
               <div>
                 <p className="text-xs uppercase font-semibold text-gray-500">
@@ -174,9 +174,8 @@ export default function ProfilePage() {
                 </p>
               </div>
             </div>
-            <RewardLogrosCard games={userGames} />
-          </div>
-        </div>
+            </div> */}
+        <RewardLogrosCard games={userGames} />
 
         {/* Stats Grid */}
 

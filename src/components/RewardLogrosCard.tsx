@@ -14,7 +14,8 @@ import {
 } from '@/lib/roulette'
 import { incrementUserTries, spinPrizeWheel } from '@/lib/tries'
 import { Game } from '@/types'
-import { PrizeTier, RewardPrize } from '@/types/rewards'
+import { RewardPrize } from '@/types/rewards'
+import { Roulette } from './roulette/roulette'
 
 interface RewardLogrosCardProps {
   games: Game[]
@@ -25,7 +26,7 @@ const isCorePrizeTier = (tier: PrizeRecord['tier']): tier is PrizeTier =>
 
 const RewardLogrosCard: FC<RewardLogrosCardProps> = ({ games }) => {
   const { user, isAdmin, refreshUser } = useAuth()
-  const { byId: prizeMap, loading: prizesLoading } = usePrizes()
+  const { prizes, loading: prizesLoading } = usePrizes()
   const [adminRollInput, setAdminRollInput] = useState('1')
   const [adminStatus, setAdminStatus] = useState<string | null>(null)
   const [isSpinning, setIsSpinning] = useState(false)
@@ -53,13 +54,6 @@ const RewardLogrosCard: FC<RewardLogrosCardProps> = ({ games }) => {
       : 'Sin tiradas disponibles, completa retos para ganar más.'
     : 'Termina una partida para activar la ruleta.'
 
-  const normalizePrizeMeta = (prizeId?: string) => {
-    if (!prizeId) return null
-    const record = prizeMap[prizeId]
-    if (!record) return null
-    return record
-  }
-
   const prizeEntries = user?.tries?.prizesWon ?? []
   const pendingPrizes = useMemo(
     () => prizeEntries.filter((entry) => !entry.deliveredAt),
@@ -77,9 +71,9 @@ const RewardLogrosCard: FC<RewardLogrosCardProps> = ({ games }) => {
         description: lastPrize.description || 'Reclámalo con el staff.'
       }
     }
-    if (lastResult && lastResult !== 'none') {
-      return prizeCatalog[lastResult]
-    }
+    // if (lastResult && lastResult !== 'none') {
+    //   return prizeCatalog[lastResult]
+    // }
     return null
   })()
 
@@ -177,48 +171,23 @@ const RewardLogrosCard: FC<RewardLogrosCardProps> = ({ games }) => {
   }
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h4 className="text-sm font-semibold text-gray-900">
-            Centro de premios
-          </h4>
-          <p className="text-[11px] text-gray-500 mt-1">
-            Guarda tus tiradas y revisa los premios ganados.
-          </p>
-        </div>
+    <>
+      {/* <div className="flex flex-wrap items-center justify-between gap-3">
         {games.length > 0 && (
           <p className="text-[11px] text-gray-500">
             {games.filter((game) => game.status === 'finished').length} partidas
             finalizadas
           </p>
         )}
-      </div>
+      </div> */}
+      <Roulette
+        prizes={prizes}
+        onResult={(res) => {
+          console.log({ res })
+        }}
+      />
 
-      {isAdmin && (
-        <div className="flex flex-wrap items-center gap-2 border border-dashed border-gray-200 rounded-lg p-2 text-xs">
-          <span className="font-semibold text-gray-700">Modo staff</span>
-          <input
-            type="number"
-            min={1}
-            value={adminRollInput}
-            onChange={(event) => setAdminRollInput(event.target.value)}
-            className="w-16 border border-gray-300 rounded px-2 py-1"
-          />
-          <button
-            type="button"
-            onClick={handleAdminGrant}
-            className="px-3 py-1 rounded bg-black text-white font-semibold"
-          >
-            Dar tiradas
-          </button>
-          {adminStatus && (
-            <span className="text-green-600 font-medium">{adminStatus}</span>
-          )}
-        </div>
-      )}
-
-      <div className="space-y-4">
+      {/* <div className="space-y-4">
         <div className="rounded-2xl border border-gray-200 p-4 space-y-4">
           <div className="flex flex-col gap-4 md:flex-row md:items-center">
             <div className="flex flex-col items-center gap-2">
@@ -299,11 +268,44 @@ const RewardLogrosCard: FC<RewardLogrosCardProps> = ({ games }) => {
             </div>
 
             <div className="flex-1 space-y-2">
-              <p className="text-xs text-gray-500">Tiradas disponibles</p>
-              <p className="text-3xl font-bold text-gray-900">
-                {rollsAvailable}
-              </p>
-              <p className="text-[11px] text-gray-500">
+              <div className="flex p-3 bg-gray-50 rounded-xl items-center justify-between">
+                <div className="flex-1 space-y-2">
+                  <p className="text-xs text-gray-500">Tiradas disponibles</p>
+                  <p className="text-3xl font-bold text-gray-900">
+                    {rollsAvailable}
+                  </p>
+                </div>
+                {isAdmin && (
+                  <div className="flex flex-wrap items-center gap-2 border border-dashed border-gray-200 rounded-lg p-2 text-xs">
+                    <span className="font-semibold text-gray-700">
+                      Modo staff
+                    </span>
+                    <input
+                      type="number"
+                      min={1}
+                      value={adminRollInput}
+                      onChange={(event) =>
+                        setAdminRollInput(event.target.value)
+                      }
+                      className="w-16 border border-gray-300 rounded px-2 py-1"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAdminGrant}
+                      className="px-3 py-1 rounded bg-black text-white font-semibold"
+                    >
+                      Dar tiradas
+                    </button>
+                    {adminStatus && (
+                      <span className="text-green-600 font-medium">
+                        {adminStatus}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <p className="text-[11px] text-gray-500 p-3">
                 {rouletteHelperMessage}
               </p>
               <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
@@ -439,14 +441,14 @@ const RewardLogrosCard: FC<RewardLogrosCardProps> = ({ games }) => {
             </p>
           )}
         </div>
-      </div>
+      </div> */}
 
       {prizesLoading && (
         <p className="text-[11px] text-gray-400">
           Actualizando catálogo de premios...
         </p>
       )}
-    </div>
+    </>
   )
 }
 

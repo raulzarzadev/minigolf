@@ -1,7 +1,7 @@
 import { render, waitFor } from '@testing-library/react'
 import { useEffect } from 'react'
 import { usePrizes } from '@/hooks/usePrizes'
-import { listPrices, PriceRecord } from '@/lib/prices'
+import { listPrizes, PrizeRecord } from '@/lib/prizes'
 
 jest.mock('@/lib/prices', () => ({
   listPrices: jest.fn()
@@ -13,7 +13,7 @@ describe('usePrizes', () => {
   })
 
   it('organizes active prices by tier and id map', async () => {
-    const mockRecords: PriceRecord[] = [
+    const mockRecords: PrizeRecord[] = [
       {
         id: 'p-small-active',
         title: 'Snack Pack',
@@ -43,7 +43,7 @@ describe('usePrizes', () => {
         isActive: true
       }
     ]
-    ;(listPrices as jest.Mock).mockResolvedValue(mockRecords)
+    ;(listPrizes as jest.Mock).mockResolvedValue(mockRecords)
 
     const states: Array<ReturnType<typeof usePrizes>> = []
 
@@ -77,7 +77,7 @@ describe('usePrizes', () => {
   })
 
   it('stops loading even if fetching prices fails', async () => {
-    ;(listPrices as jest.Mock).mockRejectedValueOnce(new Error('boom'))
+    ;(listPrizes as jest.Mock).mockRejectedValueOnce(new Error('boom'))
 
     const states: Array<ReturnType<typeof usePrizes>> = []
 
