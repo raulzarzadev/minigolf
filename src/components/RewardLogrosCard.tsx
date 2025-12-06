@@ -19,7 +19,7 @@ const RewardLogrosCard: FC = () => {
   const { user, refreshUser } = useAuth()
   const { prizes, loading: prizesLoading } = usePrizes()
   const [lastResult] = useState<RewardPrize | null>(null)
-  const [lastPrize] = useState<PrizeRecord | null>(null)
+  const [lastPrize, setLastPrize] = useState<PrizeRecord | null>(null)
   const [showPending, setShowPending] = useState(false)
   const [showEarnModal, setShowEarnModal] = useState(false)
   const [staffPrize, setStaffPrize] = useState<{
@@ -28,6 +28,9 @@ const RewardLogrosCard: FC = () => {
     code?: string
     wonAt?: Date | null
   } | null>(null)
+  const [celebrationPrize, setCelebrationPrize] = useState<PrizeRecord | null>(
+    null
+  )
   const spinTimeoutRef = useRef<number | null>(null)
 
   useEffect(() => {
@@ -89,6 +92,59 @@ const RewardLogrosCard: FC = () => {
           Cómo ganar más
         </button>
       </div>
+      <div
+        className={`rounded-2xl p-4 shadow-lg ${
+          rollsAvailable > 0
+            ? 'border border-emerald-100 bg-linear-to-r from-emerald-500 to-emerald-600 text-white'
+            : 'border border-gray-200 bg-gray-50 text-gray-700'
+        }`}
+      >
+        {rollsAvailable > 0 ? (
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-emerald-100">
+                Tus tiradas disponibles
+              </p>
+              <p className="text-lg font-bold leading-tight">
+                ¡Te quedan {rollsAvailable} tiro
+                {rollsAvailable === 1 ? '' : 's'}!
+              </p>
+              <p className="text-sm text-emerald-50">
+                Aprovecha tus tiradas antes de que se agoten.
+              </p>
+            </div>
+            <div className="flex items-center justify-center rounded-xl bg-white/20 px-4 py-3 text-center">
+              <span className="text-3xl font-black">{rollsAvailable}</span>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                Sin tiradas disponibles
+              </p>
+              <p className="text-lg font-bold leading-tight text-gray-900">
+                Completa una partida para obtener más intentos.
+              </p>
+              <p className="text-sm text-gray-600">
+                Pide ayuda al staff o revisa cómo ganar más premios.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowEarnModal(true)}
+              className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-emerald-600 shadow"
+            >
+              Cómo ganar más
+            </button>
+          </div>
+        )}
+      </div>
+      {/* <StatPill
+        label="Tiradas pendientes"
+        value={rollsAvailable}
+        tone="emerald"
+      /> */}
       <div className="flex flex-col lg:flex-row md:gap-6 gap-4">
         {/* //* RULETA  */}
         <div className="flex flex-col gap-3 items-center">
@@ -104,6 +160,8 @@ const RewardLogrosCard: FC = () => {
                   await incrementUserTries(user.id, -1)
                   if (result) {
                     await assignPrizeToUser(user.id, result)
+                    setLastPrize(result)
+                    setCelebrationPrize(result)
                   }
                   refreshUser()
                   return
@@ -427,6 +485,40 @@ const RewardLogrosCard: FC = () => {
               >
                 Listo
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {celebrationPrize && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
+          <div className="relative w-full max-w-md overflow-hidden rounded-3xl border border-emerald-100 bg-white p-6 shadow-2xl">
+            <div className="absolute inset-0 bg-linear-to-br from-emerald-50 via-white to-emerald-100 opacity-70" />
+            <div className="relative space-y-4 text-center">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">
+                Premio ganado
+              </p>
+              <p className="text-2xl font-black text-gray-900">¡Felicidades!</p>
+              <p className="text-lg font-semibold text-emerald-800">
+                {celebrationPrize.title}
+              </p>
+              <p className="text-sm text-gray-600">
+                Muestra tu código en "Mostrar a staff" para reclamarlo.
+              </p>
+              <div className="flex justify-center gap-2 text-3xl" aria-hidden>
+                <span className="animate-bounce">*</span>
+                <span className="animate-pulse">★</span>
+                <span className="animate-bounce">*</span>
+              </div>
+              <div className="flex items-center justify-center">
+                <button
+                  type="button"
+                  onClick={() => setCelebrationPrize(null)}
+                  className="rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-lg hover:bg-emerald-700"
+                >
+                  Cerrar
+                </button>
+              </div>
             </div>
           </div>
         </div>
