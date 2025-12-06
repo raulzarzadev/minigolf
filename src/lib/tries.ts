@@ -20,6 +20,11 @@ export const createDefaultUserTries = (): UserTries => ({
   triesPlayed: 0
 })
 
+const generatePrizeCode = () =>
+  Math.floor(Math.random() * 0xffffff)
+    .toString(16)
+    .padStart(6, '0')
+
 export const normalizeUserTries = (raw?: unknown): UserTries => {
   if (!raw || typeof raw !== 'object') {
     return createDefaultUserTries()
@@ -35,21 +40,25 @@ export const normalizeUserTries = (raw?: unknown): UserTries => {
     lastTryAt: source.lastTryAt?.toDate
       ? source.lastTryAt.toDate()
       : source.lastTryAt
-        ? new Date(source.lastTryAt)
-        : null,
+      ? new Date(source.lastTryAt)
+      : null,
     prizesWon: Array.isArray(source.prizesWon)
       ? source.prizesWon.map((entry) => ({
           prizeId: entry.prizeId,
+          code:
+            typeof entry.code === 'string' && entry.code.length > 0
+              ? entry.code
+              : generatePrizeCode(),
           wonAt: entry.wonAt?.toDate
             ? entry.wonAt.toDate()
             : entry.wonAt
-              ? new Date(entry.wonAt)
-              : new Date(),
+            ? new Date(entry.wonAt)
+            : new Date(),
           deliveredAt: entry.deliveredAt?.toDate
             ? entry.deliveredAt.toDate()
             : entry.deliveredAt
-              ? new Date(entry.deliveredAt)
-              : null
+            ? new Date(entry.deliveredAt)
+            : null
         }))
       : []
   }
@@ -63,9 +72,7 @@ export const deliverPrizeForUser = async (userId: string, prizeId: string) => {
 
   const tries = normalizeUserTries(data.tries)
   const updatedPrizes = tries.prizesWon.map((prize) =>
-    prize.prizeId === prizeId
-      ? { ...prize, deliveredAt: serverTimestamp() }
-      : prize
+    prize.prizeId === prizeId ? { ...prize, deliveredAt: new Date() } : prize
   )
 
   await updateDoc(userRef, {
@@ -130,6 +137,7 @@ export const assignPrizeToUser = async (
     transaction.update(userRef, {
       'tries.prizesWon': arrayUnion({
         prizeId: selectedPrize.id,
+        code: generatePrizeCode(),
         wonAt: new Date(),
         deliveredAt: null
       }),
@@ -209,6 +217,7 @@ export const spinPrizeWheel = async (userId: string): Promise<SpinResult> => {
     if (selectedPrize) {
       updates['tries.prizesWon'] = arrayUnion({
         prizeId: selectedPrize.id,
+        code: generatePrizeCode(),
         wonAt: serverTimestamp(),
         deliveredAt: null
       })

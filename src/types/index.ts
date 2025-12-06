@@ -3,6 +3,7 @@ export interface UserTries {
   lastTryAt: Date | null
   prizesWon: {
     prizeId: string
+    code?: string
     wonAt: Date
     deliveredAt: Date | null
   }[]

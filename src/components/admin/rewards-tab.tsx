@@ -60,7 +60,7 @@ type TierStats = Record<
   { pending: number; delivered: number }
 >
 
-type RecentPrizeRow = {
+type PrizeRow = {
   id: string
   userId: string
   username: string
@@ -71,6 +71,7 @@ type RecentPrizeRow = {
   tier: PrizeTier | 'bonus'
   wonAt: Date
   deliveredAt: Date | null
+  code?: string
 }
 
 export function RewardsTab({
@@ -98,6 +99,8 @@ export function RewardsTab({
   const [deliveringPrizeId, setDeliveringPrizeId] = useState<string | null>(
     null
   )
+  const [showPendingList, setShowPendingList] = useState(false)
+  const [pendingSearch, setPendingSearch] = useState('')
 
   const hasAccess = !!isAdmin
   const priceList = prices
@@ -158,8 +161,8 @@ export function RewardsTab({
     [tierStats]
   )
 
-  const recentPrizes = useMemo<RecentPrizeRow[]>(() => {
-    const rows: RecentPrizeRow[] = []
+  const recentPrizes = useMemo<PrizeRow[]>(() => {
+    const rows: PrizeRow[] = []
 
     users.forEach((candidate) => {
       candidate.tries?.prizesWon?.forEach((entry, index) => {
@@ -178,7 +181,8 @@ export function RewardsTab({
             record?.description ?? 'Valida este premio con el staff.',
           tier,
           wonAt,
-          deliveredAt: entry.deliveredAt ?? null
+          deliveredAt: entry.deliveredAt ?? null,
+          code: typeof entry.code === 'string' ? entry.code : undefined
         })
       })
     })
@@ -188,7 +192,50 @@ export function RewardsTab({
       .slice(0, 20)
   }, [users, prizeMap])
 
-  const handleDeliver = async (prize: RecentPrizeRow) => {
+  const pendingPrizes = useMemo<PrizeRow[]>(() => {
+    const rows: PrizeRow[] = []
+
+    users.forEach((candidate) => {
+      candidate.tries?.prizesWon?.forEach((entry, index) => {
+        if (entry.deliveredAt) return
+        const record = prizeMap.get(entry.prizeId)
+        const tier = (record?.tier ?? 'bonus') as PrizeTier | 'bonus'
+        const wonAt = entry.wonAt ?? new Date()
+
+        rows.push({
+          id: `${candidate.id}-${entry.prizeId}-${wonAt.getTime()}-${index}-pending`,
+          userId: candidate.id,
+          username: candidate.username,
+          userName: candidate.name,
+          prizeId: entry.prizeId,
+          prizeTitle: record?.title ?? 'Premio sorpresa',
+          prizeDescription:
+            record?.description ?? 'Valida este premio con el staff.',
+          tier,
+          wonAt,
+          deliveredAt: null,
+          code: typeof entry.code === 'string' ? entry.code : undefined
+        })
+      })
+    })
+
+    return rows.sort((a, b) => b.wonAt.getTime() - a.wonAt.getTime())
+  }, [users, prizeMap])
+
+  const filteredPendingPrizes = useMemo(() => {
+    const term = pendingSearch.trim().toLowerCase()
+    if (!term) return pendingPrizes
+    return pendingPrizes.filter((row) => {
+      const code = row.code?.toLowerCase() ?? ''
+      const title = row.prizeTitle.toLowerCase()
+      const userName = row.userName.toLowerCase()
+      return (
+        code.includes(term) || title.includes(term) || userName.includes(term)
+      )
+    })
+  }, [pendingPrizes, pendingSearch])
+
+  const handleDeliver = async (prize: PrizeRow) => {
     if (!hasAccess || prize.deliveredAt) return
     try {
       setDeliveringPrizeId(prize.id)
@@ -397,7 +444,6 @@ export function RewardsTab({
               )
             })}
           </div>
-
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
               <h4 className="text-sm font-semibold text-gray-900">
@@ -701,7 +747,94 @@ export function RewardsTab({
               )}
             </div>
           </div>
+          <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="text-sm font-semibold text-gray-900">
+                  Premios pendientes de entrega
+                </h4>
+                <p className="text-[11px] text-gray-500">
+                  {pendingPrizes.length} premios sin entregar · busca por código
+                  o jugador.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowPendingList((prev) => !prev)}
+                className="text-[11px] font-semibold text-emerald-700 hover:underline"
+              >
+                {showPendingList ? 'Ocultar lista' : 'Ver lista'}
+              </button>
+            </div>
 
+            {showPendingList && (
+              <div className="space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                  <input
+                    type="text"
+                    value={pendingSearch}
+                    onChange={(event) => setPendingSearch(event.target.value)}
+                    placeholder="Buscar por código, premio o jugador"
+                    className="w-full sm:max-w-xs rounded border border-gray-300 px-3 py-2 text-sm"
+                  />
+                  <span className="text-[11px] text-gray-500">
+                    {filteredPendingPrizes.length} coinciden con la búsqueda
+                  </span>
+                </div>
+
+                <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                  {filteredPendingPrizes.length === 0 ? (
+                    <p className="text-xs text-gray-500">
+                      No hay premios pendientes con ese código o nombre.
+                    </p>
+                  ) : (
+                    filteredPendingPrizes.map((row) => (
+                      <div
+                        key={row.id}
+                        className="flex items-start justify-between gap-3 rounded-lg border border-amber-100 bg-amber-50 px-3 py-2"
+                      >
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-semibold text-gray-900">
+                              {row.prizeTitle}
+                            </p>
+                            <span className="inline-flex items-center rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold text-gray-700 border border-amber-200">
+                              Código: {(row.code ?? 'SIN-CODIGO').toUpperCase()}
+                            </span>
+                          </div>
+                          <p className="text-xs text-gray-600">
+                            {row.prizeDescription}
+                          </p>
+                          <p className="text-[11px] text-gray-500">
+                            {row.userName} ·{' '}
+                            {row.wonAt.toLocaleDateString('es-MX', {
+                              month: 'short',
+                              day: 'numeric'
+                            })}
+                          </p>
+                        </div>
+                        <div className="flex flex-col items-end gap-2">
+                          <span className="text-[11px] uppercase text-amber-700 font-semibold">
+                            Pendiente
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleDeliver(row)}
+                            className="text-[11px] font-semibold text-emerald-700 hover:underline disabled:opacity-50"
+                            disabled={deliveringPrizeId === row.id}
+                          >
+                            {deliveringPrizeId === row.id
+                              ? 'Marcando...'
+                              : 'Marcar entregado'}
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
           <div className="bg-white rounded-lg border border-gray-200 p-4">
             <div className="flex items-center justify-between mb-3">
               <h4 className="text-sm font-semibold text-gray-900">
@@ -788,7 +921,6 @@ export function RewardsTab({
               </table>
             </div>
           </div>
-
           {statusMessage && (
             <div className="bg-green-50 border border-green-200 text-green-700 text-sm rounded px-3 py-2">
               {statusMessage}

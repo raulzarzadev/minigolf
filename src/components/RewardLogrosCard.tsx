@@ -8,6 +8,7 @@ import { usePrizes } from '@/hooks/usePrizes'
 import { PrizeRecord } from '@/lib/prizes'
 import { ROULETTE_SPIN_DURATION_MS } from '@/lib/roulette'
 import { assignPrizeToUser, incrementUserTries } from '@/lib/tries'
+import { UserTries } from '@/types'
 import { PrizeTier, RewardPrize } from '@/types/rewards'
 import { Roulette } from './roulette/roulette'
 
@@ -21,6 +22,12 @@ const RewardLogrosCard: FC = () => {
   const [lastPrize] = useState<PrizeRecord | null>(null)
   const [showPending, setShowPending] = useState(false)
   const [showEarnModal, setShowEarnModal] = useState(false)
+  const [staffPrize, setStaffPrize] = useState<{
+    title: string
+    description: string
+    code?: string
+    wonAt?: Date | null
+  } | null>(null)
   const spinTimeoutRef = useRef<number | null>(null)
 
   useEffect(() => {
@@ -35,7 +42,8 @@ const RewardLogrosCard: FC = () => {
 
   const findPrizeMeta = (prizeId: string) =>
     prizes.find((p) => p.id === prizeId) ?? null
-  const prizeEntries = user?.tries?.prizesWon ?? []
+  const prizeEntries: UserTries['prizesWon'] = (user?.tries?.prizesWon ??
+    []) as UserTries['prizesWon']
   const pendingPrizes = useMemo(
     () => prizeEntries.filter((entry) => !entry.deliveredAt),
     [prizeEntries]
@@ -238,9 +246,23 @@ const RewardLogrosCard: FC = () => {
                           Ganado el {formatDate(entry.wonAt)}
                         </span>
                       </div>
-                      <span className="text-[11px] font-semibold text-amber-800">
+                      <button
+                        type="button"
+                        className="text-[11px] font-semibold text-amber-800 underline"
+                        onClick={() =>
+                          setStaffPrize({
+                            title: record?.title ?? fallback?.label ?? 'Premio',
+                            description:
+                              record?.description ??
+                              fallback?.description ??
+                              'Muestra este código al staff.',
+                            code: entry.code,
+                            wonAt: entry.wonAt ?? null
+                          })
+                        }
+                      >
                         Mostrar a staff
-                      </span>
+                      </button>
                     </div>
                   )
                 })
@@ -299,6 +321,111 @@ const RewardLogrosCard: FC = () => {
                 className="rounded-full bg-emerald-500 px-3 py-1 text-xs font-semibold text-white shadow hover:bg-emerald-600"
               >
                 Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showEarnModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-4 shadow-xl space-y-3">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm font-semibold text-gray-900">
+                  Cómo ganar más premios
+                </p>
+                <p className="text-xs text-gray-500">
+                  Completa estas acciones y pide al staff validar tu premio.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowEarnModal(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </button>
+            </div>
+            <ul className="space-y-2 text-sm text-gray-700">
+              <li className="flex items-start gap-2">
+                <Sparkles className="h-4 w-4 text-emerald-600 mt-0.5" />
+                Comparte tu partida en redes sociales y etiqueta al club.
+              </li>
+              <li className="flex items-start gap-2">
+                <Sparkles className="h-4 w-4 text-emerald-600 mt-0.5" />
+                Síguenos y muestra tu perfil al staff.
+              </li>
+              <li className="flex items-start gap-2">
+                <Sparkles className="h-4 w-4 text-emerald-600 mt-0.5" />
+                Completa retos especiales durante tus partidas.
+              </li>
+            </ul>
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setShowEarnModal(false)}
+                className="text-xs font-semibold text-gray-700 hover:text-gray-900"
+              >
+                Cerrar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowEarnModal(false)
+                }}
+                className="rounded-full bg-emerald-500 px-3 py-1 text-xs font-semibold text-white shadow hover:bg-emerald-600"
+              >
+                Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {staffPrize && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-4 shadow-xl space-y-3">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm font-semibold text-gray-900">
+                  Mostrar a staff
+                </p>
+                <p className="text-xs text-gray-500">
+                  Enseña este código al equipo para validar tu premio.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setStaffPrize(null)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-semibold text-gray-900">
+                {staffPrize.title}
+              </p>
+              <p className="text-xs text-gray-600">{staffPrize.description}</p>
+              {staffPrize.wonAt && (
+                <p className="text-[11px] text-gray-500">
+                  Ganado el {formatDate(staffPrize.wonAt)}
+                </p>
+              )}
+            </div>
+            <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-3 text-center">
+              <p className="text-xs uppercase text-gray-500">Código</p>
+              <p className="font-mono text-xl font-bold text-gray-900 tracking-[0.3em]">
+                {(staffPrize.code ?? '------').toUpperCase()}
+              </p>
+            </div>
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setStaffPrize(null)}
+                className="rounded-full bg-emerald-500 px-3 py-1 text-xs font-semibold text-white shadow hover:bg-emerald-600"
+              >
+                Listo
               </button>
             </div>
           </div>
