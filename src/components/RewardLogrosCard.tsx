@@ -1,38 +1,27 @@
 'use client'
 
-import { CheckCircle2, Gift, Loader2 } from 'lucide-react'
+import { CheckCircle2, Gift, Info, Loader2, Sparkles } from 'lucide-react'
 import { FC, useEffect, useMemo, useRef, useState } from 'react'
 import { prizeCatalog } from '@/constants/prizes'
 import { useAuth } from '@/contexts/AuthContext'
 import { usePrizes } from '@/hooks/usePrizes'
 import { PrizeRecord } from '@/lib/prizes'
-import {
-  ROULETTE_SPIN_DURATION_MS,
-  rouletteGradient,
-  rouletteSegmentAngle,
-  rouletteSegments
-} from '@/lib/roulette'
-import { incrementUserTries, spinPrizeWheel } from '@/lib/tries'
-import { Game } from '@/types'
-import { RewardPrize } from '@/types/rewards'
+import { ROULETTE_SPIN_DURATION_MS } from '@/lib/roulette'
+import { spinPrizeWheel } from '@/lib/tries'
+import { PrizeTier, RewardPrize } from '@/types/rewards'
 import { Roulette } from './roulette/roulette'
-
-interface RewardLogrosCardProps {
-  games: Game[]
-}
 
 const isCorePrizeTier = (tier: PrizeRecord['tier']): tier is PrizeTier =>
   tier === 'small' || tier === 'medium' || tier === 'large'
 
-const RewardLogrosCard: FC<RewardLogrosCardProps> = ({ games }) => {
-  const { user, isAdmin, refreshUser } = useAuth()
+const RewardLogrosCard: FC = () => {
+  const { user, refreshUser } = useAuth()
   const { prizes, loading: prizesLoading } = usePrizes()
-  const [adminRollInput, setAdminRollInput] = useState('1')
-  const [adminStatus, setAdminStatus] = useState<string | null>(null)
   const [isSpinning, setIsSpinning] = useState(false)
-  const [wheelRotation, setWheelRotation] = useState(0)
   const [lastResult, setLastResult] = useState<RewardPrize | null>(null)
   const [lastPrize, setLastPrize] = useState<PrizeRecord | null>(null)
+  const [showPending, setShowPending] = useState(false)
+  const [showEarnModal, setShowEarnModal] = useState(false)
   const spinTimeoutRef = useRef<number | null>(null)
 
   useEffect(() => {
@@ -44,15 +33,9 @@ const RewardLogrosCard: FC<RewardLogrosCardProps> = ({ games }) => {
   }, [])
 
   const rollsAvailable = user?.tries?.triesLeft ?? 0
-  const hasFinishedGame = useMemo(
-    () => games.some((game) => game.status === 'finished'),
-    [games]
-  )
-  const rouletteHelperMessage = hasFinishedGame
-    ? rollsAvailable > 0
-      ? `${rollsAvailable} tirada(s) disponible(s)`
-      : 'Sin tiradas disponibles, completa retos para ganar más.'
-    : 'Termina una partida para activar la ruleta.'
+
+  const findPrizeMeta = (prizeId: string) =>
+    prizes.find((p) => p.id === prizeId) ?? null
 
   const prizeEntries = user?.tries?.prizesWon ?? []
   const pendingPrizes = useMemo(
@@ -88,7 +71,7 @@ const RewardLogrosCard: FC<RewardLogrosCardProps> = ({ games }) => {
         'Pulsa la ruleta cuando tengas tiradas disponibles.')
 
   const handleSpinRoulette = async () => {
-    if (!user || isSpinning || rollsAvailable <= 0 || !hasFinishedGame) {
+    if (!user || isSpinning || rollsAvailable <= 0) {
       return
     }
 
@@ -100,21 +83,6 @@ const RewardLogrosCard: FC<RewardLogrosCardProps> = ({ games }) => {
       const spinResult = await spinPrizeWheel(user.id)
       const tier: RewardPrize =
         (spinResult.prize?.tier as RewardPrize | undefined) ?? 'none'
-
-      const segmentIndex = rouletteSegments.findIndex(
-        (segment) => segment.tier === tier
-      )
-      const safeIndex = segmentIndex === -1 ? 0 : segmentIndex
-      const extraSpins = 4 + Math.floor(Math.random() * 3)
-      const rotationOffset =
-        safeIndex * rouletteSegmentAngle + rouletteSegmentAngle / 2
-
-      setWheelRotation((prev) => {
-        const normalizedPrev = prev % 360
-        const alignmentOffset = rotationOffset - normalizedPrev
-        return prev + extraSpins * 360 + alignmentOffset
-      })
-
       if (spinTimeoutRef.current) {
         window.clearTimeout(spinTimeoutRef.current)
       }
@@ -137,23 +105,6 @@ const RewardLogrosCard: FC<RewardLogrosCardProps> = ({ games }) => {
     }
   }
 
-  const handleAdminGrant = async () => {
-    if (!user || !isAdmin) return
-    const rollsToGrant = Math.max(1, Math.floor(Number(adminRollInput) || 0))
-
-    try {
-      await incrementUserTries(user.id, rollsToGrant)
-      setAdminRollInput('1')
-      setAdminStatus(`+${rollsToGrant} tirada(s) asignada(s)`)
-      await refreshUser()
-    } catch (error) {
-      console.error('Error asignando tiradas manuales:', error)
-      setAdminStatus('No se pudo asignar tiradas')
-    } finally {
-      setTimeout(() => setAdminStatus(null), 2500)
-    }
-  }
-
   if (!user) {
     return (
       <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
@@ -171,284 +122,278 @@ const RewardLogrosCard: FC<RewardLogrosCardProps> = ({ games }) => {
   }
 
   return (
-    <>
-      {/* <div className="flex flex-wrap items-center justify-between gap-3">
-        {games.length > 0 && (
-          <p className="text-[11px] text-gray-500">
-            {games.filter((game) => game.status === 'finished').length} partidas
-            finalizadas
+    <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm space-y-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-xs uppercase font-semibold text-gray-500">
+            Logros y premios
           </p>
-        )}
-      </div> */}
-      <Roulette
-        prizes={prizes}
-        onResult={(res) => {
-          console.log({ res })
-        }}
-      />
+          <p className="text-sm text-gray-600">
+            Consulta tus tiradas, premios ganados y reclámalos en un solo lugar.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowEarnModal(true)}
+          className="inline-flex items-center gap-1 rounded-full border border-gray-200 px-3 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+        >
+          <Info className="h-3.5 w-3.5" />
+          Cómo ganar más
+        </button>
+      </div>
 
-      {/* <div className="space-y-4">
-        <div className="rounded-2xl border border-gray-200 p-4 space-y-4">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center">
-            <div className="flex flex-col items-center gap-2">
-              <button
-                type="button"
-                onClick={handleSpinRoulette}
-                disabled={
-                  !hasFinishedGame || rollsAvailable === 0 || isSpinning
-                }
-                className="relative h-56 w-56 md:h-64 md:w-64 rounded-full focus-visible:outline-none disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                <div
-                  aria-hidden="true"
-                  className="pointer-events-none absolute -top-4 left-1/2 flex -translate-x-1/2 flex-col items-center"
-                >
-                  <div className="h-5 w-1 rounded bg-white shadow" />
-                  <div
-                    className="drop-shadow"
-                    style={{
-                      width: 0,
-                      height: 0,
-                      borderLeft: '9px solid transparent',
-                      borderRight: '9px solid transparent',
-                      borderTop: '14px solid white'
-                    }}
-                  />
-                </div>
-                <div
-                  className="absolute inset-0 rounded-full border-[6px] border-white shadow-xl transition-transform ease-out"
-                  style={{
-                    backgroundImage: rouletteGradient,
-                    transform: `rotate(${wheelRotation}deg)`,
-                    transitionDuration: `${ROULETTE_SPIN_DURATION_MS}ms`
-                  }}
-                />
-                <div className="absolute inset-0 rounded-full overflow-hidden">
-                  <div className="absolute inset-2 flex items-center justify-center">
-                    {rouletteSegments.map((segment, index) => {
-                      const rotation =
-                        index * rouletteSegmentAngle + rouletteSegmentAngle / 2
-                      return (
-                        <div
-                          key={segment.tier}
-                          className="absolute inset-4 flex items-center justify-center"
-                          style={{ transform: `rotate(${rotation}deg)` }}
-                        >
-                          <span
-                            className="text-[11px] font-semibold uppercase tracking-tight text-center"
-                            style={{
-                              color: segment.color,
-                              transform: `rotate(-${rotation}deg)`
-                            }}
-                          >
-                            {segment.label}
-                          </span>
-                        </div>
-                      )
-                    })}
-                  </div>
-                  <div className="absolute inset-5 rounded-full bg-white/95 backdrop-blur flex flex-col items-center justify-center text-center px-4">
-                    <p className="text-[11px] uppercase tracking-wide text-gray-400">
-                      Ruleta
-                    </p>
-                    <p className="text-base font-semibold text-gray-900">
-                      {isSpinning ? 'Girando...' : 'Tocar para girar'}
-                    </p>
-                    <p className="text-[11px] text-gray-500">
-                      {rollsAvailable} tirada(s)
-                    </p>
-                  </div>
-                </div>
-              </button>
-              <p className="text-[11px] text-gray-500 text-center">
-                {hasFinishedGame
-                  ? 'Valida el premio con el staff al terminar el giro.'
-                  : 'Termina una partida para activar la ruleta.'}
-              </p>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <StatPill
+          label="Tiradas pendientes"
+          value={rollsAvailable}
+          tone="emerald"
+        />
+        <StatPill
+          label="Premios por reclamar"
+          value={pendingPrizes.length}
+          tone="amber"
+          onClick={() => setShowPending((prev) => !prev)}
+          interactive
+        />
+        <StatPill
+          label="Premios ganados"
+          value={claimedPrizes.length}
+          tone="purple"
+        />
+        <StatPill
+          label="Último resultado"
+          value={
+            lastPrize?.title ?? (lastResult === 'none' ? 'Sin premio' : '--')
+          }
+          tone="blue"
+        />
+      </div>
+
+      <div className="relative rounded-2xl border border-gray-100 bg-gray-50 p-3">
+        <div className="flex flex-col lg:flex-row gap-3 items-center">
+          <div className="relative">
+            <div
+              className={
+                rollsAvailable === 0 ? 'pointer-events-none opacity-40' : ''
+              }
+            >
+              <Roulette
+                prizes={prizes}
+                onResult={() => refreshUser()}
+                spinTime={ROULETTE_SPIN_DURATION_MS}
+              />
             </div>
-
-            <div className="flex-1 space-y-2">
-              <div className="flex p-3 bg-gray-50 rounded-xl items-center justify-between">
-                <div className="flex-1 space-y-2">
-                  <p className="text-xs text-gray-500">Tiradas disponibles</p>
-                  <p className="text-3xl font-bold text-gray-900">
-                    {rollsAvailable}
-                  </p>
+            {rollsAvailable === 0 && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-gray-600 border border-gray-200">
+                  {rollsAvailable === 0
+                    ? 'Sin tiradas disponibles'
+                    : 'Completa una partida para activar'}
                 </div>
-                {isAdmin && (
-                  <div className="flex flex-wrap items-center gap-2 border border-dashed border-gray-200 rounded-lg p-2 text-xs">
-                    <span className="font-semibold text-gray-700">
-                      Modo staff
-                    </span>
-                    <input
-                      type="number"
-                      min={1}
-                      value={adminRollInput}
-                      onChange={(event) =>
-                        setAdminRollInput(event.target.value)
-                      }
-                      className="w-16 border border-gray-300 rounded px-2 py-1"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleAdminGrant}
-                      className="px-3 py-1 rounded bg-black text-white font-semibold"
-                    >
-                      Dar tiradas
-                    </button>
-                    {adminStatus && (
-                      <span className="text-green-600 font-medium">
-                        {adminStatus}
-                      </span>
-                    )}
-                  </div>
-                )}
               </div>
-
-              <p className="text-[11px] text-gray-500 p-3">
-                {rouletteHelperMessage}
-              </p>
-              <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
-                <p className="text-xs text-gray-500">Último resultado</p>
-                <p className="text-sm font-semibold text-gray-900">
-                  {rouletteStatusLabel}
-                </p>
-                <p className="text-[11px] text-gray-500">
-                  {rouletteStatusDescription}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={handleSpinRoulette}
-                disabled={
-                  !hasFinishedGame || rollsAvailable === 0 || isSpinning
-                }
-                className="w-full inline-flex items-center justify-center px-4 py-2 rounded-2xl bg-green-500 text-white font-semibold text-xs hover:bg-green-400 disabled:opacity-40"
-              >
-                {isSpinning ? 'Girando...' : 'Girar ruleta'}
-              </button>
-            </div>
+            )}
           </div>
 
-          <div className="grid grid-cols-2 gap-2 text-[11px] text-gray-600">
-            {rouletteSegments.map((segment) => (
-              <div
-                key={segment.tier}
-                className="flex items-center gap-2 rounded-lg border border-gray-100 bg-white px-2 py-1.5"
-              >
-                <span
-                  className="h-2 w-2 rounded-full"
-                  style={{ backgroundColor: segment.color }}
-                />
-                <span className="font-semibold text-gray-900">
-                  {segment.label}
-                </span>
-              </div>
-            ))}
+          <div className="flex-1 space-y-2 w-full max-w-md">
+            {prizesLoading && (
+              <p className="text-[11px] text-gray-400">
+                Actualizando catálogo de premios...
+              </p>
+            )}
           </div>
         </div>
+      </div>
 
-        <div className="rounded-2xl border border-yellow-200 bg-yellow-50 p-4">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-sm font-semibold text-yellow-900">
+      {showPending && (
+        <div className="rounded-2xl border border-amber-100 bg-amber-50 p-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-semibold text-amber-900">
               Premios por reclamar
             </p>
-            <Gift className="h-4 w-4 text-yellow-700" />
+            <Gift className="h-4 w-4 text-amber-700" />
           </div>
-          {pendingPrizes.length > 0 ? (
-            <div className="space-y-2">
-              {pendingPrizes.map((entry) => {
-                const record = normalizePrizeMeta(entry.prizeId)
-                const fallback =
-                  record && isCorePrizeTier(record.tier)
-                    ? prizeCatalog[record.tier]
-                    : undefined
-                return (
-                  <div
-                    key={`${entry.prizeId}-${entry.wonAt?.toString()}`}
-                    className="flex items-start justify-between gap-3 rounded-xl bg-white border border-yellow-100 px-3 py-2"
-                  >
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">
-                        {record?.title ?? fallback?.label ?? 'Premio sorpresa'}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {record?.description ??
-                          fallback?.description ??
-                          'Reclámalo con el staff.'}
-                      </p>
-                      <span className="text-[11px] text-gray-400">
-                        Ganado el {formatDate(entry.wonAt)}
-                      </span>
-                    </div>
-                    <span className="text-[11px] font-semibold text-yellow-900">
-                      Mostrar a staff
+          {pendingPrizes.length === 0 ? (
+            <p className="text-xs text-amber-800">
+              No tienes premios pendientes.
+            </p>
+          ) : (
+            pendingPrizes.map((entry) => {
+              const record = findPrizeMeta(entry.prizeId)
+              const fallback =
+                record && isCorePrizeTier(record.tier)
+                  ? prizeCatalog[record.tier as PrizeTier]
+                  : undefined
+              return (
+                <div
+                  key={`${entry.prizeId}-${entry.wonAt?.toString()}`}
+                  className="flex items-start justify-between gap-3 rounded-lg bg-white border border-amber-100 px-3 py-2"
+                >
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">
+                      {record?.title ?? fallback?.label ?? 'Premio sorpresa'}
+                    </p>
+                    <p className="text-xs text-gray-600">
+                      {record?.description ??
+                        fallback?.description ??
+                        'Reclámalo con el staff.'}
+                    </p>
+                    <span className="text-[11px] text-gray-400">
+                      Ganado el {formatDate(entry.wonAt)}
                     </span>
                   </div>
-                )
-              })}
-            </div>
-          ) : (
-            <p className="text-xs text-yellow-900">
-              No tienes premios pendientes por reclamar.
-            </p>
+                  <span className="text-[11px] font-semibold text-amber-800">
+                    Mostrar a staff
+                  </span>
+                </div>
+              )
+            })
           )}
         </div>
-
-        <div className="rounded-2xl border border-green-200 bg-green-50 p-4">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-sm font-semibold text-green-900">
-              Premios que ya reclamaste
-            </p>
-            <CheckCircle2 className="h-4 w-4 text-green-700" />
-          </div>
-          {claimedPrizes.length > 0 ? (
-            <div className="space-y-2">
-              {claimedPrizes.map((entry) => {
-                const record = normalizePrizeMeta(entry.prizeId)
-                const fallback =
-                  record && isCorePrizeTier(record.tier)
-                    ? prizeCatalog[record.tier]
-                    : undefined
-                const deliveredDate = entry.deliveredAt ?? entry.wonAt
-                return (
-                  <div
-                    key={`${entry.prizeId}-${entry.wonAt?.toString()}-delivered`}
-                    className="flex items-center justify-between rounded-xl bg-white border border-green-100 px-3 py-2"
-                  >
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">
-                        {record?.title ?? fallback?.label ?? 'Premio reclamado'}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {record?.description ?? fallback?.description ?? ''}
-                      </p>
-                      <span className="text-[11px] text-gray-400">
-                        Entregado el {formatDate(deliveredDate)}
-                      </span>
-                    </div>
-                    <span className="inline-flex items-center text-[11px] font-semibold text-green-700">
-                      <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
-                      Entregado
-                    </span>
-                  </div>
-                )
-              })}
-            </div>
-          ) : (
-            <p className="text-xs text-green-900">
-              Aún no has reclamado premios.
-            </p>
-          )}
-        </div>
-      </div> */}
-
-      {prizesLoading && (
-        <p className="text-[11px] text-gray-400">
-          Actualizando catálogo de premios...
-        </p>
       )}
-    </>
+
+      <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-3 space-y-2">
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-semibold text-emerald-900">
+            Premios ganados
+          </p>
+          <CheckCircle2 className="h-4 w-4 text-emerald-700" />
+        </div>
+        {claimedPrizes.length === 0 ? (
+          <p className="text-xs text-emerald-800">
+            Aún no has reclamado premios.
+          </p>
+        ) : (
+          claimedPrizes.map((entry) => {
+            const record = findPrizeMeta(entry.prizeId)
+            const fallback =
+              record && isCorePrizeTier(record.tier)
+                ? prizeCatalog[record.tier as PrizeTier]
+                : undefined
+            const deliveredDate = entry.deliveredAt ?? entry.wonAt
+            return (
+              <div
+                key={`${entry.prizeId}-${entry.wonAt?.toString()}-delivered`}
+                className="flex items-start justify-between gap-3 rounded-lg bg-white border border-emerald-100 px-3 py-2"
+              >
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">
+                    {record?.title ?? fallback?.label ?? 'Premio reclamado'}
+                  </p>
+                  <p className="text-xs text-gray-600">
+                    {record?.description ?? fallback?.description ?? ''}
+                  </p>
+                  <span className="text-[11px] text-gray-400">
+                    Entregado el {formatDate(deliveredDate)}
+                  </span>
+                </div>
+                <span className="inline-flex items-center text-[11px] font-semibold text-emerald-800">
+                  <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
+                  Entregado
+                </span>
+              </div>
+            )
+          })
+        )}
+      </div>
+
+      {showEarnModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-4 shadow-xl space-y-3">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm font-semibold text-gray-900">
+                  Cómo ganar más premios
+                </p>
+                <p className="text-xs text-gray-500">
+                  Completa estas acciones y pide al staff validar tu premio.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowEarnModal(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </button>
+            </div>
+            <ul className="space-y-2 text-sm text-gray-700">
+              <li className="flex items-start gap-2">
+                <Sparkles className="h-4 w-4 text-emerald-600 mt-0.5" />
+                Comparte tu partida en redes sociales y etiqueta al club.
+              </li>
+              <li className="flex items-start gap-2">
+                <Sparkles className="h-4 w-4 text-emerald-600 mt-0.5" />
+                Síguenos y muestra tu perfil al staff.
+              </li>
+              <li className="flex items-start gap-2">
+                <Sparkles className="h-4 w-4 text-emerald-600 mt-0.5" />
+                Completa retos especiales durante tus partidas.
+              </li>
+            </ul>
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setShowEarnModal(false)}
+                className="text-xs font-semibold text-gray-700 hover:text-gray-900"
+              >
+                Cerrar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowEarnModal(false)
+                }}
+                className="rounded-full bg-emerald-500 px-3 py-1 text-xs font-semibold text-white shadow hover:bg-emerald-600"
+              >
+                Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+const StatPill = ({
+  label,
+  value,
+  tone = 'emerald',
+  onClick,
+  interactive = false
+}: {
+  label: string
+  value: number | string
+  tone?: 'emerald' | 'amber' | 'blue' | 'purple'
+  onClick?: () => void
+  interactive?: boolean
+}) => {
+  const toneMap: Record<typeof tone, string> = {
+    emerald: 'bg-emerald-50 text-emerald-700',
+    amber: 'bg-amber-50 text-amber-700',
+    blue: 'bg-blue-50 text-blue-700',
+    purple: 'bg-purple-50 text-purple-700'
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={!interactive}
+      className={`w-full rounded-2xl border border-gray-200 bg-white p-3 text-left shadow-sm flex items-center justify-between ${interactive ? 'hover:border-gray-300 active:scale-[0.99]' : ''}`}
+    >
+      <div className="space-y-1">
+        <p className="text-sm font-semibold text-gray-700">{label}</p>
+        <div
+          className={`inline-flex h-8 w-8 items-center justify-center rounded-full text-[13px] font-semibold ${toneMap[tone]}`}
+        >
+          {value}
+        </div>
+      </div>
+      {interactive && (
+        <span className="text-[11px] text-emerald-700 font-semibold">Ver</span>
+      )}
+    </button>
   )
 }
 

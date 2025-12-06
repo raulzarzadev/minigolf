@@ -363,9 +363,7 @@ export function RewardsTab({
             {statOrder.map((tier) => {
               const bucket = tierStats[tier]
               const tierLabel =
-                tier === 'bonus'
-                  ? 'Premios bonus'
-                  : prizeCatalog[tier]?.label || `Premio ${tier}`
+                tier === 'bonus' ? 'Premios bonus' : `Premio ${tier}`
               const accent =
                 tier === 'large'
                   ? 'text-purple-700'

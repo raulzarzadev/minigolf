@@ -1,12 +1,13 @@
 'use client'
 
-import { Clock, Flag, Play, Target, User } from 'lucide-react'
+import { Clock, Flag, Target, Trophy, User } from 'lucide-react'
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
+import ActiveGameBanner from '@/components/ActiveGameBanner'
 import DiscreteUsernameEditor from '@/components/DiscreteUsernameEditor'
 
 import RewardLogrosCard from '@/components/RewardLogrosCard'
-import UserStats from '@/components/UserStats'
+import UserStats, { MainUserStats } from '@/components/UserStats'
 import { useAuth } from '@/contexts/AuthContext'
 import { getUserGames } from '@/lib/db'
 import { Game } from '@/types'
@@ -92,6 +93,9 @@ export default function ProfilePage() {
   }
 
   const triesLeft = user.tries?.triesLeft ?? 0
+  const pendingPrizes = (user.tries?.prizesWon ?? []).filter(
+    (entry) => !entry.deliveredAt
+  )
 
   const handleFocusRewardCenter = () => {
     const target = document.getElementById('reward-center')
@@ -101,188 +105,242 @@ export default function ProfilePage() {
   const stats = calculateStats()
 
   return (
-    <div className="min-h-screen">
-      <div className="max-w-7xl mx-auto py-3 px-3 sm:px-6 lg:px-8">
-        {/* Profile Header */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">
-          <div className="flex items-center space-x-3 mb-4">
-            <div className="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center shrink-0">
-              <User className="h-6 w-6 text-green-600" />
+    <div className="min-h-screen bg-gray-50">
+      <ActiveGameBanner />
+      <div className="max-w-6xl mx-auto py-4 px-3 sm:px-6 lg:px-8 space-y-4">
+        {/* Header */}
+        <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
+          <div className="flex items-start gap-3">
+            <div className="h-12 w-12 bg-emerald-50 rounded-full flex items-center justify-center shrink-0">
+              <User className="h-6 w-6 text-emerald-600" />
             </div>
             <div className="flex-1 min-w-0">
-              <h1 className="text-lg font-bold text-gray-900 truncate">
-                {user.name}
-              </h1>
-
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-lg font-bold text-gray-900 truncate">
+                  {user.name}
+                </h1>
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                  ID: {user.id}
+                </span>
+              </div>
               <DiscreteUsernameEditor />
-
-              <div className="mt-1 space-y-0.5 text-xs text-gray-500">
-                <p className="truncate">
-                  {user.email || 'Sin correo registrado'}
-                </p>
-                <p className="font-mono break-all">ID: {user.id}</p>
-              </div>
+              <p className="text-xs text-gray-500 mt-1 truncate">
+                {user.email || 'Sin correo registrado'}
+              </p>
             </div>
-            <div className="text-center">
-              <div className="text-xl font-bold text-green-600">
+            <div className="text-right">
+              <p className="text-xs text-gray-500">Partidas</p>
+              <p className="text-2xl font-bold text-gray-900">
                 {stats.totalGames}
-              </div>
-              <div className="text-xs text-gray-500">Partidas</div>
+              </p>
             </div>
           </div>
         </div>
 
-        {/* Tiradas balance */}
-
-        {/* <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs uppercase font-semibold text-gray-500">
-                Tiradas pendientes
-              </p>
-              <p className="text-3xl font-bold text-gray-900">{triesLeft}</p>
-              <p className="text-xs text-gray-500 mt-1">
-                Usa tus tiradas para activar beneficios especiales en el club.
-              </p>
-            </div>
-            <div className="h-12 w-12 rounded-full bg-green-50 flex items-center justify-center">
-              <Target className="h-6 w-6 text-green-600" />
-            </div>
-          </div> */}
-        {/* <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
-            <button
-              type="button"
-              onClick={handleFocusRewardCenter}
-              disabled={triesLeft <= 0}
-              className="px-4 py-2 bg-green-600 text-white rounded-md text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
-            >
-              {triesLeft > 0 ? 'Ver ruleta' : 'Sin tiradas disponibles'}
-            </button>
-            <span className="text-xs text-gray-500">
-              Cada giro se gestiona directamente desde la ruleta inferior.
-            </span>
-          </div> */}
-
-        {/* <div id="reward-center" className="pt-4 border-t border-gray-100">
-            <div className="flex items-center justify-between mb-3">
-              <div>
-                <p className="text-xs uppercase font-semibold text-gray-500">
-                  Ruleta y premios
-                </p>
-                <p className="text-[13px] text-gray-500">
-                  Gira la ruleta cuando termines tus partidas y revisa tus
-                  premios ganados.
-                </p>
-              </div>
-            </div>
-            </div> */}
-        <RewardLogrosCard games={userGames} />
-
-        {/* Stats Grid */}
-
-        <UserStats user={user} />
-
-        {/* Games History */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base font-semibold text-gray-900">
-              Historial de Partidas
-            </h2>
-            <Link
-              href="/game/new"
-              className="inline-flex items-center px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm touch-manipulation"
-            >
-              <Play className="h-4 w-4 mr-1" />
-              Nueva
-            </Link>
-          </div>
-
-          {gamesLoading ? (
-            <div className="text-center py-6">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-500 mx-auto"></div>
-              <p className="text-gray-500 mt-2 text-sm">Cargando partidas...</p>
-            </div>
-          ) : userGames.length === 0 ? (
-            <div className="text-center py-6 text-gray-500">
-              <Clock className="h-8 w-8 mx-auto mb-3 opacity-50" />
-              <p className="text-sm">No has jugado ninguna partida aún</p>
-              <p className="text-xs">¡Crea tu primera partida para empezar!</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {userGames.map((game) => {
-                const playerScore = game.scores[user.id] || []
-                const totalScore = playerScore.reduce(
-                  (sum, score) => sum + score,
-                  0
-                )
-                const completedHoles = playerScore.filter(
-                  (score) => score > 0
-                ).length
-
-                return (
-                  <Link
-                    key={game.id}
-                    href={`/game/${game.id}`}
-                    className="block border border-gray-200 rounded-lg p-3 hover:border-gray-300 hover:shadow-sm transition-all active:scale-98 touch-manipulation"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3 min-w-0 flex-1">
-                        <div
-                          className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 ${
-                            game.status === 'finished'
-                              ? 'bg-green-100'
-                              : 'bg-blue-100'
-                          }`}
-                        >
-                          {game.status === 'finished' ? (
-                            <Flag className="h-4 w-4 text-green-600" />
-                          ) : (
-                            <Clock className="h-4 w-4 text-green-600" />
-                          )}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="font-medium text-sm text-gray-900 truncate">
-                            {game.isMultiplayer ? 'Multijugador' : 'Individual'}
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            {new Date(game.createdAt).toLocaleDateString(
-                              'es-ES'
-                            )}{' '}
-                            • {game.holeCount} hoyos • {game.players.length}{' '}
-                            jugador{game.players.length > 1 ? 'es' : ''}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <div className="font-semibold text-base">
-                          {completedHoles > 0 ? totalScore : '--'}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          {completedHoles} / {game.holeCount} hoyos
-                        </div>
-                        <div
-                          className={`text-xs px-2 py-1 rounded-full inline-block mt-1 ${
-                            game.status === 'finished'
-                              ? 'bg-green-100 text-green-600'
-                              : 'bg-gray-100 text-gray-600'
-                          }`}
-                        >
-                          {game.status === 'finished'
-                            ? 'Terminada'
-                            : 'En progreso'}
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
-                )
-              })}
-            </div>
-          )}
+        {/* Reward center */}
+        <div
+          id="reward-center"
+          className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm"
+        >
+          <RewardLogrosCard />
         </div>
 
-        {/* User Statistics */}
-        {user && <UserStats user={user} />}
+        {/* Stats */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="lg:col-span-2 space-y-3">
+            <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
+              <h2 className="text-base font-semibold text-gray-900 mb-3">
+                Resumen rápido
+              </h2>
+              <MainUserStats
+                stats={{
+                  totalGames: stats.totalGames,
+                  gamesWon: 0,
+                  totalStrokes: stats.totalStrokes,
+                  totalHoles: stats.totalHoles,
+                  averagePerHole: Number(stats.averageScore),
+                  bestGame: stats.bestGame ?? 0,
+                  holesInOne: stats.holesInOne,
+                  averageGameTime: 0,
+                  favoriteGameType: null,
+                  winRate: 0,
+                  recentForm: []
+                }}
+              />
+            </div>
+
+            <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-base font-semibold text-gray-900">
+                  Historial de partidas
+                </h2>
+                <Link
+                  href="/games"
+                  className="inline-flex items-center text-xs font-semibold text-emerald-600 hover:text-emerald-700"
+                >
+                  Ver todo
+                </Link>
+              </div>
+
+              {gamesLoading ? (
+                <div className="text-center py-6">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-emerald-500 mx-auto"></div>
+                  <p className="text-gray-500 mt-2 text-sm">
+                    Cargando partidas...
+                  </p>
+                </div>
+              ) : userGames.length === 0 ? (
+                <div className="text-center py-6 text-gray-500">
+                  <Clock className="h-8 w-8 mx-auto mb-3 opacity-50" />
+                  <p className="text-sm">No has jugado ninguna partida aún</p>
+                  <p className="text-xs">
+                    ¡Crea tu primera partida para empezar!
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {userGames
+                    .slice()
+                    .sort(
+                      (a, b) =>
+                        new Date(b.createdAt).getTime() -
+                        new Date(a.createdAt).getTime()
+                    )
+                    .slice(0, 5)
+                    .map((game) => {
+                      const playerScore = game.scores[user.id] || []
+                      const totalScore = playerScore.reduce(
+                        (sum, score) => sum + score,
+                        0
+                      )
+                      const completedHoles = playerScore.filter(
+                        (score) => score > 0
+                      ).length
+
+                      return (
+                        <Link
+                          key={game.id}
+                          href={`/game/${game.id}`}
+                          className="block border border-gray-200 rounded-lg p-3 hover:border-gray-300 hover:shadow-sm transition-all active:scale-98 touch-manipulation bg-white"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-3 min-w-0 flex-1">
+                              <div
+                                className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 ${
+                                  game.status === 'finished'
+                                    ? 'bg-emerald-100'
+                                    : 'bg-blue-100'
+                                }`}
+                              >
+                                {game.status === 'finished' ? (
+                                  <Flag className="h-4 w-4 text-emerald-600" />
+                                ) : (
+                                  <Clock className="h-4 w-4 text-emerald-600" />
+                                )}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="font-medium text-sm text-gray-900 truncate">
+                                  {game.isMultiplayer
+                                    ? 'Multijugador'
+                                    : 'Individual'}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  {new Date(game.createdAt).toLocaleDateString(
+                                    'es-ES'
+                                  )}{' '}
+                                  • {game.holeCount} hoyos •{' '}
+                                  {game.players.length} jugador
+                                  {game.players.length > 1 ? 'es' : ''}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="text-right shrink-0">
+                              <div className="font-semibold text-base">
+                                {completedHoles > 0 ? totalScore : '--'}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {completedHoles} / {game.holeCount} hoyos
+                              </div>
+                              <div
+                                className={`text-[11px] px-2 py-1 rounded-full inline-block mt-1 ${
+                                  game.status === 'finished'
+                                    ? 'bg-emerald-100 text-emerald-700'
+                                    : 'bg-gray-100 text-gray-600'
+                                }`}
+                              >
+                                {game.status === 'finished'
+                                  ? 'Terminada'
+                                  : 'En progreso'}
+                              </div>
+                            </div>
+                          </div>
+                        </Link>
+                      )
+                    })}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
+            <UserStats user={user} />
+          </div>
+        </div>
       </div>
     </div>
   )
 }
+
+const MetricCard = ({
+  label,
+  value,
+  icon,
+  accent = 'emerald'
+}: {
+  label: string
+  value: number | string
+  icon: ReactNode
+  accent?: 'emerald' | 'amber' | 'blue' | 'purple'
+}) => {
+  const accentMap: Record<'emerald' | 'amber' | 'blue' | 'purple', string> = {
+    emerald: 'bg-emerald-50 text-emerald-700',
+    amber: 'bg-amber-50 text-amber-700',
+    blue: 'bg-blue-50 text-blue-700',
+    purple: 'bg-purple-50 text-purple-700'
+  }
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 p-3 shadow-sm">
+      <div className="flex items-center justify-between">
+        <div
+          className={`h-8 w-8 rounded-full flex items-center justify-center ${accentMap[accent]}`}
+        >
+          {icon}
+        </div>
+        <div className="text-right">
+          <p className="text-xs text-gray-500">{label}</p>
+          <p className="text-lg font-bold text-gray-900">{value}</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+const GiftIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className="h-4 w-4"
+  >
+    <polyline points="20 12 20 22 4 22 4 12" />
+    <rect x="2" y="7" width="20" height="5" />
+    <line x1="12" y1="22" x2="12" y2="7" />
+    <path d="M12 7h6a3 3 0 0 0-6 0" />
+    <path d="M12 7H6a3 3 0 0 1 6 0" />
+  </svg>
+)

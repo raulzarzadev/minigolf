@@ -80,12 +80,14 @@ export function Roulette({
   prizes,
   spinTime,
   onResult,
-  onStart
+  onStart,
+  disabled
 }: {
   prizes: PrizeRecord[]
   onResult: (prize: PrizeRecord | null) => void
   onStart?: () => void
   spinTime?: number
+  disabled?: boolean
 }) {
   const [rotation, setRotation] = useState(0)
   const [isSpinning, setIsSpinning] = useState(false)
@@ -418,8 +420,8 @@ export function Roulette({
             onMouseLeave={() => setIsPressing(false)}
             onTouchStart={handleMouseDown}
             onTouchEnd={handleMouseUp}
-            disabled={isSpinning || segments.length === 0}
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-linear-to-br from-emerald-400 to-emerald-600 text-white font-bold shadow-lg hover:from-emerald-500 hover:to-emerald-700 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed transition-colors"
+            disabled={disabled || isSpinning || segments.length === 0}
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-linear-to-br from-emerald-400 to-emerald-600 text-white font-bold shadow-lg hover:from-emerald-500 hover:to-emerald-700 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed   disabled:text-white/30 transition-colors "
             style={{
               width: `${60 * buttonScale}px`,
               height: `${60 * buttonScale}px`,
