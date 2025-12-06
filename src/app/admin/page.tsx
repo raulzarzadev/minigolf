@@ -29,7 +29,7 @@ export default function AdminPanel() {
     try {
       const [remotePrices, latestUsers] = await Promise.all([
         listPrizes(),
-        getAdminUsers()
+        getAdminUsers({ includeHistory: false })
       ])
       setPrices(remotePrices)
       setUsers(latestUsers)
@@ -62,7 +62,7 @@ export default function AdminPanel() {
         console.log('Stats data:', statsData)
 
         console.log('Fetching users...')
-        const usersData = await getAdminUsers()
+        const usersData = await getAdminUsers({ includeHistory: false })
         console.log('Users data:', usersData)
 
         console.log('Fetching games...')

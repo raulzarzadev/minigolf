@@ -40,8 +40,8 @@ export const normalizeUserTries = (raw?: unknown): UserTries => {
     lastTryAt: source.lastTryAt?.toDate
       ? source.lastTryAt.toDate()
       : source.lastTryAt
-      ? new Date(source.lastTryAt)
-      : null,
+        ? new Date(source.lastTryAt)
+        : null,
     prizesWon: Array.isArray(source.prizesWon)
       ? source.prizesWon.map((entry) => ({
           prizeId: entry.prizeId,
@@ -52,13 +52,13 @@ export const normalizeUserTries = (raw?: unknown): UserTries => {
           wonAt: entry.wonAt?.toDate
             ? entry.wonAt.toDate()
             : entry.wonAt
-            ? new Date(entry.wonAt)
-            : new Date(),
+              ? new Date(entry.wonAt)
+              : new Date(),
           deliveredAt: entry.deliveredAt?.toDate
             ? entry.deliveredAt.toDate()
             : entry.deliveredAt
-            ? new Date(entry.deliveredAt)
-            : null
+              ? new Date(entry.deliveredAt)
+              : null
         }))
       : []
   }
@@ -121,17 +121,12 @@ export const assignPrizeToUser = async (
     return null
   }
 
-  runTransaction(db, async (transaction) => {
+  await runTransaction(db, async (transaction) => {
     const userRef = doc(db, COLLECTION_NAME, userId)
     const snapshot = await transaction.get(userRef)
 
     if (!snapshot.exists()) {
       throw new Error('Usuario no encontrado')
-    }
-
-    const currentTries = normalizeUserTries(snapshot.data()?.tries)
-    const updatedTries: UserTries = {
-      ...currentTries
     }
 
     transaction.update(userRef, {
@@ -143,8 +138,6 @@ export const assignPrizeToUser = async (
       }),
       'tries.updatedAt': serverTimestamp()
     })
-
-    return updatedTries
   })
 
   return selectedPrize

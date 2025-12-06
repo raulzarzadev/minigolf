@@ -1,8 +1,8 @@
 'use client'
 
-import { Clock, Flag, Target, Trophy, User } from 'lucide-react'
+import { Clock, Flag, User } from 'lucide-react'
 import Link from 'next/link'
-import { type ReactNode, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import ActiveGameBanner from '@/components/ActiveGameBanner'
 import DiscreteUsernameEditor from '@/components/DiscreteUsernameEditor'
 
@@ -90,16 +90,6 @@ export default function ProfilePage() {
         </div>
       </div>
     )
-  }
-
-  const triesLeft = user.tries?.triesLeft ?? 0
-  const pendingPrizes = (user.tries?.prizesWon ?? []).filter(
-    (entry) => !entry.deliveredAt
-  )
-
-  const handleFocusRewardCenter = () => {
-    const target = document.getElementById('reward-center')
-    target?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
   const stats = calculateStats()
@@ -290,57 +280,3 @@ export default function ProfilePage() {
     </div>
   )
 }
-
-const MetricCard = ({
-  label,
-  value,
-  icon,
-  accent = 'emerald'
-}: {
-  label: string
-  value: number | string
-  icon: ReactNode
-  accent?: 'emerald' | 'amber' | 'blue' | 'purple'
-}) => {
-  const accentMap: Record<'emerald' | 'amber' | 'blue' | 'purple', string> = {
-    emerald: 'bg-emerald-50 text-emerald-700',
-    amber: 'bg-amber-50 text-amber-700',
-    blue: 'bg-blue-50 text-blue-700',
-    purple: 'bg-purple-50 text-purple-700'
-  }
-
-  return (
-    <div className="bg-white rounded-2xl border border-gray-200 p-3 shadow-sm">
-      <div className="flex items-center justify-between">
-        <div
-          className={`h-8 w-8 rounded-full flex items-center justify-center ${accentMap[accent]}`}
-        >
-          {icon}
-        </div>
-        <div className="text-right">
-          <p className="text-xs text-gray-500">{label}</p>
-          <p className="text-lg font-bold text-gray-900">{value}</p>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-const GiftIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className="h-4 w-4"
-  >
-    <polyline points="20 12 20 22 4 22 4 12" />
-    <rect x="2" y="7" width="20" height="5" />
-    <line x1="12" y1="22" x2="12" y2="7" />
-    <path d="M12 7h6a3 3 0 0 0-6 0" />
-    <path d="M12 7H6a3 3 0 0 1 6 0" />
-  </svg>
-)

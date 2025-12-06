@@ -96,51 +96,31 @@ export async function getAdminStats(): Promise<AdminStats> {
   }
 }
 
-export async function getAdminUsers(): Promise<AdminUser[]> {
+type AdminUsersOptions = {
+  includeHistory?: boolean
+  historyLimit?: number
+}
+
+export async function getAdminUsers(
+  options: AdminUsersOptions = {}
+): Promise<AdminUser[]> {
   try {
+    const includeHistory = options.includeHistory ?? false
+    const historyLimit = options.historyLimit ?? 5
+
     const usersQuery = query(
       collection(db, 'users'),
       orderBy('createdAt', 'desc')
     )
     const usersSnapshot = await getDocs(usersQuery)
 
-    const users: AdminUser[] = []
-
-    for (const doc of usersSnapshot.docs) {
+    const baseUsers: AdminUser[] = usersSnapshot.docs.map((doc) => {
       const userData = doc.data()
+      const lastLogin = userData.lastLoginAt?.toDate
+        ? userData.lastLoginAt.toDate()
+        : undefined
 
-      // Get user's game history
-      const userGamesQuery = query(
-        collection(db, 'games'),
-        where('createdBy', '==', doc.id),
-        where('status', '==', 'finished'),
-        orderBy('finishedAt', 'desc'),
-        limit(10)
-      )
-      const userGamesSnapshot = await getDocs(userGamesQuery)
-
-      const gameHistory = userGamesSnapshot.docs.map((gameDoc) => {
-        const gameData = gameDoc.data()
-        let totalStrokes = 0
-
-        if (gameData.scores && typeof gameData.scores === 'object') {
-          Object.values(gameData.scores).forEach((scores) => {
-            if (Array.isArray(scores)) {
-              totalStrokes += scores.reduce((a: number, b: number) => a + b, 0)
-            }
-          })
-        }
-
-        return {
-          gameId: gameDoc.id,
-          finishedAt: gameData.finishedAt?.toDate
-            ? gameData.finishedAt.toDate()
-            : new Date(),
-          totalStrokes
-        }
-      })
-
-      const adminUser: AdminUser = {
+      return {
         id: doc.id,
         name: userData.name || '',
         username: userData.username || '',
@@ -152,20 +132,58 @@ export async function getAdminUsers(): Promise<AdminUser[]> {
         averageScore: userData.averageScore || 0,
         tries: normalizeUserTries(userData.tries),
         isAdmin: userData.isAdmin || false,
-        lastLoginAt: userData.lastLoginAt?.toDate
-          ? userData.lastLoginAt.toDate()
-          : undefined,
-        isActive: userData.lastLoginAt
-          ? Date.now() - userData.lastLoginAt.toDate().getTime() <
-            30 * 24 * 60 * 60 * 1000 // Active if logged in within 30 days
+        lastLoginAt: lastLogin,
+        isActive: lastLogin
+          ? Date.now() - lastLogin.getTime() < 30 * 24 * 60 * 60 * 1000
           : false,
-        gameHistory
+        gameHistory: []
       }
+    })
 
-      users.push(adminUser)
+    if (!includeHistory) {
+      return baseUsers
     }
 
-    return users
+    const usersWithHistory = await Promise.all(
+      baseUsers.map(async (user) => {
+        const userGamesQuery = query(
+          collection(db, 'games'),
+          where('createdBy', '==', user.id),
+          where('status', '==', 'finished'),
+          orderBy('finishedAt', 'desc'),
+          limit(historyLimit)
+        )
+        const userGamesSnapshot = await getDocs(userGamesQuery)
+
+        const gameHistory = userGamesSnapshot.docs.map((gameDoc) => {
+          const gameData = gameDoc.data()
+          let totalStrokes = 0
+
+          if (gameData.scores && typeof gameData.scores === 'object') {
+            Object.values(gameData.scores).forEach((scores) => {
+              if (Array.isArray(scores)) {
+                totalStrokes += scores.reduce(
+                  (a: number, b: number) => a + b,
+                  0
+                )
+              }
+            })
+          }
+
+          return {
+            gameId: gameDoc.id,
+            finishedAt: gameData.finishedAt?.toDate
+              ? gameData.finishedAt.toDate()
+              : new Date(),
+            totalStrokes
+          }
+        })
+
+        return { ...user, gameHistory }
+      })
+    )
+
+    return usersWithHistory
   } catch (error) {
     console.error('Error getting admin users:', error)
     throw error
