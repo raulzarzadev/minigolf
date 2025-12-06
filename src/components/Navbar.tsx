@@ -33,7 +33,6 @@ const Navbar: FC = () => {
 
   const currentPage =
     typeof window !== 'undefined' ? window?.location?.pathname : ''
-  console.log({ currentPage })
   return (
     <nav className="bg-white text-black shadow-lg border-b-2 border-black">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
