@@ -84,7 +84,7 @@ export function Roulette({
   disabled
 }: {
   prizes: PrizeRecord[]
-  onResult: (prize: PrizeRecord | null) => void
+  onResult: (prize: PrizeRecord | null) => Promise<void> | void
   onStart?: () => void
   spinTime?: number
   disabled?: boolean
@@ -262,11 +262,11 @@ export function Roulette({
     }
   }, [isPressing])
 
-  const resolveResult = (segment: Segment | null) => {
+  const resolveResult = async (segment: Segment | null) => {
     const prize = segment && !segment.isNoPrize ? segment.prize : null
+    await onResult?.(prize)
     setHasOutcome(true)
     setResult(prize)
-    onResult(prize)
     setIsSpinning(false)
   }
 

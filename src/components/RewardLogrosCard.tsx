@@ -7,7 +7,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { usePrizes } from '@/hooks/usePrizes'
 import { PrizeRecord } from '@/lib/prizes'
 import { ROULETTE_SPIN_DURATION_MS } from '@/lib/roulette'
-import { spinPrizeWheel } from '@/lib/tries'
+import { incrementUserTries, spinPrizeWheel } from '@/lib/tries'
 import { PrizeTier, RewardPrize } from '@/types/rewards'
 import { Roulette } from './roulette/roulette'
 
@@ -179,7 +179,11 @@ const RewardLogrosCard: FC = () => {
             >
               <Roulette
                 prizes={prizes}
-                onResult={() => refreshUser()}
+                onResult={async () => {
+                  await incrementUserTries(user.id, -1)
+                  refreshUser()
+                  return
+                }}
                 spinTime={ROULETTE_SPIN_DURATION_MS}
               />
             </div>
