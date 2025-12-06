@@ -14,10 +14,10 @@
     "@hookform/resolvers": "^5.1.1",
     "firebase": "^11.9.1",
     "lucide-react": "^0.515.0",
-    "next": "15.3.3",
+    "next": "16.0.7",
     "next-seo": "^6.8.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
+    "react": "^19.2.1",
+    "react-dom": "^19.2.1",
     "react-hook-form": "^7.57.0",
     "zod": "^3.25.64"
   },
