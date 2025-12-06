@@ -1,4 +1,4 @@
-export function Facebook(props) {
+export function Facebook(props: any) {
   return (
     <svg
       {...props}

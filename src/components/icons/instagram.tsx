@@ -1,4 +1,4 @@
-export function Instagram(props) {
+export function Instagram(props: any) {
   return (
     <svg
       {...props}
@@ -7,7 +7,7 @@ export function Instagram(props) {
       height="1em"
       viewBox="0 0 256 256"
     >
-      <title xmlns="">instagram</title>
+      <title>instagram</title>
       <g fill="none">
         <rect width="256" height="256" fill="url(#SVGWRUqebek)" rx="60" />
         <rect width="256" height="256" fill="url(#SVGfkNpldMH)" rx="60" />

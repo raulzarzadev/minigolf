@@ -1,4 +1,4 @@
-export function Tripadvisor(props) {
+export function Tripadvisor(props: any) {
   return (
     <svg
       {...props}
