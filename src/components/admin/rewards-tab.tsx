@@ -406,6 +406,94 @@ export function RewardsTab({
         </div>
       ) : (
         <>
+          <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="text-sm font-semibold text-gray-900">
+                  Premios pendientes de entrega
+                </h4>
+                <p className="text-[11px] text-gray-500">
+                  {pendingPrizes.length} premios sin entregar · busca por código
+                  o jugador.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowPendingList((prev) => !prev)}
+                className="text-[11px] font-semibold text-emerald-700 hover:underline"
+              >
+                {showPendingList ? 'Ocultar lista' : 'Ver lista'}
+              </button>
+            </div>
+
+            {showPendingList && (
+              <div className="space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                  <input
+                    type="text"
+                    value={pendingSearch}
+                    onChange={(event) => setPendingSearch(event.target.value)}
+                    placeholder="Buscar por código, premio o jugador"
+                    className="w-full sm:max-w-xs rounded border border-gray-300 px-3 py-2 text-sm"
+                  />
+                  <span className="text-[11px] text-gray-500">
+                    {filteredPendingPrizes.length} coinciden con la búsqueda
+                  </span>
+                </div>
+
+                <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                  {filteredPendingPrizes.length === 0 ? (
+                    <p className="text-xs text-gray-500">
+                      No hay premios pendientes con ese código o nombre.
+                    </p>
+                  ) : (
+                    filteredPendingPrizes.map((row) => (
+                      <div
+                        key={row.id}
+                        className="flex items-start justify-between gap-3 rounded-lg border border-amber-100 bg-amber-50 px-3 py-2"
+                      >
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-semibold text-gray-900">
+                              {row.prizeTitle}
+                            </p>
+                            <span className="inline-flex items-center rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold text-gray-700 border border-amber-200">
+                              Código: {(row.code ?? 'SIN-CODIGO').toUpperCase()}
+                            </span>
+                          </div>
+                          <p className="text-xs text-gray-600">
+                            {row.prizeDescription}
+                          </p>
+                          <p className="text-[11px] text-gray-500">
+                            {row.userName} ·{' '}
+                            {row.wonAt.toLocaleDateString('es-MX', {
+                              month: 'short',
+                              day: 'numeric'
+                            })}
+                          </p>
+                        </div>
+                        <div className="flex flex-col items-end gap-2">
+                          <span className="text-[11px] uppercase text-amber-700 font-semibold">
+                            Pendiente
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleDeliver(row)}
+                            className="text-[11px] font-semibold text-emerald-700 hover:underline disabled:opacity-50"
+                            disabled={deliveringPrizeId === row.id}
+                          >
+                            {deliveringPrizeId === row.id
+                              ? 'Marcando...'
+                              : 'Marcar entregado'}
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {statOrder.map((tier) => {
               const bucket = tierStats[tier]
@@ -747,94 +835,7 @@ export function RewardsTab({
               )}
             </div>
           </div>
-          <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="text-sm font-semibold text-gray-900">
-                  Premios pendientes de entrega
-                </h4>
-                <p className="text-[11px] text-gray-500">
-                  {pendingPrizes.length} premios sin entregar · busca por código
-                  o jugador.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowPendingList((prev) => !prev)}
-                className="text-[11px] font-semibold text-emerald-700 hover:underline"
-              >
-                {showPendingList ? 'Ocultar lista' : 'Ver lista'}
-              </button>
-            </div>
 
-            {showPendingList && (
-              <div className="space-y-3">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                  <input
-                    type="text"
-                    value={pendingSearch}
-                    onChange={(event) => setPendingSearch(event.target.value)}
-                    placeholder="Buscar por código, premio o jugador"
-                    className="w-full sm:max-w-xs rounded border border-gray-300 px-3 py-2 text-sm"
-                  />
-                  <span className="text-[11px] text-gray-500">
-                    {filteredPendingPrizes.length} coinciden con la búsqueda
-                  </span>
-                </div>
-
-                <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
-                  {filteredPendingPrizes.length === 0 ? (
-                    <p className="text-xs text-gray-500">
-                      No hay premios pendientes con ese código o nombre.
-                    </p>
-                  ) : (
-                    filteredPendingPrizes.map((row) => (
-                      <div
-                        key={row.id}
-                        className="flex items-start justify-between gap-3 rounded-lg border border-amber-100 bg-amber-50 px-3 py-2"
-                      >
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <p className="text-sm font-semibold text-gray-900">
-                              {row.prizeTitle}
-                            </p>
-                            <span className="inline-flex items-center rounded-full bg-white px-2 py-0.5 text-[11px] font-semibold text-gray-700 border border-amber-200">
-                              Código: {(row.code ?? 'SIN-CODIGO').toUpperCase()}
-                            </span>
-                          </div>
-                          <p className="text-xs text-gray-600">
-                            {row.prizeDescription}
-                          </p>
-                          <p className="text-[11px] text-gray-500">
-                            {row.userName} ·{' '}
-                            {row.wonAt.toLocaleDateString('es-MX', {
-                              month: 'short',
-                              day: 'numeric'
-                            })}
-                          </p>
-                        </div>
-                        <div className="flex flex-col items-end gap-2">
-                          <span className="text-[11px] uppercase text-amber-700 font-semibold">
-                            Pendiente
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => handleDeliver(row)}
-                            className="text-[11px] font-semibold text-emerald-700 hover:underline disabled:opacity-50"
-                            disabled={deliveringPrizeId === row.id}
-                          >
-                            {deliveringPrizeId === row.id
-                              ? 'Marcando...'
-                              : 'Marcar entregado'}
-                          </button>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
           <div className="bg-white rounded-lg border border-gray-200 p-4">
             <div className="flex items-center justify-between mb-3">
               <h4 className="text-sm font-semibold text-gray-900">
