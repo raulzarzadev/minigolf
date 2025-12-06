@@ -4,28 +4,19 @@ import {
   ArrowLeft,
   Camera,
   CheckCircle2,
-  Gift,
-  Instagram,
   Loader2,
   Save,
-  Trophy
+  Instagram
 } from 'lucide-react'
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
-import { prizeCatalog } from '@/constants/prizes'
 import { useAuth } from '@/contexts/AuthContext'
 import { subscribeToGame } from '@/lib/db'
 import { getLocalGame, isLocalGame } from '@/lib/localStorage'
-import { PrizeRecord } from '@/lib/prizes'
-import {
-  ROULETTE_SPIN_DURATION_MS,
-  rouletteGradient,
-  rouletteSegmentAngle,
-  rouletteSegments
-} from '@/lib/roulette'
-import { incrementUserTries, spinPrizeWheel } from '@/lib/tries'
+import { incrementUserTries } from '@/lib/tries'
 import { Game } from '@/types'
 import { RewardPrize } from '@/types/rewards'
+import RewardLogrosCard from '@/components/RewardLogrosCard'
 
 type RewardStepId = 'register' | 'follow' | 'share'
 
@@ -131,19 +122,15 @@ const persistCelebrationState = (
 export default function CelebrationPage() {
   const params = useParams()
   const router = useRouter()
-  const { user, refreshUser } = useAuth()
+  const { user, refreshUser, signInWithGoogle } = useAuth()
   const [game, setGame] = useState<Game | null>(null)
   const [loading, setLoading] = useState(true)
   const [availableRolls, setAvailableRolls] = useState(0)
   const [completedSteps, setCompletedSteps] = useState<
     Partial<Record<RewardStepId, boolean>>
   >({})
-  const [rollHistory, setRollHistory] = useState<RollResult[]>([])
   const [ready, setReady] = useState(false)
-  const [isSpinning, setIsSpinning] = useState(false)
-  const [wheelRotation, setWheelRotation] = useState(0)
-  const [lastResult, setLastResult] = useState<RewardPrize | null>(null)
-  const [lastPrize, setLastPrize] = useState<PrizeRecord | null>(null)
+
   const spinTimeoutRef = useRef<number | null>(null)
 
   const gameId = params.id as string
@@ -152,7 +139,6 @@ export default function CelebrationPage() {
     if (!gameId) return
     const stored = loadCelebrationState(gameId)
     setCompletedSteps(stored.completedSteps)
-    setRollHistory(stored.rollHistory)
     setReady(true)
   }, [gameId])
 
@@ -190,100 +176,56 @@ export default function CelebrationPage() {
     }
   }, [])
 
-  const runStepAction = (stepId: RewardStepId) => {
-    if (typeof window === 'undefined') return
+  const runStepAction = async (stepId: RewardStepId): Promise<boolean> => {
+    if (typeof window === 'undefined') return false
+
+    let activeUser = user
+
+    if (!activeUser) {
+      try {
+        await signInWithGoogle()
+        await refreshUser()
+        activeUser = user ?? null
+      } catch (error) {
+        console.error('Error al iniciar sesión para reclamar tirada:', error)
+        return false
+      }
+    }
+
+    if (!activeUser) {
+      return false
+    }
+
+    try {
+      const updated = await incrementUserTries(activeUser.id, 1)
+      setAvailableRolls(updated.triesLeft)
+      await refreshUser()
+    } catch (error) {
+      console.error('Error incrementando tirada tras acción:', error)
+      return false
+    }
+
     if (stepId === 'register') {
       router.push('/profile')
-      return
+    } else {
+      router.push('/social')
     }
-    window.open('https://instagram.com/bajaminigolf', '_blank')
+
+    return true
   }
 
   const handleMarkStep = async (stepId: RewardStepId) => {
     if (!ready || completedSteps[stepId]) return
-    runStepAction(stepId)
+    const granted = await runStepAction(stepId)
+    if (!granted) {
+      return
+    }
     const updatedSteps = { ...completedSteps, [stepId]: true }
     setCompletedSteps(updatedSteps)
     persistCelebrationState(gameId, { completedSteps: updatedSteps })
-
-    if (!user) {
-      return
-    }
-
-    try {
-      const updatedTries = await incrementUserTries(user.id, 1)
-      setAvailableRolls(updatedTries.triesLeft)
-      await refreshUser()
-    } catch (error) {
-      console.error('Error incrementando tiradas tras completar paso:', error)
-    }
   }
 
   const isFinished = game?.status === 'finished'
-
-  const handleSpinRoulette = async () => {
-    if (!ready || !isFinished || availableRolls <= 0 || isSpinning || !user) {
-      return
-    }
-
-    setIsSpinning(true)
-    setLastResult(null)
-    setLastPrize(null)
-
-    try {
-      const spinResult = await spinPrizeWheel(user.id)
-      const tier: RewardPrize =
-        (spinResult.prize?.tier as RewardPrize | undefined) ?? 'none'
-      const newRoll: RollResult = {
-        id: `${tier}-${Date.now()}`,
-        tier,
-        timestamp: Date.now(),
-        prizeId: spinResult.prize?.id,
-        prizeTitle: spinResult.prize?.title,
-        prizeDescription: spinResult.prize?.description
-      }
-
-      const segmentIndex = rouletteSegments.findIndex(
-        (segment) => segment.tier === tier
-      )
-      const safeIndex = segmentIndex === -1 ? 0 : segmentIndex
-      const extraSpins = 4 + Math.floor(Math.random() * 3)
-      const rotationOffset =
-        safeIndex * rouletteSegmentAngle + rouletteSegmentAngle / 2
-
-      setWheelRotation((prev) => {
-        const normalizedPrev = prev % 360
-        const alignmentOffset = rotationOffset - normalizedPrev
-        return prev + extraSpins * 360 + alignmentOffset
-      })
-
-      if (spinTimeoutRef.current) {
-        window.clearTimeout(spinTimeoutRef.current)
-      }
-
-      spinTimeoutRef.current = window.setTimeout(() => {
-        setRollHistory((prevHistory) => {
-          const updatedHistory = [newRoll, ...prevHistory]
-          persistCelebrationState(gameId, { rollHistory: updatedHistory })
-          return updatedHistory
-        })
-        setAvailableRolls(spinResult.triesLeft)
-        setLastResult(tier)
-        setLastPrize(spinResult.prize ?? null)
-        setIsSpinning(false)
-        spinTimeoutRef.current = null
-      }, ROULETTE_SPIN_DURATION_MS)
-
-      await refreshUser()
-    } catch (error) {
-      console.error('Error al girar la ruleta:', error)
-      setIsSpinning(false)
-      if (spinTimeoutRef.current) {
-        window.clearTimeout(spinTimeoutRef.current)
-        spinTimeoutRef.current = null
-      }
-    }
-  }
 
   const handleBackToGame = () => {
     router.push(`/game/${gameId}`)
@@ -310,33 +252,6 @@ export default function CelebrationPage() {
       </div>
     )
   }
-
-  const rouletteHelperMessage = isFinished
-    ? availableRolls > 0
-      ? `${availableRolls} tirada(s) disponible(s)`
-      : 'Completa acciones pendientes para ganar más tiradas'
-    : 'Termina la partida para desbloquear las tiradas'
-  const lastResultMeta = (() => {
-    if (lastPrize) {
-      return {
-        label: lastPrize.title,
-        description: lastPrize.description || 'Reclámalo con el staff.'
-      }
-    }
-    if (lastResult && lastResult !== 'none') {
-      return prizeCatalog[lastResult]
-    }
-    return null
-  })()
-  const rouletteStatusLabel =
-    lastResult === 'none'
-      ? 'Sin premio esta vez'
-      : (lastResultMeta?.label ?? 'Listo para girar')
-  const rouletteStatusDescription =
-    lastResult === 'none'
-      ? 'Esta vez no salió premio. Inténtalo de nuevo.'
-      : (lastResultMeta?.description ??
-        'Pulsa la ruleta cuando tengas tiradas disponibles.')
 
   return (
     <div className="min-h-screen">
@@ -460,201 +375,7 @@ export default function CelebrationPage() {
             })}
           </div>
         </div>
-
-        <div className="rounded-2xl border border-slate-200 bg-linear-to-br from-blue-50 via-slate-50 to-emerald-50 p-4 text-slate-900">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <p className="text-xs uppercase tracking-wide text-emerald-700">
-                Zona de tiradas
-              </p>
-              <h3 className="text-xl font-semibold">Gira para ganar</h3>
-              <p className="text-sm text-slate-600">
-                Premios físicos y experiencias especiales dentro del parque.
-              </p>
-            </div>
-            <Gift className="h-8 w-8 text-emerald-700" />
-          </div>
-          <div className="flex flex-col gap-6 lg:flex-row">
-            <div className="flex flex-col items-center gap-3">
-              <button
-                type="button"
-                onClick={handleSpinRoulette}
-                disabled={!isFinished || availableRolls === 0 || isSpinning}
-                className="relative h-56 w-56 md:h-64 md:w-64 rounded-full focus-visible:outline-none disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                <div
-                  aria-hidden="true"
-                  className="pointer-events-none absolute -top-4 left-1/2 flex -translate-x-1/2 flex-col items-center"
-                >
-                  <div className="h-5 w-1 rounded bg-white shadow" />
-                  <div
-                    className="drop-shadow"
-                    style={{
-                      width: 0,
-                      height: 0,
-                      borderLeft: '9px solid transparent',
-                      borderRight: '9px solid transparent',
-                      borderTop: '14px solid white'
-                    }}
-                  />
-                </div>
-                <div
-                  className="absolute inset-0 rounded-full border-[6px] border-white shadow-xl transition-transform ease-out"
-                  style={{
-                    backgroundImage: rouletteGradient,
-                    transform: `rotate(${wheelRotation}deg)`,
-                    transitionDuration: `${ROULETTE_SPIN_DURATION_MS}ms`
-                  }}
-                />
-                <div className="absolute inset-0 rounded-full overflow-hidden">
-                  <div className="absolute inset-2 flex items-center justify-center">
-                    {rouletteSegments.map((segment, index) => {
-                      const rotation =
-                        index * rouletteSegmentAngle + rouletteSegmentAngle / 2
-                      return (
-                        <div
-                          key={segment.tier}
-                          className="absolute inset-4 flex items-center justify-center"
-                          style={{ transform: `rotate(${rotation}deg)` }}
-                        >
-                          <span
-                            className="text-[11px] font-semibold uppercase tracking-tight text-center"
-                            style={{
-                              color: segment.color,
-                              transform: `rotate(-${rotation}deg)`
-                            }}
-                          >
-                            {segment.label}
-                          </span>
-                        </div>
-                      )
-                    })}
-                  </div>
-                  <div className="absolute inset-5 rounded-full bg-white/95 backdrop-blur flex flex-col items-center justify-center text-center px-4">
-                    <p className="text-[11px] uppercase tracking-wide text-gray-400">
-                      Ruleta
-                    </p>
-                    <p className="text-base font-semibold text-gray-900">
-                      {isSpinning ? 'Girando...' : 'Toca para girar'}
-                    </p>
-                    <p className="text-[11px] text-gray-500">
-                      {availableRolls} tirada(s)
-                    </p>
-                  </div>
-                </div>
-              </button>
-              <p className="text-xs text-slate-500 text-center">
-                {isFinished
-                  ? 'Deja que el staff valide el premio al terminar el giro.'
-                  : 'Termina la partida para activar la ruleta.'}
-              </p>
-            </div>
-            <div className="flex-1 space-y-3">
-              <p className="text-xs text-slate-500">Tiradas disponibles</p>
-              <p className="text-3xl font-bold text-emerald-700">
-                {availableRolls}
-              </p>
-              <p className="text-xs text-slate-500">{rouletteHelperMessage}</p>
-              <div className="rounded-xl border border-slate-200 bg-white p-3 space-y-1">
-                <p className="text-xs text-slate-500">Último resultado</p>
-                <p className="text-sm font-semibold text-slate-900">
-                  {rouletteStatusLabel}
-                </p>
-                <p className="text-xs text-slate-500">
-                  {rouletteStatusDescription}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={handleSpinRoulette}
-                disabled={!isFinished || availableRolls === 0 || isSpinning}
-                className="w-full inline-flex items-center justify-center px-4 py-3 rounded-2xl bg-emerald-500 text-white font-semibold text-sm hover:bg-emerald-400 disabled:opacity-40"
-              >
-                {isSpinning ? 'Girando...' : 'Girar ruleta'}
-              </button>
-            </div>
-          </div>
-          <div className="mt-4 grid grid-cols-2 gap-2 text-[11px] text-slate-600">
-            {rouletteSegments.map((segment) => (
-              <div
-                key={segment.tier}
-                className="flex items-center gap-2 rounded-lg border border-slate-100 bg-white px-2 py-1.5"
-              >
-                <span
-                  className="h-2 w-2 rounded-full"
-                  style={{ backgroundColor: segment.color }}
-                />
-                <span className="font-semibold text-slate-900">
-                  {segment.label}
-                </span>
-              </div>
-            ))}
-          </div>
-          {rollHistory.length > 0 ? (
-            <div className="mt-4 space-y-2">
-              {rollHistory.map((roll) => {
-                const baseMeta =
-                  roll.tier === 'none'
-                    ? {
-                        label: 'Sin premio',
-                        description:
-                          'Esta vez no salió premio, vuelve a intentarlo.',
-                        accent: 'bg-gray-100 text-gray-600'
-                      }
-                    : prizeCatalog[roll.tier]
-                const label = roll.prizeTitle ?? baseMeta.label
-                const description =
-                  roll.prizeDescription ?? baseMeta.description
-                return (
-                  <div
-                    key={roll.id}
-                    className="flex items-center justify-between bg-white rounded-xl px-3 py-2"
-                  >
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900">
-                        {label}
-                      </p>
-                      <p className="text-xs text-slate-500">{description}</p>
-                    </div>
-                    <span
-                      className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${baseMeta.accent}`}
-                    >
-                      {new Date(roll.timestamp).toLocaleTimeString('es-MX', {
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
-                    </span>
-                  </div>
-                )
-              })}
-            </div>
-          ) : (
-            <p className="mt-4 text-sm text-gray-300">
-              Aún no tienes premios mostrados. Completa un paso y gira la ruleta
-              para descubrir tu recompensa.
-            </p>
-          )}
-        </div>
-
-        <div className="bg-white border border-gray-200 rounded-2xl p-4">
-          <div className="flex items-center mb-3">
-            <Trophy className="h-5 w-5 text-yellow-500 mr-2" />
-            <p className="text-sm font-semibold text-gray-900">
-              ¿Cómo reclamo mi premio físico?
-            </p>
-          </div>
-          <ul className="text-xs text-gray-600 space-y-1">
-            <li>
-              • Muestra este resultado en taquilla dentro de los próximos 30
-              minutos.
-            </li>
-            <li>
-              • El staff validará la captura y te entregará el beneficio
-              correspondiente.
-            </li>
-            <li>• Premios sujetos a disponibilidad diaria.</li>
-          </ul>
-        </div>
+        <RewardLogrosCard />
       </div>
     </div>
   )
