@@ -2,6 +2,7 @@
 
 import {
   Home,
+  InstagramIcon,
   LogOut,
   Medal,
   Menu,
@@ -30,6 +31,9 @@ const Navbar: FC = () => {
 
   const closeMobileMenu = () => setIsMobileMenuOpen(false)
 
+  const currentPage =
+    typeof window !== 'undefined' ? window?.location?.pathname : ''
+  console.log({ currentPage })
   return (
     <nav className="bg-white text-black shadow-lg border-b-2 border-black">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
@@ -47,20 +51,20 @@ const Navbar: FC = () => {
 
           {/* Menu de escritorio */}
           <div className="hidden md:flex items-center space-x-1 lg:space-x-4">
-            <Link
-              href="/"
-              className="flex items-center space-x-1 px-2 lg:px-3 py-2 rounded-md text-sm font-medium hover:bg-green-100 hover:text-green-700 transition-colors"
-            >
-              <Home size={18} />
-              <span className="hidden lg:inline">Inicio</span>
-            </Link>
-
-            <Link
+            {/* <Link
               href="/game/new"
               className="flex items-center space-x-1 px-2 lg:px-3 py-2 rounded-md text-sm font-medium hover:bg-green-100 hover:text-green-700 transition-colors"
             >
               <Plus size={18} />
               <span className="hidden lg:inline">Nueva Partida</span>
+            </Link> */}
+
+            <Link
+              href="/social"
+              className={`flex items-center space-x-1 px-2 lg:px-3 py-2 rounded-md text-sm font-medium ${currentPage === '/social' ? 'bg-green-100 text-green-700' : 'hover:bg-green-100 hover:text-green-700'} transition-colors`}
+            >
+              <InstagramIcon size={18} />
+              <span className="hidden lg:inline">Redes Sociales</span>
             </Link>
 
             <Link
@@ -73,13 +77,13 @@ const Navbar: FC = () => {
 
             {user && (
               <>
-                <Link
+                {/* <Link
                   href="/tournaments"
                   className="flex items-center space-x-1 px-2 lg:px-3 py-2 rounded-md text-sm font-medium hover:bg-green-100 hover:text-green-700 transition-colors"
                 >
                   <Trophy size={18} />
                   <span className="hidden lg:inline">Torneos</span>
-                </Link>
+                </Link> */}
 
                 {isAdmin && (
                   <Link

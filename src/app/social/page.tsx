@@ -3,6 +3,13 @@ import { ArrowLeft, Copy, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useCallback, useState } from 'react'
+import {
+  Facebook,
+  GoogleMaps,
+  Instagram,
+  ReviewsOutline,
+  Tripadvisor
+} from '@/components/icons'
 
 const socials = [
   {
@@ -10,29 +17,46 @@ const socials = [
     name: 'Instagram',
     description: 'Comparte una historia o reel con #BajaMiniGolf.',
     actionLabel: 'Abrir Instagram',
-    href: 'https://instagram.com/bajaminigolf'
+    href: 'https://instagram.com/bajaminigolf',
+    accent: 'bg-gradient-to-r from-pink-500 to-yellow-400 text-white',
+    icon: Instagram
   },
-  // {
-  //   id: 'tiktok',
-  //   name: 'TikTok',
-  //   description: 'Sube un clip corto de tu partida y etiqueta @bajaminigolf.',
-  //   actionLabel: 'Abrir TikTok',
-  //   href: 'https://www.tiktok.com/'
-  // },
   {
     id: 'facebook',
     name: 'Facebook',
     description: 'Publica en tu muro y cuéntanos tu score.',
     actionLabel: 'Abrir Facebook',
-    href: 'https://www.facebook.com/bajaminigolf'
+    href: 'https://www.facebook.com/bajaminigolf',
+    accent: 'bg-blue-600 text-white',
+    icon: Facebook
+  },
+  {
+    id: 'google-maps',
+    name: 'Google Maps',
+    description: 'Visítanos y conoce nuestra ubicación.',
+    actionLabel: 'Ver en Maps',
+    href: 'https://maps.app.goo.gl/NuP78WQzBeULyK397',
+    accent: 'bg-green-600 text-white',
+    icon: GoogleMaps
+  },
+  {
+    id: 'google-review',
+    name: 'Deja tu opinión',
+    description: 'Comparte tu experiencia en Google Maps.',
+    actionLabel: 'Dejar reseña',
+    href: 'https://g.page/r/CXxixU3dPuehEBM/review',
+    accent: 'bg-amber-500 text-white',
+    icon: ReviewsOutline
+  },
+  {
+    id: 'tripadvisor',
+    name: 'TripAdvisor',
+    description: 'Lee opiniones de otros visitantes.',
+    actionLabel: 'Ver en TripAdvisor',
+    href: 'https://www.tripadvisor.com.mx/Attraction_Review-g150771-d24023819-Reviews-Baja_Mini_Golf-La_Paz_Baja_California.html',
+    accent: 'bg-emerald-700 text-white',
+    icon: Tripadvisor
   }
-  // {
-  //   id: 'x',
-  //   name: 'X (Twitter)',
-  //   description: 'Comparte un tweet con el hashtag y menciónanos.',
-  //   actionLabel: 'Tweetear',
-  //   href: 'https://twitter.com/intent/tweet?text=Jugando%20mini%20golf%20en%20%23BajaMiniGolf%20%F0%9F%8E%81%20%40bajaminigolf'
-  // }
 ]
 
 const defaultCaption =
@@ -104,11 +128,17 @@ export default function SocialPage() {
               className="flex flex-col gap-2 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm"
             >
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-semibold text-gray-900">
-                    {social.name}
-                  </p>
-                  <p className="text-xs text-gray-600">{social.description}</p>
+                <div className="flex items-center gap-2">
+                  {social?.icon && <social.icon className="h-8 w-8" />}
+
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">
+                      {social.name}
+                    </p>
+                    <p className="text-xs text-gray-600">
+                      {social.description}
+                    </p>
+                  </div>
                 </div>
               </div>
               <div className="flex items-center justify-between">
