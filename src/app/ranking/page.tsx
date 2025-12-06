@@ -92,6 +92,7 @@ export default function RankingPage() {
         return a.averageScore - b.averageScore
     }
   })
+  const topRanking = sortedRanking.slice(0, 20)
 
   return (
     <div className="min-h-screen">
@@ -165,7 +166,7 @@ export default function RankingPage() {
             <div className="flex items-center space-x-2 mb-4">
               <Users className="h-5 w-5 text-gray-500" />
               <h2 className="text-lg font-semibold text-gray-900">
-                Jugadores Registrados ({ranking.length})
+                Top 20 jugadores ({Math.min(ranking.length, 20)})
               </h2>
             </div>
 
@@ -183,7 +184,7 @@ export default function RankingPage() {
               </div>
             ) : (
               <div className="space-y-3">
-                {sortedRanking.map((player, index) => {
+                {topRanking.map((player, index) => {
                   const actualPosition = index + 1
                   const isCurrentUser = user ? player.id === user.id : false
 
@@ -214,7 +215,7 @@ export default function RankingPage() {
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center space-x-2">
                               <h3 className="text-sm font-medium text-gray-900 truncate whitespace-pre-line">
-                                {player.name}
+                                @{player.username || 'sin-usuario'}
                               </h3>
                               {isCurrentUser && (
                                 <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800">
@@ -222,9 +223,6 @@ export default function RankingPage() {
                                 </span>
                               )}
                             </div>
-                            <p className="text-xs text-gray-500">
-                              @{player.username}
-                            </p>
                           </div>
                         </div>
 

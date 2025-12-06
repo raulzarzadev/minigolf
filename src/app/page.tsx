@@ -1,5 +1,5 @@
 'use client'
-import { BarChart3, Clock, Plus, Trophy, User, Users } from 'lucide-react'
+import { BarChart3, Clock, Gift, Plus, Trophy, User, Users } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import ActiveGameBanner from '@/components/ActiveGameBanner'
@@ -102,6 +102,28 @@ export default function Home() {
               </p>
             </>
           )}
+        </div>
+
+        <div className="mb-4 rounded-2xl border border-emerald-100 bg-emerald-50 p-4 shadow-sm">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+                Gira la ruleta y gana
+              </p>
+              <p className="text-lg font-bold text-emerald-900 leading-tight">
+                Termina tu partida y desbloquea tiradas para premios reales.
+              </p>
+              <p className="text-sm text-emerald-800">
+                Juega, registra tu score y al finalizar podrás usar la ruleta para reclamar recompensas.
+              </p>
+            </div>
+            <Link
+              href="/game/new"
+              className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-emerald-700"
+            >
+              <Gift className="h-4 w-4" /> Crear partida y ganar
+            </Link>
+          </div>
         </div>
 
         {/* Quick Actions - Available to all users */}
@@ -287,7 +309,7 @@ export default function Home() {
                       <div key={game.id} className="p-3 bg-gray-50 rounded-lg">
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center space-x-2 min-w-0 flex-1">
-                            <div className="flex-shrink-0">
+                            <div className="shrink-0">
                               {game.isMultiplayer ? (
                                 <Users className="h-4 w-4 text-black" />
                               ) : (
@@ -368,7 +390,7 @@ export default function Home() {
                   <div key={localGame.id} className="p-3 bg-gray-50 rounded-lg">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center space-x-2 min-w-0 flex-1">
-                        <div className="flex-shrink-0">
+                        <div className="shrink-0">
                           {localGame.isMultiplayer ? (
                             <Users className="h-4 w-4 text-black" />
                           ) : (
