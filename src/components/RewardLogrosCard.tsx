@@ -7,7 +7,11 @@ import { useAuth } from '@/contexts/AuthContext'
 import { usePrizes } from '@/hooks/usePrizes'
 import { PrizeRecord } from '@/lib/prizes'
 import { ROULETTE_SPIN_DURATION_MS } from '@/lib/roulette'
-import { incrementUserTries, spinPrizeWheel } from '@/lib/tries'
+import {
+  assignPrizeToUser,
+  incrementUserTries,
+  spinPrizeWheel
+} from '@/lib/tries'
 import { PrizeTier, RewardPrize } from '@/types/rewards'
 import { Roulette } from './roulette/roulette'
 
@@ -17,7 +21,6 @@ const isCorePrizeTier = (tier: PrizeRecord['tier']): tier is PrizeTier =>
 const RewardLogrosCard: FC = () => {
   const { user, refreshUser } = useAuth()
   const { prizes, loading: prizesLoading } = usePrizes()
-  const [isSpinning, setIsSpinning] = useState(false)
   const [lastResult, setLastResult] = useState<RewardPrize | null>(null)
   const [lastPrize, setLastPrize] = useState<PrizeRecord | null>(null)
   const [showPending, setShowPending] = useState(false)
@@ -36,7 +39,7 @@ const RewardLogrosCard: FC = () => {
 
   const findPrizeMeta = (prizeId: string) =>
     prizes.find((p) => p.id === prizeId) ?? null
-
+  console.log({ user })
   const prizeEntries = user?.tries?.prizesWon ?? []
   const pendingPrizes = useMemo(
     () => prizeEntries.filter((entry) => !entry.deliveredAt),
@@ -46,64 +49,6 @@ const RewardLogrosCard: FC = () => {
     () => prizeEntries.filter((entry) => !!entry.deliveredAt),
     [prizeEntries]
   )
-
-  const lastResultMeta = (() => {
-    if (lastPrize) {
-      return {
-        label: lastPrize.title,
-        description: lastPrize.description || 'Reclámalo con el staff.'
-      }
-    }
-    // if (lastResult && lastResult !== 'none') {
-    //   return prizeCatalog[lastResult]
-    // }
-    return null
-  })()
-
-  const rouletteStatusLabel =
-    lastResult === 'none'
-      ? 'Sin premio esta vez'
-      : (lastResultMeta?.label ?? 'Listo para girar')
-  const rouletteStatusDescription =
-    lastResult === 'none'
-      ? 'Esta vez no tocó premio, vuelve a intentarlo.'
-      : (lastResultMeta?.description ??
-        'Pulsa la ruleta cuando tengas tiradas disponibles.')
-
-  const handleSpinRoulette = async () => {
-    if (!user || isSpinning || rollsAvailable <= 0) {
-      return
-    }
-
-    setIsSpinning(true)
-    setLastResult(null)
-    setLastPrize(null)
-
-    try {
-      const spinResult = await spinPrizeWheel(user.id)
-      const tier: RewardPrize =
-        (spinResult.prize?.tier as RewardPrize | undefined) ?? 'none'
-      if (spinTimeoutRef.current) {
-        window.clearTimeout(spinTimeoutRef.current)
-      }
-
-      spinTimeoutRef.current = window.setTimeout(() => {
-        setLastResult(tier)
-        setLastPrize(spinResult.prize ?? null)
-        setIsSpinning(false)
-        spinTimeoutRef.current = null
-      }, ROULETTE_SPIN_DURATION_MS)
-
-      await refreshUser()
-    } catch (error) {
-      console.error('Error al girar la ruleta:', error)
-      setIsSpinning(false)
-      if (spinTimeoutRef.current) {
-        window.clearTimeout(spinTimeoutRef.current)
-        spinTimeoutRef.current = null
-      }
-    }
-  }
 
   if (!user) {
     return (
@@ -179,8 +124,11 @@ const RewardLogrosCard: FC = () => {
             >
               <Roulette
                 prizes={prizes}
-                onResult={async () => {
+                onResult={async (result) => {
                   await incrementUserTries(user.id, -1)
+                  if (result) {
+                    await assignPrizeToUser(user.id, result)
+                  }
                   refreshUser()
                   return
                 }}

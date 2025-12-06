@@ -105,6 +105,79 @@ export const incrementUserTries = async (
   })
 }
 
+export const assignPrizeToUser = async (
+  userId: string,
+  selectedPrize: PrizeRecord | null = null
+): Promise<PrizeRecord | null> => {
+  if (!selectedPrize) {
+    console.error('No prize was selected')
+    return null
+  }
+
+  runTransaction(db, async (transaction) => {
+    const userRef = doc(db, COLLECTION_NAME, userId)
+    const snapshot = await transaction.get(userRef)
+
+    if (!snapshot.exists()) {
+      throw new Error('Usuario no encontrado')
+    }
+
+    const currentTries = normalizeUserTries(snapshot.data()?.tries)
+    const updatedTries: UserTries = {
+      ...currentTries
+    }
+
+    transaction.update(userRef, {
+      'tries.prizesWon': arrayUnion({
+        prizeId: selectedPrize.id,
+        wonAt: new Date(),
+        deliveredAt: null
+      }),
+      'tries.updatedAt': serverTimestamp()
+    })
+
+    return updatedTries
+  })
+
+  return selectedPrize
+  // const userRef = doc(db, COLLECTION_NAME, userId)
+
+  // await updateDoc(userRef, {
+  //   'tries.prizesWon': arrayUnion({
+  //     prizeId: selectedPrize.id,
+  //     wonAt: serverTimestamp(),
+  //     deliveredAt: null
+  //   })
+  // })
+  //   .then(() => {
+  //     console.log(
+  //       `Premio ${selectedPrize.id} asignado al usuario ${userId} correctamente.`
+  //     )
+  //   })
+  //   .catch((error) => {
+  //     console.error('Error assigning prize to user:', error)
+  //     throw error
+  //   })
+
+  // // await runTransaction(db, async (transaction) => {
+  // //   const snapshot = await transaction.get(userRef)
+  // //   if (!snapshot.exists()) {
+  // //     throw new Error('Usuario no encontrado')
+  // //   }
+
+  // //   const updates: Record<string, any> = {
+  // //     'tries.prizesWon': arrayUnion({
+  // //       prizeId: selectedPrize.id,
+  // //       wonAt: serverTimestamp(),
+  // //       deliveredAt: null
+  // //     })
+  // //   }
+
+  // //   transaction.update(userRef, updates)
+  // // })
+  // return selectedPrize
+}
+
 type SpinResult = {
   prize: PrizeRecord | null
   triesLeft: number
