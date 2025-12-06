@@ -114,7 +114,8 @@ export default function Home() {
                 Termina tu partida y desbloquea tiradas para premios reales.
               </p>
               <p className="text-sm text-emerald-800">
-                Juega, registra tu score y al finalizar podrás usar la ruleta para reclamar recompensas.
+                Juega, registra tu score y al finalizar podrás usar la ruleta
+                para reclamar recompensas.
               </p>
             </div>
             <Link

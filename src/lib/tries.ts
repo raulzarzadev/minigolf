@@ -40,8 +40,8 @@ export const normalizeUserTries = (raw?: unknown): UserTries => {
     lastTryAt: source.lastTryAt?.toDate
       ? source.lastTryAt.toDate()
       : source.lastTryAt
-      ? new Date(source.lastTryAt)
-      : null,
+        ? new Date(source.lastTryAt)
+        : null,
     prizesWon: Array.isArray(source.prizesWon)
       ? source.prizesWon.map((entry) => ({
           prizeId: entry.prizeId,
@@ -52,13 +52,13 @@ export const normalizeUserTries = (raw?: unknown): UserTries => {
           wonAt: entry.wonAt?.toDate
             ? entry.wonAt.toDate()
             : entry.wonAt
-            ? new Date(entry.wonAt)
-            : new Date(),
+              ? new Date(entry.wonAt)
+              : new Date(),
           deliveredAt: entry.deliveredAt?.toDate
             ? entry.deliveredAt.toDate()
             : entry.deliveredAt
-            ? new Date(entry.deliveredAt)
-            : null
+              ? new Date(entry.deliveredAt)
+              : null
         }))
       : []
   }

@@ -4,13 +4,13 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { GameFormData, GuestInput } from '@/app/game/new/types'
+import ActiveGameBanner from '@/components/ActiveGameBanner'
 import GuestNewGameForm from '@/components/new-game/GuestNewGameForm'
 import HoleCountSelect from '@/components/new-game/HoleCountSelect'
 import { useAuth } from '@/contexts/AuthContext'
 import { createGame, generateGuestId } from '@/lib/db'
 import { saveLocalGame } from '@/lib/localStorage'
 import { Game, Player } from '@/types'
-import ActiveGameBanner from '@/components/ActiveGameBanner'
 
 const createPlayerInput = (overrides?: Partial<GuestInput>): GuestInput => ({
   id: overrides?.id ?? generateGuestId(),

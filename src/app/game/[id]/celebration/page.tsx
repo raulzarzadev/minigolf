@@ -4,19 +4,19 @@ import {
   ArrowLeft,
   Camera,
   CheckCircle2,
+  Instagram,
   Loader2,
-  Save,
-  Instagram
+  Save
 } from 'lucide-react'
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
+import RewardLogrosCard from '@/components/RewardLogrosCard'
 import { useAuth } from '@/contexts/AuthContext'
 import { subscribeToGame } from '@/lib/db'
 import { getLocalGame, isLocalGame } from '@/lib/localStorage'
 import { incrementUserTries } from '@/lib/tries'
 import { Game } from '@/types'
 import { RewardPrize } from '@/types/rewards'
-import RewardLogrosCard from '@/components/RewardLogrosCard'
 
 type RewardStepId = 'register' | 'follow' | 'share'
 
