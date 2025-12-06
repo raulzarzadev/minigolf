@@ -7,11 +7,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { usePrizes } from '@/hooks/usePrizes'
 import { PrizeRecord } from '@/lib/prizes'
 import { ROULETTE_SPIN_DURATION_MS } from '@/lib/roulette'
-import {
-  assignPrizeToUser,
-  incrementUserTries,
-  spinPrizeWheel
-} from '@/lib/tries'
+import { assignPrizeToUser, incrementUserTries } from '@/lib/tries'
 import { PrizeTier, RewardPrize } from '@/types/rewards'
 import { Roulette } from './roulette/roulette'
 
@@ -21,8 +17,8 @@ const isCorePrizeTier = (tier: PrizeRecord['tier']): tier is PrizeTier =>
 const RewardLogrosCard: FC = () => {
   const { user, refreshUser } = useAuth()
   const { prizes, loading: prizesLoading } = usePrizes()
-  const [lastResult, setLastResult] = useState<RewardPrize | null>(null)
-  const [lastPrize, setLastPrize] = useState<PrizeRecord | null>(null)
+  const [lastResult] = useState<RewardPrize | null>(null)
+  const [lastPrize] = useState<PrizeRecord | null>(null)
   const [showPending, setShowPending] = useState(false)
   const [showEarnModal, setShowEarnModal] = useState(false)
   const spinTimeoutRef = useRef<number | null>(null)
@@ -39,7 +35,6 @@ const RewardLogrosCard: FC = () => {
 
   const findPrizeMeta = (prizeId: string) =>
     prizes.find((p) => p.id === prizeId) ?? null
-  console.log({ user })
   const prizeEntries = user?.tries?.prizesWon ?? []
   const pendingPrizes = useMemo(
     () => prizeEntries.filter((entry) => !entry.deliveredAt),
@@ -86,36 +81,9 @@ const RewardLogrosCard: FC = () => {
           Cómo ganar más
         </button>
       </div>
-
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatPill
-          label="Tiradas pendientes"
-          value={rollsAvailable}
-          tone="emerald"
-        />
-        <StatPill
-          label="Premios por reclamar"
-          value={pendingPrizes.length}
-          tone="amber"
-          onClick={() => setShowPending((prev) => !prev)}
-          interactive
-        />
-        <StatPill
-          label="Premios ganados"
-          value={claimedPrizes.length}
-          tone="purple"
-        />
-        <StatPill
-          label="Último resultado"
-          value={
-            lastPrize?.title ?? (lastResult === 'none' ? 'Sin premio' : '--')
-          }
-          tone="blue"
-        />
-      </div>
-
-      <div className="relative rounded-2xl border border-gray-100 bg-gray-50 p-3">
-        <div className="flex flex-col lg:flex-row gap-3 items-center">
+      <div className="flex flex-col lg:flex-row md:gap-6 gap-4">
+        {/* //* RULETA  */}
+        <div className="flex flex-col gap-3 items-center">
           <div className="relative">
             <div
               className={
@@ -154,100 +122,133 @@ const RewardLogrosCard: FC = () => {
             )}
           </div>
         </div>
-      </div>
-
-      {showPending && (
-        <div className="rounded-2xl border border-amber-100 bg-amber-50 p-3 space-y-2">
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-semibold text-amber-900">
-              Premios por reclamar
-            </p>
-            <Gift className="h-4 w-4 text-amber-700" />
-          </div>
-          {pendingPrizes.length === 0 ? (
-            <p className="text-xs text-amber-800">
-              No tienes premios pendientes.
-            </p>
-          ) : (
-            pendingPrizes.map((entry) => {
-              const record = findPrizeMeta(entry.prizeId)
-              const fallback =
-                record && isCorePrizeTier(record.tier)
-                  ? prizeCatalog[record.tier as PrizeTier]
-                  : undefined
-              return (
-                <div
-                  key={`${entry.prizeId}-${entry.wonAt?.toString()}`}
-                  className="flex items-start justify-between gap-3 rounded-lg bg-white border border-amber-100 px-3 py-2"
-                >
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900">
-                      {record?.title ?? fallback?.label ?? 'Premio sorpresa'}
-                    </p>
-                    <p className="text-xs text-gray-600">
-                      {record?.description ??
-                        fallback?.description ??
-                        'Reclámalo con el staff.'}
-                    </p>
-                    <span className="text-[11px] text-gray-400">
-                      Ganado el {formatDate(entry.wonAt)}
+        <div className="flex-1 flex flex-col gap-4">
+          {/* //* PREMIOS RECLAMADOS  */}
+          <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-emerald-900">
+                Premios ganados
+              </p>
+              <CheckCircle2 className="h-4 w-4 text-emerald-700" />
+            </div>
+            {claimedPrizes.length === 0 ? (
+              <p className="text-xs text-emerald-800">
+                Aún no has reclamado premios.
+              </p>
+            ) : (
+              claimedPrizes.map((entry) => {
+                const record = findPrizeMeta(entry.prizeId)
+                const fallback =
+                  record && isCorePrizeTier(record.tier)
+                    ? prizeCatalog[record.tier as PrizeTier]
+                    : undefined
+                const deliveredDate = entry.deliveredAt ?? entry.wonAt
+                return (
+                  <div
+                    key={`${entry.prizeId}-${entry.wonAt?.toString()}-delivered`}
+                    className="flex items-start justify-between gap-3 rounded-lg bg-white border border-emerald-100 px-3 py-2"
+                  >
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">
+                        {record?.title ?? fallback?.label ?? 'Premio reclamado'}
+                      </p>
+                      <p className="text-xs text-gray-600">
+                        {record?.description ?? fallback?.description ?? ''}
+                      </p>
+                      <span className="text-[11px] text-gray-400">
+                        Entregado el {formatDate(deliveredDate)}
+                      </span>
+                    </div>
+                    <span className="inline-flex items-center text-[11px] font-semibold text-emerald-800">
+                      <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
+                      Entregado
                     </span>
                   </div>
-                  <span className="text-[11px] font-semibold text-amber-800">
-                    Mostrar a staff
-                  </span>
-                </div>
-              )
-            })
+                )
+              })
+            )}
+          </div>
+          {/* //* NUMBERS  */}
+
+          <div className="grid grid-cols-2  gap-3">
+            <StatPill
+              label="Tiradas pendientes"
+              value={rollsAvailable}
+              tone="emerald"
+            />
+            <StatPill
+              label="Premios por reclamar"
+              value={pendingPrizes.length}
+              tone="amber"
+              onClick={() => setShowPending((prev) => !prev)}
+              interactive
+            />
+            <StatPill
+              label="Premios ganados"
+              value={claimedPrizes.length}
+              tone="purple"
+            />
+            <StatPill
+              label="Último resultado"
+              value={
+                lastPrize?.title ??
+                (lastResult === 'none' ? 'Sin premio' : '--')
+              }
+              tone="blue"
+            />
+          </div>
+
+          {/* //* PREMIOS POR RECLAMAR  */}
+          {showPending && (
+            <div className="rounded-2xl border border-amber-100 bg-amber-50 p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold text-amber-900">
+                  Premios por reclamar
+                </p>
+                <Gift className="h-4 w-4 text-amber-700" />
+              </div>
+              {pendingPrizes.length === 0 ? (
+                <p className="text-xs text-amber-800">
+                  No tienes premios pendientes.
+                </p>
+              ) : (
+                pendingPrizes.map((entry) => {
+                  const record = findPrizeMeta(entry.prizeId)
+                  const fallback =
+                    record && isCorePrizeTier(record.tier)
+                      ? prizeCatalog[record.tier as PrizeTier]
+                      : undefined
+                  return (
+                    <div
+                      key={`${entry.prizeId}-${entry.wonAt?.toString()}`}
+                      className="flex items-start justify-between gap-3 rounded-lg bg-white border border-amber-100 px-3 py-2"
+                    >
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900">
+                          {record?.title ??
+                            fallback?.label ??
+                            'Premio sorpresa'}
+                        </p>
+                        <p className="text-xs text-gray-600">
+                          {record?.description ??
+                            fallback?.description ??
+                            'Reclámalo con el staff.'}
+                        </p>
+                        <span className="text-[11px] text-gray-400">
+                          Ganado el {formatDate(entry.wonAt)}
+                        </span>
+                      </div>
+                      <span className="text-[11px] font-semibold text-amber-800">
+                        Mostrar a staff
+                      </span>
+                    </div>
+                  )
+                })
+              )}
+            </div>
           )}
         </div>
-      )}
-
-      <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-3 space-y-2">
-        <div className="flex items-center justify-between">
-          <p className="text-sm font-semibold text-emerald-900">
-            Premios ganados
-          </p>
-          <CheckCircle2 className="h-4 w-4 text-emerald-700" />
-        </div>
-        {claimedPrizes.length === 0 ? (
-          <p className="text-xs text-emerald-800">
-            Aún no has reclamado premios.
-          </p>
-        ) : (
-          claimedPrizes.map((entry) => {
-            const record = findPrizeMeta(entry.prizeId)
-            const fallback =
-              record && isCorePrizeTier(record.tier)
-                ? prizeCatalog[record.tier as PrizeTier]
-                : undefined
-            const deliveredDate = entry.deliveredAt ?? entry.wonAt
-            return (
-              <div
-                key={`${entry.prizeId}-${entry.wonAt?.toString()}-delivered`}
-                className="flex items-start justify-between gap-3 rounded-lg bg-white border border-emerald-100 px-3 py-2"
-              >
-                <div>
-                  <p className="text-sm font-semibold text-gray-900">
-                    {record?.title ?? fallback?.label ?? 'Premio reclamado'}
-                  </p>
-                  <p className="text-xs text-gray-600">
-                    {record?.description ?? fallback?.description ?? ''}
-                  </p>
-                  <span className="text-[11px] text-gray-400">
-                    Entregado el {formatDate(deliveredDate)}
-                  </span>
-                </div>
-                <span className="inline-flex items-center text-[11px] font-semibold text-emerald-800">
-                  <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
-                  Entregado
-                </span>
-              </div>
-            )
-          })
-        )}
       </div>
-
       {showEarnModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
           <div className="w-full max-w-md rounded-2xl bg-white p-4 shadow-xl space-y-3">

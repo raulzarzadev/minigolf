@@ -727,9 +727,7 @@ export function RewardsTab({
                   {recentPrizes.map((prize) => {
                     const isDelivered = Boolean(prize.deliveredAt)
                     const tierLabel =
-                      prize.tier === 'bonus'
-                        ? 'Bonus'
-                        : prizeCatalog[prize.tier]?.label || prize.tier
+                      prize.tier === 'bonus' ? 'Bonus' : prize.tier
 
                     return (
                       <tr key={prize.id} className="text-gray-700">

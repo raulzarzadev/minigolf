@@ -2,7 +2,7 @@
 
 import { Clock, Flag, Target, Trophy, User } from 'lucide-react'
 import Link from 'next/link'
-import { useEffect, useState, type ReactNode } from 'react'
+import { type ReactNode, useEffect, useState } from 'react'
 import ActiveGameBanner from '@/components/ActiveGameBanner'
 import DiscreteUsernameEditor from '@/components/DiscreteUsernameEditor'
 
