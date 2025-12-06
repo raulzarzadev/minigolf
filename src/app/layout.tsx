@@ -32,7 +32,13 @@ export const metadata: Metadata = {
     'mini golf',
     'minigolf',
     'entretenimiento',
-    'cita de juego'
+    'cita de juego',
+    'golf',
+    'golfito',
+    'diversión familiar',
+    'actividades al aire libre',
+    'deportes recreativos',
+    'eventos sociales'
   ],
   icons: {
     icon: '/favicon.ico',

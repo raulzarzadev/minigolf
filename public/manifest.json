@@ -1,6 +1,6 @@
 {
   "name": "Baja Mini Golf",
-  "short_name": "Baja Golf",
+  "short_name": "Baja Mini Golf",
   "description": "Administra partidas de Baja Mini Golf y torneos digitales en La Paz, Baja California Sur.",
   "start_url": "/",
   "display": "standalone",
