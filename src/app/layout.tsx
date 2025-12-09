@@ -19,6 +19,7 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://www.bajaminigolf.com'),
   title: 'Baja Mini Golf',
   description:
     'Administra partidas de Baja Mini Golf y torneos digitales en La Paz, Baja California Sur.',
@@ -49,7 +50,7 @@ export const metadata: Metadata = {
     title: 'Baja Mini Golf',
     description:
       'Administra partidas de Baja Mini Golf y torneos digitales en La Paz, Baja California Sur.',
-    url: 'https://baja-minigolf.vercel.app',
+    url: 'https://www.bajaminigolf.com',
     siteName: 'Baja Mini Golf',
     images: [
       {
