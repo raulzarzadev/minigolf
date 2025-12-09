@@ -48,6 +48,13 @@ const Navbar: FC = () => {
             </Link>
           </div>
 
+          <Link
+            href="/social"
+            className={`flex items-center space-x-1 px-2 lg:px-3 py-2 rounded-md text-sm font-medium ${currentPage === '/social' ? 'bg-green-100 text-green-700' : 'hover:bg-green-100 hover:text-green-700'} transition-colors`}
+          >
+            <InstagramIcon size={18} />
+            <span className="hidden sm:inline">Redes Sociales</span>
+          </Link>
           {/* Menu de escritorio */}
           <div className="hidden md:flex items-center space-x-1 lg:space-x-4">
             {/* <Link
@@ -57,14 +64,6 @@ const Navbar: FC = () => {
               <Plus size={18} />
               <span className="hidden lg:inline">Nueva Partida</span>
             </Link> */}
-
-            <Link
-              href="/social"
-              className={`flex items-center space-x-1 px-2 lg:px-3 py-2 rounded-md text-sm font-medium ${currentPage === '/social' ? 'bg-green-100 text-green-700' : 'hover:bg-green-100 hover:text-green-700'} transition-colors`}
-            >
-              <InstagramIcon size={18} />
-              <span className="hidden lg:inline">Redes Sociales</span>
-            </Link>
 
             <Link
               href="/ranking"
